@@ -1,62 +1,71 @@
+// Configuración de Supabase para el proyecto CuratorOS
 const SUPABASE_URL = "https://iyvbufxkgycqcmdeclsf.supabase.co";
-const SUPABASE_KEY = "EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5dmJ1ZnhrZ3ljcWNtZGVjbHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzOTE5NTMsImV4cCI6MjA4OTk2Nzk1M30.Rt6XfnsvWu1Efwb3-fVOyHCmz7aCJXHpIJxaxGzuThw";
+const SUPABASE_KEY = "sb_publishable_Z3ze6gKwcKh91S9YBnacqA_3so-cPOC";
 
-// Inicializar Supabase correctamente
+// Inicializar el cliente de Supabase
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// Función para guardar el animalito y la hora
 async function guardarResultado() {
     const animal = document.getElementById('animalito').value;
     const hora = document.getElementById('hora').value;
 
     if (!animal || !hora) {
-        alert("Faltan datos por rellenar");
+        alert("Por favor, rellena todos los campos");
         return;
     }
 
-    // Insertar en la tabla que creamos
+    // Insertar datos en la tabla correcta: control_guacharo
     const { error } = await _supabase
-        .from('resultados_guacharo')
+        .from('control_guacharo')
         .insert([{ 
             animalito: animal.trim(), 
             hora_sorteo: hora 
         }]);
 
     if (error) {
-        alert("Error de conexión: " + error.message);
+        console.error("Error detallado:", error);
+        alert("Error al guardar: " + error.message);
     } else {
         alert("¡Anotado con éxito! 🦜");
+        // Limpiar el campo del animalito después de guardar
         document.getElementById('animalito').value = "";
+        // Actualizar la lista automáticamente
         cargarResultados();
     }
 }
 
+// Función para mostrar los últimos resultados en la web
 async function cargarResultados() {
     const { data, error } = await _supabase
-        .from('resultados_guacharo')
+        .from('control_guacharo')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(10);
 
     const lista = document.getElementById('lista-resultados');
+    
     if (error) {
-        lista.innerHTML = "<p class='text-red-500'>Error al cargar datos</p>";
+        console.error("Error al cargar:", error);
+        lista.innerHTML = "<p style='color:red;'>Error al conectar con la base de datos</p>";
         return;
     }
 
-    lista.innerHTML = "<h3 class='text-yellow-500 font-bold mb-2'>Últimos 10 sorteos:</h3>";
+    // Dibujar la lista en el HTML
+    lista.innerHTML = "<h3 style='color:#EAB308; font-weight:bold; margin-bottom:10px;'>Últimos 10 sorteos:</h3>";
     
-    if(data && data.length > 0) {
+    if (data && data.length > 0) {
         data.forEach(res => {
             lista.innerHTML += `
-                <div class="bg-gray-800 p-3 rounded-lg border-l-4 border-yellow-600 mb-2 flex justify-between items-center shadow">
-                    <span class="font-bold text-white uppercase text-lg">${res.animalito}</span>
-                    <span class="text-gray-400 text-sm font-mono bg-gray-900 px-2 py-1 rounded">${res.hora_sorteo}</span>
+                <div style="background:#1F2937; padding:12px; border-radius:8px; border-left:4px solid #CA8A04; margin-bottom:8px; display:flex; justify-content:between; align-items:center;">
+                    <span style="font-weight:bold; color:white; text-transform:uppercase;">${res.animalito}</span>
+                    <span style="color:#9CA3AF; font-size:12px; margin-left:auto; background:#111827; padding:4px 8px; border-radius:4px;">${res.hora_sorteo}</span>
                 </div>`;
         });
     } else {
-        lista.innerHTML += "<p class='text-gray-500'>No hay datos registrados aún.</p>";
+        lista.innerHTML += "<p style='color:#6B7280;'>No hay resultados registrados todavía.</p>";
     }
 }
 
-// Cargar al iniciar
+// Ejecutar la carga de datos apenas abra la página
 cargarResultados();
