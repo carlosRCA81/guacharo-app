@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guácharo Analítico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white p-4">
+    <h1 class="text-2xl font-bold text-center mb-6 text-yellow-500">Guácharo Activo 🦜</h1>
+    
+    <div class="bg-gray-800 p-4 rounded-lg shadow-lg mb-6">
+        <h2 class="text-lg font-semibold mb-3 text-gray-300">Anotar Resultado</h2>
+        <input type="text" id="animalito" placeholder="Ej: Delfín" class="w-full p-2 mb-3 rounded bg-gray-700 border border-gray-600 text-white">
+        <input type="time" id="hora" class="w-full p-2 mb-4 rounded bg-gray-700 border border-gray-600 text-white">
+        
+        <button onclick="guardarResultado()" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 rounded">
+            Guardar Resultado
+        </button>
+    </div>
+
+    <div id="lista-resultados" class="space-y-2">
+        <p class="text-gray-400 text-center">Aquí verás los últimos sorteos...</p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+</body>
+</html>
