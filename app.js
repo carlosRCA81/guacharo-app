@@ -15,12 +15,14 @@ async function guardarResultado() {
         return;
     }
 
-    // Insertamos en la tabla que ya comprobamos que funciona
+    // Insertamos usando las columnas exactas de tu tabla:
+    // animalito, hora_sorteo y fecha_sorteo
     const { error } = await _supabase
         .from('control_guacharo')
         .insert([{ 
             animalito: animal.trim(), 
-            hora_sorteo: hora 
+            hora_sorteo: hora,
+            fecha_sorteo: new Date().toISOString().split('T')[0] // Guarda la fecha de hoy
         }]);
 
     if (error) {
@@ -29,7 +31,7 @@ async function guardarResultado() {
     } else {
         alert("¡Anotado con éxito! 🦜");
         document.getElementById('animalito').value = "";
-        cargarResultados(); // Recargamos la lista automáticamente
+        cargarResultados();
     }
 }
 
@@ -38,30 +40,31 @@ async function cargarResultados() {
     const lista = document.getElementById('lista-resultados');
     if (!lista) return;
 
-    // IMPORTANTE: Quitamos el .order('created_at') porque esa columna 
-    // está dando error en tu tabla actual.
+    // IMPORTANTE: Ordenamos por 'id' de forma descendente 
+    // para que el último anotado salga de primero.
     const { data, error } = await _supabase
         .from('control_guacharo')
         .select('*')
+        .order('id', { ascending: false }) 
         .limit(10); 
 
     if (error) {
         console.error("Error de Supabase:", error);
-        lista.innerHTML = `<p style='color:red;'>Error de conexión: ${error.message}</p>`;
+        lista.innerHTML = `<p style='color:red;'>Error de conexión con CuratorOS</p>`;
         return;
     }
 
     lista.innerHTML = "<h3 style='color:#eab308; font-weight:bold; margin-bottom:10px;'>Últimos sorteos:</h3>";
     
     if (data && data.length > 0) {
-        // Invertimos el orden manualmente para ver lo más nuevo arriba
-        const resultadosInvertidos = data.reverse();
-        
-        resultadosInvertidos.forEach(res => {
+        data.forEach(res => {
             lista.innerHTML += `
                 <div style="background:#1f2937; padding:10px; border-radius:8px; border-left:4px solid #ca8a04; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
                     <span style="font-weight:bold; color:white; text-transform:uppercase;">${res.animalito}</span>
-                    <span style="color:#9ca3af; font-size:12px; background:#111827; padding:2px 6px; border-radius:4px;">${res.hora_sorteo}</span>
+                    <div style="text-align:right;">
+                        <span style="color:#9ca3af; font-size:12px; background:#111827; padding:2px 6px; border-radius:4px; display:block; margin-bottom:2px;">${res.hora_sorteo}</span>
+                        <span style="color:#6b7280; font-size:10px;">${res.fecha_sorteo || ''}</span>
+                    </div>
                 </div>`;
         });
     } else {
@@ -69,5 +72,5 @@ async function cargarResultados() {
     }
 }
 
-// Carga inicial al abrir la página
+// Carga inicial
 document.addEventListener('DOMContentLoaded', cargarResultados);
