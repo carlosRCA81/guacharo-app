@@ -1,21 +1,24 @@
-// Configuración de Supabase para el proyecto CuratorOS
+// 1. CONFIGURACIÓN DEL PROYECTO CURATOROS
+// Estos datos conectan tu web con la base de datos de Supabase
 const SUPABASE_URL = "https://iyvbufxkgycqcmdeclsf.supabase.co";
 const SUPABASE_KEY = "sb_publishable_Z3ze6gKwcKh91S9YBnacqA_3so-cPOC";
 
 // Inicializar el cliente de Supabase
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Función para guardar el animalito y la hora
+// 2. FUNCIÓN PARA GUARDAR (BOTÓN NARANJA)
 async function guardarResultado() {
     const animal = document.getElementById('animalito').value;
     const hora = document.getElementById('hora').value;
 
+    // Validación: No dejar que guarden campos vacíos
     if (!animal || !hora) {
-        alert("Por favor, rellena todos los campos");
+        alert("¡Cuidado Carlos! Te falta escribir el animal o la hora.");
         return;
     }
 
-    // Insertar datos en la tabla correcta: control_guacharo
+    // Insertar en la tabla 'control_guacharo'
+    // Usamos los nombres de columnas que creamos: animalito y hora_sorteo
     const { error } = await _supabase
         .from('control_guacharo')
         .insert([{ 
@@ -24,48 +27,50 @@ async function guardarResultado() {
         }]);
 
     if (error) {
-        console.error("Error detallado:", error);
-        alert("Error al guardar: " + error.message);
+        console.error("Error al guardar:", error);
+        alert("Error de conexión: " + error.message);
     } else {
         alert("¡Anotado con éxito! 🦜");
-        // Limpiar el campo del animalito después de guardar
+        // Limpiar el cuadro de texto del animalito para el siguiente
         document.getElementById('animalito').value = "";
-        // Actualizar la lista automáticamente
+        // Actualizar la lista de abajo automáticamente
         cargarResultados();
     }
 }
 
-// Función para mostrar los últimos resultados en la web
+// 3. FUNCIÓN PARA CARGAR LA LISTA (LOS ÚLTIMOS 10)
 async function cargarResultados() {
+    const lista = document.getElementById('lista-resultados');
+
     const { data, error } = await _supabase
         .from('control_guacharo')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(10);
 
-    const lista = document.getElementById('lista-resultados');
-    
     if (error) {
         console.error("Error al cargar:", error);
-        lista.innerHTML = "<p style='color:red;'>Error al conectar con la base de datos</p>";
+        lista.innerHTML = "<p style='color:#ef4444; text-align:center;'>Error al conectar con la base de datos</p>";
         return;
     }
 
-    // Dibujar la lista en el HTML
-    lista.innerHTML = "<h3 style='color:#EAB308; font-weight:bold; margin-bottom:10px;'>Últimos 10 sorteos:</h3>";
+    // Título de la sección de resultados
+    lista.innerHTML = "<h3 style='color:#eab308; font-weight:bold; margin-bottom:15px; text-align:center;'>Últimos 10 sorteos registrados:</h3>";
     
-    if (data && data.length > 0) {
+    // Si hay datos, los mostramos uno por uno
+    if(data && data.length > 0) {
         data.forEach(res => {
             lista.innerHTML += `
-                <div style="background:#1F2937; padding:12px; border-radius:8px; border-left:4px solid #CA8A04; margin-bottom:8px; display:flex; justify-content:between; align-items:center;">
-                    <span style="font-weight:bold; color:white; text-transform:uppercase;">${res.animalito}</span>
-                    <span style="color:#9CA3AF; font-size:12px; margin-left:auto; background:#111827; padding:4px 8px; border-radius:4px;">${res.hora_sorteo}</span>
+                <div style="background:#1f2937; padding:15px; border-radius:10px; border-left:5px solid #ca8a04; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);">
+                    <span style="font-weight:bold; color:white; text-transform:uppercase; font-size:1.1rem;">${res.animalito}</span>
+                    <span style="color:#9ca3af; font-family:monospace; background:#111827; padding:5px 10px; border-radius:5px;">${res.hora_sorteo}</span>
                 </div>`;
         });
     } else {
-        lista.innerHTML += "<p style='color:#6B7280;'>No hay resultados registrados todavía.</p>";
+        lista.innerHTML += "<p style='color:#6b7280; text-align:center;'>No hay resultados anotados hoy.</p>";
     }
 }
 
-// Ejecutar la carga de datos apenas abra la página
+// 4. INICIO AUTOMÁTICO
+// Al abrir la página, que cargue la lista de inmediato
 cargarResultados();
