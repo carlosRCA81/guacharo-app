@@ -2,56 +2,61 @@ const SUPABASE_URL = "https://iyvbufxkgycqcmdeclsf.supabase.co";
 const SUPABASE_KEY = "sb_publishable_Z3ze6gKwcKh91S9YBnacqA_3so-cPOC";
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+const horasSorteos = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"];
+
+function actualizarReloj() {
+    const ahora = new Date();
+    const tiempoStr = ahora.toLocaleTimeString('en-GB');
+    document.getElementById('reloj-digital').innerText = tiempoStr;
+
+    // Detectar el sorteo más cercano basado en la hora actual
+    const horaActual = ahora.getHours();
+    let sorteoDetectado = "19:00"; 
+    
+    if (horaActual < 9) sorteoDetectado = "08:00";
+    else if (horaActual < 10) sorteoDetectado = "09:00";
+    else if (horaActual < 11) sorteoDetectado = "10:00";
+    else if (horaActual < 12) sorteoDetectado = "11:00";
+    else if (horaActual < 13) sorteoDetectado = "12:00";
+    else if (horaActual < 14) sorteoDetectado = "13:00";
+    else if (horaActual < 15) sorteoDetectado = "14:00";
+    else if (horaActual < 16) sorteoDetectado = "15:00";
+    else if (horaActual < 17) sorteoDetectado = "16:00";
+    else if (horaActual < 18) sorteoDetectado = "17:00";
+    else if (horaActual < 19) sorteoDetectado = "18:00";
+
+    document.getElementById('sorteo-proximo').innerText = sorteoDetectado;
+}
+
+setInterval(actualizarReloj, 1000);
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Establecer fecha de hoy por defecto
-    const hoy = new Date().toISOString().split('T')[0];
-    document.getElementById('fecha_manual').value = hoy;
-    obtenerLista();
+    document.getElementById('fecha_manual').value = new Date().toISOString().split('T')[0];
+    actualizarReloj();
+    obtenerSecuencia();
 });
 
-async function enviarDatos() {
+async function registrarSorteo() {
     const animal = document.getElementById('animalito').value.trim();
     const fecha = document.getElementById('fecha_manual').value;
-    const hora = document.getElementById('hora').value;
+    const hora = document.getElementById('sorteo-proximo').innerText;
 
-    if (!animal || !fecha || !hora) {
-        alert("⚠️ Por favor completa todos los campos");
-        return;
-    }
-
-    const btn = document.getElementById('btnGuardar');
-    btn.innerText = "⌛ PROCESANDO...";
-    btn.disabled = true;
+    if (!animal) return alert("Ingresa el número");
 
     const { error } = await _supabase
         .from('control_guacharo')
         .insert([{ animalito: animal, fecha_sorteo: fecha, hora_sorteo: hora }]);
 
-    if (error) {
-        alert("❌ Error: " + error.message);
-    } else {
+    if (!error) {
         document.getElementById('animalito').value = "";
-        obtenerLista();
+        obtenerSecuencia();
     }
-    
-    btn.innerText = "💾 GUARDAR RESULTADO";
-    btn.disabled = false;
 }
 
-// Función para convertir hora militar a AM/PM
-function formatoAMPM(horaMilitar) {
-    let [horas, minutos] = horaMilitar.split(':');
-    horas = parseInt(horas);
-    const ampm = horas >= 12 ? 'PM' : 'AM';
-    horas = horas % 12;
-    horas = horas ? horas : 12; // la hora '0' debería ser '12'
-    return `${horas}:${minutos} ${ampm}`;
-}
-
-async function obtenerLista() {
+async function obtenerSecuencia() {
     const lista = document.getElementById('lista-resultados');
     
-    // Traemos los últimos 12 resultados ordenados por fecha y hora
+    // Traemos exactamente los últimos 12 para el análisis del algoritmo
     const { data, error } = await _supabase
         .from('control_guacharo')
         .select('*')
@@ -59,31 +64,18 @@ async function obtenerLista() {
         .order('hora_sorteo', { ascending: false }) 
         .limit(12);
 
-    if (error) {
-        lista.innerHTML = "<p class='text-red-500 text-center'>Error de conexión</p>";
-        return;
-    }
+    if (error) return;
 
-    lista.innerHTML = "<h3 class='text-yellow-500 font-black mb-4 text-sm text-center uppercase tracking-widest'>Resultados del Día</h3>";
-    
-    if (data.length === 0) {
-        lista.innerHTML += "<p class='text-gray-600 text-center text-xs'>No hay sorteos registrados.</p>";
-        return;
-    }
-
+    lista.innerHTML = "";
     data.forEach(item => {
-        const horaBonita = formatoAMPM(item.hora_sorteo);
-        
         lista.innerHTML += `
-            <div class="card-resultado bg-gray-800 p-4 rounded-xl border-l-4 border-yellow-500 flex justify-between items-center shadow-lg border border-gray-700/50">
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex justify-between items-center mb-2 shadow-sm">
                 <div>
-                    <span class="block text-[10px] text-gray-500 font-bold uppercase">${item.fecha_sorteo}</span>
-                    <span class="text-2xl font-black text-white tracking-tighter uppercase">${item.animalito}</span>
+                    <span class="block text-[8px] text-slate-600 font-black uppercase mb-1">${item.fecha_sorteo}</span>
+                    <span class="text-2xl font-black text-white tracking-tighter">${item.animalito}</span>
                 </div>
-                <div class="text-right">
-                    <span class="bg-yellow-600/10 text-yellow-500 px-3 py-1 rounded-full text-xs font-black border border-yellow-600/20">
-                        ${horaBonita}
-                    </span>
+                <div class="bg-slate-950 px-3 py-2 rounded-lg border border-yellow-900/30">
+                    <span class="text-yellow-500 font-mono font-bold text-sm">${item.hora_sorteo}</span>
                 </div>
             </div>`;
     });
