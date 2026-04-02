@@ -37,22 +37,29 @@ async function guardarResultado() {
         .from('control_guacharo')
         .insert([{ animalito: animal, hora_sorteo: hora, fecha_sorteo: fecha }]);
 
-    if (error) { alert("Error: " + error.message); }
+    if (error) { alert("Error al guardar: " + error.message); }
     else {
         document.getElementById('animalito').value = "";
         cargarResultados();
     }
 }
 
+// FUNCIÓN DE BORRADO MEJORADA
 async function borrarRegistro(id) {
-    if (confirm("¿Borrar este resultado permanentemente?")) {
+    const confirmar = confirm("¿Borrar este resultado permanentemente?");
+    if (confirmar) {
         const { error } = await _supabase
             .from('control_guacharo')
             .delete()
-            .eq('id', id);
+            .match({ id: id }); // Usamos .match para asegurar puntería exacta
 
-        if (error) { alert("Error: " + error.message); }
-        else { cargarResultados(); }
+        if (error) { 
+            console.error(error);
+            alert("No se pudo borrar. Posiblemente falta activar la política 'DELETE' en Supabase."); 
+        } else {
+            alert("¡Eliminado correctamente!");
+            cargarResultados(); 
+        }
     }
 }
 
@@ -67,14 +74,19 @@ async function cargarResultados() {
     if (error) return;
 
     lista.innerHTML = "<h3 class='text-yellow-500 font-bold mb-3 text-sm'>Últimos sorteos registrados:</h3>";
+    
+    if (data.length === 0) {
+        lista.innerHTML += "<p class='text-gray-500 text-xs italic text-center'>No hay resultados anotados.</p>";
+    }
+
     data.forEach(res => {
         lista.innerHTML += `
             <div class="bg-gray-800 p-3 rounded-lg border-l-4 border-yellow-600 flex justify-between items-center mb-2 shadow-md">
                 <div class="flex items-center gap-3">
-                    <button onclick="borrarRegistro(${res.id})" class="bg-red-900/30 p-1.5 rounded-full hover:bg-red-800 transition-colors">
+                    <button onclick="borrarRegistro(${res.id})" class="bg-red-900/30 p-2 rounded-full active:bg-red-600 transition-colors">
                         🗑️
                     </button>
-                    <span class="font-bold uppercase text-sm tracking-tight">${res.animalito}</span>
+                    <span class="font-bold uppercase text-sm tracking-tight text-white">${res.animalito}</span>
                 </div>
                 <div class="text-right text-[10px]">
                     <span class="text-gray-300 block font-bold">${res.hora_sorteo}</span>
@@ -88,7 +100,7 @@ async function ejecutarAnalisis() {
     const grid = document.getElementById('grid-analisis');
     const seccion = document.getElementById('seccion-analisis');
     seccion.classList.remove('hidden');
-    grid.innerHTML = "<p class='col-span-2 text-center text-blue-300 text-xs animate-pulse'>Escaneando algoritmo de la semana...</p>";
+    grid.innerHTML = "<p class='col-span-2 text-center text-blue-300 text-xs animate-pulse'>Analizando patrones...</p>";
 
     const sieteDiasAtras = new Date();
     sieteDiasAtras.setDate(sieteDiasAtras.getDate() - 7);
@@ -121,7 +133,7 @@ async function ejecutarAnalisis() {
             <div class="${bg} p-2 rounded border border-gray-700 text-center shadow-inner">
                 <div class="text-yellow-500 font-black text-lg leading-none">${num}</div>
                 <div class="text-[8px] uppercase font-bold text-white truncate mb-1">${RULETA[num]}</div>
-                <div class="text-[7px] text-gray-400 font-mono">SALIDAS: ${veces}</div>
+                <div class="text-[7px] text-gray-400 font-mono italic">VISTO: ${veces}</div>
                 <div class="text-[8px] font-black text-white mt-1 tracking-tighter">${extra}</div>
             </div>`;
     });
