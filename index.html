@@ -3,33 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guácharo Pro</title>
+    <title>Guácharo Activo</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-900 text-white p-4">
     <h1 class="text-2xl font-bold text-center mb-6 text-yellow-500">Guácharo Activo 🦜</h1>
 
     <div class="bg-gray-800 p-4 rounded-lg shadow-lg mb-6 border border-gray-700">
-        <label class="text-[10px] text-gray-400 uppercase font-bold">Animalito o Número:</label>
-        <input type="text" id="animalito" class="w-full p-2 mb-3 rounded bg-gray-700 border border-gray-600 text-white">
-        
-        <label class="text-[10px] text-gray-400 uppercase font-bold">Fecha:</label>
+        <input type="text" id="animalito" placeholder="Animalito o Número" class="w-full p-2 mb-3 rounded bg-gray-700 border border-gray-600 text-white">
         <input type="date" id="fecha_manual" class="w-full p-2 mb-3 rounded bg-gray-700 border border-gray-600 text-white">
-        
-        <label class="text-[10px] text-gray-400 uppercase font-bold">Hora:</label>
         <input type="time" id="hora" class="w-full p-2 mb-4 rounded bg-gray-700 border border-gray-600 text-white">
 
-        <button onclick="guardarResultado()" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 rounded-lg mb-3 shadow-md">
-            💾 GUARDAR RESULTADO
-        </button>
-
-        <button onclick="cargarResultados()" class="w-full bg-blue-600 text-white py-2 rounded-lg text-sm">
-            🔄 REFRESCAR LISTA
+        <button id="btnGuardar" onclick="enviarDatos()" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 rounded-lg shadow-md">
+            💾 GUARDAR AHORA
         </button>
     </div>
 
     <div id="lista-resultados" class="space-y-2">
-        </div>
+        <p class="text-gray-500 text-center text-xs">Cargando sorteos...</p>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="app.js"></script>
