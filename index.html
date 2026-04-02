@@ -3,24 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guácharo Analítico</title>
+    <title>Guácharo Analítico Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .caliente { animation: pulse-red 2s infinite; border: 2px solid #ef4444 !important; }
+    </style>
 </head>
 <body class="bg-gray-900 text-white p-4">
     <h1 class="text-2xl font-bold text-center mb-6 text-yellow-500">Guácharo Activo 🦜</h1>
-    
-    <div class="bg-gray-800 p-4 rounded-lg shadow-lg mb-6">
-        <h2 class="text-lg font-semibold mb-3 text-gray-300">Anotar Resultado</h2>
-        <input type="text" id="animalito" placeholder="Ej: Delfín" class="w-full p-2 mb-3 rounded bg-gray-700 border border-gray-600 text-white">
+
+    <div class="bg-gray-800 p-4 rounded-lg shadow-lg mb-6 border border-gray-700">
+        <h2 class="text-lg font-semibold mb-3 text-gray-300 border-b border-gray-700 pb-2">Anotar Resultado</h2>
+        <input type="text" id="animalito" placeholder="Ej: Delfín o 0" class="w-full p-2 mb-3 rounded bg-gray-700 border border-gray-600 text-white focus:border-yellow-500 outline-none">
         <input type="time" id="hora" class="w-full p-2 mb-4 rounded bg-gray-700 border border-gray-600 text-white">
-        
-        <button onclick="guardarResultado()" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 rounded">
-            Guardar Resultado
+
+        <button onclick="guardarResultado()" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 rounded-lg mb-3 transition-all">
+            💾 Guardar Resultado
+        </button>
+
+        <button onclick="ejecutarAnalisis()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all shadow-lg">
+            📊 MODO ANALISTA (7 DÍAS)
         </button>
     </div>
 
+    <div id="seccion-analisis" class="hidden mb-8">
+        <h2 class="text-xl font-bold text-center mb-4 text-blue-400">🎯 Algoritmo de Probabilidad</h2>
+        <div id="grid-analisis" class="grid grid-cols-2 gap-3">
+            </div>
+    </div>
+
     <div id="lista-resultados" class="space-y-2">
-        <p class="text-gray-400 text-center">Aquí verás los últimos sorteos...</p>
+        <h3 class="text-yellow-500 font-bold mb-3">Últimos sorteos:</h3>
+        <p class="text-gray-400 text-center">Cargando datos...</p>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
