@@ -24,43 +24,56 @@ function establecerFechaHoy() {
 }
 
 async function guardarResultado() {
+    const id = document.getElementById('edit-id').value;
     const animal = document.getElementById('animalito').value.trim();
     const fecha = document.getElementById('fecha_manual').value;
     const hora = document.getElementById('hora').value;
 
-    if (!animal || !fecha || !hora) {
-        alert("Faltan datos");
-        return;
+    if (!animal || !fecha || !hora) { alert("Faltan datos"); return; }
+
+    let response;
+    if (id) {
+        // MODO EDITAR
+        response = await _supabase
+            .from('control_guacharo')
+            .update({ animalito: animal, hora_sorteo: hora, fecha_sorteo: fecha })
+            .eq('id', id);
+    } else {
+        // MODO NUEVO
+        response = await _supabase
+            .from('control_guacharo')
+            .insert([{ animalito: animal, hora_sorteo: hora, fecha_sorteo: fecha }]);
     }
 
-    const { error } = await _supabase
-        .from('control_guacharo')
-        .insert([{ animalito: animal, hora_sorteo: hora, fecha_sorteo: fecha }]);
-
-    if (error) { alert("Error al guardar: " + error.message); }
-    else {
-        document.getElementById('animalito').value = "";
+    if (response.error) { 
+        alert("Error: " + response.error.message); 
+    } else {
+        cancelarEdicion();
         cargarResultados();
     }
 }
 
-// FUNCIÓN DE BORRADO MEJORADA
-async function borrarRegistro(id) {
-    const confirmar = confirm("¿Borrar este resultado permanentemente?");
-    if (confirmar) {
-        const { error } = await _supabase
-            .from('control_guacharo')
-            .delete()
-            .match({ id: id }); // Usamos .match para asegurar puntería exacta
+function prepararEdicion(id, animal, fecha, hora) {
+    document.getElementById('edit-id').value = id;
+    document.getElementById('animalito').value = animal;
+    document.getElementById('fecha_manual').value = fecha;
+    document.getElementById('hora').value = hora;
+    
+    document.getElementById('titulo-form').innerText = "✏️ EDITANDO REGISTRO";
+    document.getElementById('btn-guardar').innerText = "✅ ACTUALIZAR AHORA";
+    document.getElementById('btn-cancelar').classList.remove('hidden');
+    window.scrollTo(0,0);
+}
 
-        if (error) { 
-            console.error(error);
-            alert("No se pudo borrar. Posiblemente falta activar la política 'DELETE' en Supabase."); 
-        } else {
-            alert("¡Eliminado correctamente!");
-            cargarResultados(); 
-        }
-    }
+function cancelarEdicion() {
+    document.getElementById('edit-id').value = "";
+    document.getElementById('animalito').value = "";
+    establecerFechaHoy();
+    document.getElementById('hora').value = "";
+    
+    document.getElementById('titulo-form').innerText = "ANOTAR RESULTADO";
+    document.getElementById('btn-guardar').innerText = "💾 GUARDAR RESULTADO";
+    document.getElementById('btn-cancelar').classList.add('hidden');
 }
 
 async function cargarResultados() {
@@ -74,19 +87,14 @@ async function cargarResultados() {
     if (error) return;
 
     lista.innerHTML = "<h3 class='text-yellow-500 font-bold mb-3 text-sm'>Últimos sorteos registrados:</h3>";
-    
-    if (data.length === 0) {
-        lista.innerHTML += "<p class='text-gray-500 text-xs italic text-center'>No hay resultados anotados.</p>";
-    }
-
     data.forEach(res => {
         lista.innerHTML += `
-            <div class="bg-gray-800 p-3 rounded-lg border-l-4 border-yellow-600 flex justify-between items-center mb-2 shadow-md">
+            <div class="bg-gray-800 p-3 rounded-lg border-l-4 border-yellow-600 flex justify-between items-center mb-2 shadow">
                 <div class="flex items-center gap-3">
-                    <button onclick="borrarRegistro(${res.id})" class="bg-red-900/30 p-2 rounded-full active:bg-red-600 transition-colors">
-                        🗑️
+                    <button onclick="prepararEdicion('${res.id}', '${res.animalito}', '${res.fecha_sorteo}', '${res.hora_sorteo}')" class="bg-blue-900/30 p-2 rounded-full active:bg-blue-600 transition-colors">
+                        📝
                     </button>
-                    <span class="font-bold uppercase text-sm tracking-tight text-white">${res.animalito}</span>
+                    <span class="font-bold uppercase text-sm text-white">${res.animalito}</span>
                 </div>
                 <div class="text-right text-[10px]">
                     <span class="text-gray-300 block font-bold">${res.hora_sorteo}</span>
@@ -100,7 +108,7 @@ async function ejecutarAnalisis() {
     const grid = document.getElementById('grid-analisis');
     const seccion = document.getElementById('seccion-analisis');
     seccion.classList.remove('hidden');
-    grid.innerHTML = "<p class='col-span-2 text-center text-blue-300 text-xs animate-pulse'>Analizando patrones...</p>";
+    grid.innerHTML = "<p class='col-span-2 text-center text-blue-300 text-xs'>Calculando algoritmo...</p>";
 
     const sieteDiasAtras = new Date();
     sieteDiasAtras.setDate(sieteDiasAtras.getDate() - 7);
@@ -133,7 +141,7 @@ async function ejecutarAnalisis() {
             <div class="${bg} p-2 rounded border border-gray-700 text-center shadow-inner">
                 <div class="text-yellow-500 font-black text-lg leading-none">${num}</div>
                 <div class="text-[8px] uppercase font-bold text-white truncate mb-1">${RULETA[num]}</div>
-                <div class="text-[7px] text-gray-400 font-mono italic">VISTO: ${veces}</div>
+                <div class="text-[7px] text-gray-400 font-mono">VISTO: ${veces}</div>
                 <div class="text-[8px] font-black text-white mt-1 tracking-tighter">${extra}</div>
             </div>`;
     });
