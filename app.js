@@ -1,9 +1,7 @@
-// CONEXIÓN SUPABASE
 const SUPABASE_URL = "https://iyvbufxkgycqcmdeclsf.supabase.co";
 const SUPABASE_KEY = "sb_publishable_Z3ze6gKwcKh91S9YBnacqA_3so-cPOC";
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// DICCIONARIO MAESTRO CORREGIDO (00-75)
 const RULETA = {
     "00": "Ballena", "0": "Delfín", "1": "Carnero", "2": "Toro", "3": "Ciempiés", "4": "Alacrán", "5": "León",
     "6": "Rana", "7": "Perico", "8": "Ratón", "9": "Águila", "10": "Tigre", "11": "Gato", "12": "Caballo",
@@ -20,13 +18,19 @@ const RULETA = {
     "74": "Turpial", "75": "GUÁCHARO"
 };
 
-// GUARDAR
+// Función para poner la fecha de hoy por defecto al cargar
+function establecerFechaHoy() {
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('fecha_manual').value = hoy;
+}
+
 async function guardarResultado() {
     const animal = document.getElementById('animalito').value.trim();
+    const fecha = document.getElementById('fecha_manual').value;
     const hora = document.getElementById('hora').value;
 
-    if (!animal || !hora) {
-        alert("Faltan datos");
+    if (!animal || !fecha || !hora) {
+        alert("Por favor rellena Animal, Fecha y Hora");
         return;
     }
 
@@ -35,18 +39,17 @@ async function guardarResultado() {
         .insert([{ 
             animalito: animal, 
             hora_sorteo: hora,
-            fecha_sorteo: new Date().toISOString().split('T')[0]
+            fecha_sorteo: fecha 
         }]);
 
     if (error) { alert("Error: " + error.message); }
     else {
-        alert("¡Anotado! 🦜");
+        alert("¡Registro guardado con éxito! 🦜");
         document.getElementById('animalito').value = "";
         cargarResultados();
     }
 }
 
-// CARGAR LISTA
 async function cargarResultados() {
     const lista = document.getElementById('lista-resultados');
     const { data, error } = await _supabase
@@ -55,12 +58,12 @@ async function cargarResultados() {
         .order('id', { ascending: false })
         .limit(10);
 
-    if (error) { lista.innerHTML = "Error de conexión"; return; }
+    if (error) return;
 
     lista.innerHTML = "<h3 class='text-yellow-500 font-bold mb-3'>Últimos sorteos:</h3>";
     data.forEach(res => {
         lista.innerHTML += `
-            <div class="bg-gray-800 p-3 rounded-lg border-l-4 border-yellow-600 flex justify-between items-center">
+            <div class="bg-gray-800 p-3 rounded-lg border-l-4 border-yellow-600 flex justify-between items-center mb-2">
                 <span class="font-bold uppercase text-sm">${res.animalito}</span>
                 <div class="text-right text-xs">
                     <span class="text-gray-300 block">${res.hora_sorteo}</span>
@@ -70,12 +73,11 @@ async function cargarResultados() {
     });
 }
 
-// ALGORITMO MODO ANALISTA (7 DÍAS)
 async function ejecutarAnalisis() {
     const grid = document.getElementById('grid-analisis');
     const seccion = document.getElementById('seccion-analisis');
     seccion.classList.remove('hidden');
-    grid.innerHTML = "<p class='col-span-2 text-center text-blue-300'>Analizando tendencia semanal...</p>";
+    grid.innerHTML = "<p class='col-span-2 text-center text-blue-300'>Procesando patrones...</p>";
 
     const sieteDiasAtras = new Date();
     sieteDiasAtras.setDate(sieteDiasAtras.getDate() - 7);
@@ -101,24 +103,20 @@ async function ejecutarAnalisis() {
         
         let bg = "bg-gray-800";
         let extra = "";
-        let texto = "Frecuencia: " + veces;
-
-        if (veces >= 3) {
-            bg = "bg-red-900 caliente";
-            extra = "🔥 REPETIDO";
-        } else if (veces === 0) {
-            bg = "bg-blue-900";
-            extra = "❄️ POR SALIR";
-        }
+        if (veces >= 3) { bg = "bg-red-900 caliente"; extra = "🔥 CALIENTE"; }
+        else if (veces === 0) { bg = "bg-blue-900"; extra = "❄️ POR SALIR"; }
 
         grid.innerHTML += `
             <div class="${bg} p-2 rounded border border-gray-700 text-center transition-all">
-                <div class="text-yellow-500 font-bold text-lg">${num}</div>
-                <div class="text-[10px] uppercase font-semibold text-white">${RULETA[num]}</div>
-                <div class="text-[9px] text-gray-400">${texto}</div>
-                <div class="text-[9px] font-black text-white mt-1">${extra}</div>
+                <div class="text-yellow-500 font-bold text-lg leading-none">${num}</div>
+                <div class="text-[9px] uppercase font-bold text-white truncate">${RULETA[num]}</div>
+                <div class="text-[8px] text-gray-400">Salidas: ${veces}</div>
+                <div class="text-[8px] font-black text-white mt-1">${extra}</div>
             </div>`;
     });
 }
 
-document.addEventListener('DOMContentLoaded', cargarResultados);
+document.addEventListener('DOMContentLoaded', () => {
+    establecerFechaHoy();
+    cargarResultados();
+});
