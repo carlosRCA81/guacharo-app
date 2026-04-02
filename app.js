@@ -18,7 +18,6 @@ const RULETA = {
     "74": "Turpial", "75": "GUÁCHARO"
 };
 
-// Función para poner la fecha de hoy por defecto al cargar
 function establecerFechaHoy() {
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById('fecha_manual').value = hoy;
@@ -30,23 +29,30 @@ async function guardarResultado() {
     const hora = document.getElementById('hora').value;
 
     if (!animal || !fecha || !hora) {
-        alert("Por favor rellena Animal, Fecha y Hora");
+        alert("Faltan datos");
         return;
     }
 
     const { error } = await _supabase
         .from('control_guacharo')
-        .insert([{ 
-            animalito: animal, 
-            hora_sorteo: hora,
-            fecha_sorteo: fecha 
-        }]);
+        .insert([{ animalito: animal, hora_sorteo: hora, fecha_sorteo: fecha }]);
 
     if (error) { alert("Error: " + error.message); }
     else {
-        alert("¡Registro guardado con éxito! 🦜");
         document.getElementById('animalito').value = "";
         cargarResultados();
+    }
+}
+
+async function borrarRegistro(id) {
+    if (confirm("¿Borrar este resultado permanentemente?")) {
+        const { error } = await _supabase
+            .from('control_guacharo')
+            .delete()
+            .eq('id', id);
+
+        if (error) { alert("Error: " + error.message); }
+        else { cargarResultados(); }
     }
 }
 
@@ -60,14 +66,19 @@ async function cargarResultados() {
 
     if (error) return;
 
-    lista.innerHTML = "<h3 class='text-yellow-500 font-bold mb-3'>Últimos sorteos:</h3>";
+    lista.innerHTML = "<h3 class='text-yellow-500 font-bold mb-3 text-sm'>Últimos sorteos registrados:</h3>";
     data.forEach(res => {
         lista.innerHTML += `
-            <div class="bg-gray-800 p-3 rounded-lg border-l-4 border-yellow-600 flex justify-between items-center mb-2">
-                <span class="font-bold uppercase text-sm">${res.animalito}</span>
-                <div class="text-right text-xs">
-                    <span class="text-gray-300 block">${res.hora_sorteo}</span>
-                    <span class="text-gray-500">${res.fecha_sorteo}</span>
+            <div class="bg-gray-800 p-3 rounded-lg border-l-4 border-yellow-600 flex justify-between items-center mb-2 shadow-md">
+                <div class="flex items-center gap-3">
+                    <button onclick="borrarRegistro(${res.id})" class="bg-red-900/30 p-1.5 rounded-full hover:bg-red-800 transition-colors">
+                        🗑️
+                    </button>
+                    <span class="font-bold uppercase text-sm tracking-tight">${res.animalito}</span>
+                </div>
+                <div class="text-right text-[10px]">
+                    <span class="text-gray-300 block font-bold">${res.hora_sorteo}</span>
+                    <span class="text-gray-500 italic">${res.fecha_sorteo}</span>
                 </div>
             </div>`;
     });
@@ -77,7 +88,7 @@ async function ejecutarAnalisis() {
     const grid = document.getElementById('grid-analisis');
     const seccion = document.getElementById('seccion-analisis');
     seccion.classList.remove('hidden');
-    grid.innerHTML = "<p class='col-span-2 text-center text-blue-300'>Procesando patrones...</p>";
+    grid.innerHTML = "<p class='col-span-2 text-center text-blue-300 text-xs animate-pulse'>Escaneando algoritmo de la semana...</p>";
 
     const sieteDiasAtras = new Date();
     sieteDiasAtras.setDate(sieteDiasAtras.getDate() - 7);
@@ -103,15 +114,15 @@ async function ejecutarAnalisis() {
         
         let bg = "bg-gray-800";
         let extra = "";
-        if (veces >= 3) { bg = "bg-red-900 caliente"; extra = "🔥 CALIENTE"; }
-        else if (veces === 0) { bg = "bg-blue-900"; extra = "❄️ POR SALIR"; }
+        if (veces >= 3) { bg = "bg-red-900/80 caliente"; extra = "🔥 CALIENTE"; }
+        else if (veces === 0) { bg = "bg-blue-900/40"; extra = "❄️ FRÍO"; }
 
         grid.innerHTML += `
-            <div class="${bg} p-2 rounded border border-gray-700 text-center transition-all">
-                <div class="text-yellow-500 font-bold text-lg leading-none">${num}</div>
-                <div class="text-[9px] uppercase font-bold text-white truncate">${RULETA[num]}</div>
-                <div class="text-[8px] text-gray-400">Salidas: ${veces}</div>
-                <div class="text-[8px] font-black text-white mt-1">${extra}</div>
+            <div class="${bg} p-2 rounded border border-gray-700 text-center shadow-inner">
+                <div class="text-yellow-500 font-black text-lg leading-none">${num}</div>
+                <div class="text-[8px] uppercase font-bold text-white truncate mb-1">${RULETA[num]}</div>
+                <div class="text-[7px] text-gray-400 font-mono">SALIDAS: ${veces}</div>
+                <div class="text-[8px] font-black text-white mt-1 tracking-tighter">${extra}</div>
             </div>`;
     });
 }
