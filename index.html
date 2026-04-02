@@ -3,43 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guácharo Algorithm Pro</title>
+    <title>Guácharo Intelligence</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .tab-active { border-bottom: 4px solid #ca8a04; color: #eab308; }
+        .hidden { display: none; }
+    </style>
 </head>
-<body class="bg-slate-950 text-white p-4 font-sans">
-    <h1 class="text-2xl font-black text-center mb-6 text-yellow-500 tracking-tighter">GUÁCHARO ALGORITHM 🦜</h1>
+<body class="bg-slate-950 text-white font-sans">
+    <nav class="flex border-b border-slate-800 bg-slate-900 sticky top-0 z-50">
+        <button onclick="cambiarPestana('registro')" id="tab-reg" class="flex-1 py-4 font-black text-xs uppercase tracking-tighter tab-active">Registro</button>
+        <button onclick="cambiarPestana('analisis')" id="tab-ana" class="flex-1 py-4 font-black text-xs uppercase tracking-tighter text-slate-500">Inteligencia</button>
+    </nav>
 
-    <div class="bg-slate-900 p-5 rounded-2xl shadow-2xl mb-8 border border-slate-800">
-        <div class="flex justify-between items-center mb-4">
-            <span class="text-[10px] font-bold text-slate-500 uppercase">Estado: <span class="text-green-500">Analizando</span></span>
-            <div id="reloj-digital" class="text-yellow-500 font-mono font-bold text-xl">00:00:00</div>
-        </div>
+    <section id="vista-registro" class="p-4">
+        <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-2xl mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <span id="reloj-digital" class="text-yellow-500 font-mono font-bold text-xl">00:00:00</span>
+                <span class="text-[10px] bg-green-900/30 text-green-500 px-2 py-1 rounded border border-green-900">SISTEMA ACTIVO</span>
+            </div>
 
-        <div class="space-y-4">
-            <input type="text" id="animalito" placeholder="Número o Animalito" class="w-full p-4 rounded-xl bg-slate-800 border border-slate-700 text-white font-bold text-lg text-center focus:ring-2 focus:ring-yellow-500 outline-none">
-            
-            <div class="grid grid-cols-2 gap-3">
-                <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-center">
-                    <span class="block text-[9px] text-slate-500 uppercase font-black">Sorteo Detectado</span>
-                    <span id="sorteo-proximo" class="text-sm font-bold text-white">--:--</span>
+            <div class="space-y-4">
+                <input type="text" id="animalito" placeholder="Número o Animal" class="w-full p-4 rounded-xl bg-slate-800 border border-slate-700 text-white font-black text-2xl text-center outline-none focus:ring-2 focus:ring-yellow-500">
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[9px] text-slate-500 font-black uppercase ml-1">Fecha del Sorteo</label>
+                        <input type="date" id="fecha_manual" class="w-full bg-slate-800 p-3 rounded-xl border border-slate-700 text-white text-xs font-bold">
+                    </div>
+                    <div>
+                        <label class="text-[9px] text-slate-500 font-black uppercase ml-1">Hora (Manual)</label>
+                        <select id="hora_manual" class="w-full bg-slate-800 p-3 rounded-xl border border-slate-700 text-white text-xs font-bold">
+                            <option value="AUTO">Detectar ahora</option>
+                            <option value="08:00">08:00 AM</option><option value="09:00">09:00 AM</option>
+                            <option value="10:00">10:00 AM</option><option value="11:00">11:00 AM</option>
+                            <option value="12:00">12:00 PM</option><option value="13:00">01:00 PM</option>
+                            <option value="14:00">02:00 PM</option><option value="15:00">03:00 PM</option>
+                            <option value="16:00">04:00 PM</option><option value="17:00">05:00 PM</option>
+                            <option value="18:00">06:00 PM</option><option value="19:00">07:00 PM</option>
+                        </select>
+                    </div>
                 </div>
-                <input type="date" id="fecha_manual" class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-white text-xs font-bold text-center">
-            </div>
 
-            <button onclick="registrarSorteo()" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-black py-4 rounded-xl shadow-[0_0_20px_rgba(202,138,4,0.3)] transition-all active:scale-95 uppercase">
-                📥 Registrar en Base de Datos
-            </button>
-        </div>
-    </div>
-
-    <div id="contenedor-lista" class="space-y-3">
-        <div class="flex justify-between items-center px-1">
-            <h3 class="text-yellow-500 font-black text-xs uppercase tracking-widest">Secuencia del Día</h3>
-            <span class="text-slate-500 text-[10px]">Límite: 12 Sorteos</span>
-        </div>
-        <div id="lista-resultados">
+                <button onclick="registrarSorteo()" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-black py-4 rounded-xl shadow-lg active:scale-95 transition-all">
+                    💾 GUARDAR EN BASE DE DATOS
+                </button>
             </div>
-    </div>
+        </div>
+
+        <div id="lista-resultados" class="space-y-2">
+            <h3 class="text-xs font-black text-slate-500 uppercase px-1">Secuencia Reciente</h3>
+            </div>
+    </section>
+
+    <section id="vista-analisis" class="p-4 hidden">
+        <div class="grid grid-cols-2 gap-3 mb-6">
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                <span class="text-[9px] text-red-500 font-black uppercase">Más Salidor 🔥</span>
+                <div id="num-caliente" class="text-3xl font-black">--</div>
+            </div>
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                <span class="text-[9px] text-blue-500 font-black uppercase">Más Frío ❄️</span>
+                <div id="num-frio" class="text-3xl font-black">--</div>
+            </div>
+        </div>
+
+        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 mb-6">
+            <h3 class="text-xs font-black text-yellow-500 uppercase mb-3">Predicción de Parejas (Si sale A, viene B)</h3>
+            <div id="patrones-secuencia" class="space-y-2 text-sm">
+                </div>
+        </div>
+
+        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+            <h3 class="text-xs font-black text-slate-400 uppercase mb-3">Frecuencia General (7 días)</h3>
+            <div id="frecuencia-lista" class="grid grid-cols-4 gap-2 text-center text-[10px]">
+                </div>
+        </div>
+    </section>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="app.js"></script>
