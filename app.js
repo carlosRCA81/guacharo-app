@@ -2,65 +2,64 @@ const SUPABASE_URL = "https://iyvbufxkgycqcmdeclsf.supabase.co";
 const SUPABASE_KEY = "sb_publishable_Z3ze6gKwcKh91S9YBnacqA_3so-cPOC";
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Cargar resultados apenas abra la página
+// Configuración inicial
 document.addEventListener('DOMContentLoaded', () => {
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById('fecha_manual').value = hoy;
-    cargarResultados();
+    obtenerLista();
 });
 
-async function guardarResultado() {
-    const animal = document.getElementById('animalito').value.trim();
+async function enviarDatos() {
+    const animal = document.getElementById('animalito').value;
     const fecha = document.getElementById('fecha_manual').value;
     const hora = document.getElementById('hora').value;
 
     if (!animal || !fecha || !hora) {
-        alert("Por favor, llena todos los campos");
+        alert("⚠️ Faltan datos por llenar");
         return;
     }
 
-    console.log("Intentando guardar:", animal, fecha, hora);
+    // Cambiar el botón para saber que está trabajando
+    const btn = document.getElementById('btnGuardar');
+    btn.innerText = "⌛ ENVIANDO...";
+    btn.disabled = true;
 
-    const { data, error } = await _supabase
+    const { error } = await _supabase
         .from('control_guacharo')
-        .insert([{ 
-            animalito: animal, 
-            hora_sorteo: hora, 
-            fecha_sorteo: fecha 
-        }]);
+        .insert([{ animalito: animal, fecha_sorteo: fecha, hora_sorteo: hora }]);
 
     if (error) {
-        alert("Error de conexión: " + error.message);
-        console.error(error);
+        alert("❌ ERROR: " + error.message);
+        btn.innerText = "💾 GUARDAR AHORA";
+        btn.disabled = false;
     } else {
-        alert("✅ ¡Guardado con éxito!");
+        alert("✅ ¡GUARDADO EXITOSAMENTE!");
         document.getElementById('animalito').value = "";
-        cargarResultados();
+        btn.innerText = "💾 GUARDAR AHORA";
+        btn.disabled = false;
+        obtenerLista();
     }
 }
 
-async function cargarResultados() {
+async function obtenerLista() {
     const lista = document.getElementById('lista-resultados');
     const { data, error } = await _supabase
         .from('control_guacharo')
         .select('*')
         .order('id', { ascending: false })
-        .limit(10);
+        .limit(8);
 
     if (error) {
-        console.error("Error cargando:", error);
+        lista.innerHTML = "<p class='text-red-500'>Error al conectar</p>";
         return;
     }
 
-    lista.innerHTML = "<h3 class='text-yellow-500 font-bold mb-3 text-sm'>Últimos sorteos registrados:</h3>";
-    data.forEach(res => {
+    lista.innerHTML = "<h3 class='text-yellow-500 font-bold mb-2 text-sm'>Últimos Registros:</h3>";
+    data.forEach(item => {
         lista.innerHTML += `
-            <div class="bg-gray-800 p-3 rounded-lg border-l-4 border-yellow-600 flex justify-between items-center mb-2 shadow-md">
-                <span class="font-bold uppercase text-white">${res.animalito}</span>
-                <div class="text-right text-[10px]">
-                    <span class="text-gray-300 block font-bold">${res.hora_sorteo}</span>
-                    <span class="text-gray-500">${res.fecha_sorteo}</span>
-                </div>
+            <div class="bg-gray-800 p-2 rounded mb-2 border-l-4 border-yellow-600 flex justify-between items-center">
+                <span class="font-bold text-white uppercase">${item.animalito}</span>
+                <span class="text-gray-400 text-[10px]">${item.hora_sorteo}</span>
             </div>`;
     });
 }
