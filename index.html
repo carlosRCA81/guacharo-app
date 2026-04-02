@@ -3,57 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guácharo Activo Pro</title>
+    <title>Guácharo Algorithm Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .card-resultado { transition: all 0.3s ease; }
-        .card-resultado:hover { transform: scale(1.02); }
-    </style>
 </head>
-<body class="bg-gray-900 text-white p-4 font-sans">
-    <h1 class="text-2xl font-bold text-center mb-6 text-yellow-500">Guácharo Activo 🦜</h1>
+<body class="bg-slate-950 text-white p-4 font-sans">
+    <h1 class="text-2xl font-black text-center mb-6 text-yellow-500 tracking-tighter">GUÁCHARO ALGORITHM 🦜</h1>
 
-    <div class="bg-gray-800 p-5 rounded-xl shadow-2xl mb-6 border border-gray-700">
-        <h2 class="text-center text-xs uppercase tracking-widest text-gray-400 mb-4 font-bold">Panel de Registro</h2>
-        
+    <div class="bg-slate-900 p-5 rounded-2xl shadow-2xl mb-8 border border-slate-800">
+        <div class="flex justify-between items-center mb-4">
+            <span class="text-[10px] font-bold text-slate-500 uppercase">Estado: <span class="text-green-500">Analizando</span></span>
+            <div id="reloj-digital" class="text-yellow-500 font-mono font-bold text-xl">00:00:00</div>
+        </div>
+
         <div class="space-y-4">
-            <div>
-                <label class="text-[10px] text-gray-500 uppercase font-black ml-1">Animalito o Número</label>
-                <input type="text" id="animalito" placeholder="Ej: 34 o Venado" class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:border-yellow-500 outline-none text-white font-bold">
-            </div>
-
+            <input type="text" id="animalito" placeholder="Número o Animalito" class="w-full p-4 rounded-xl bg-slate-800 border border-slate-700 text-white font-bold text-lg text-center focus:ring-2 focus:ring-yellow-500 outline-none">
+            
             <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="text-[10px] text-gray-500 uppercase font-black ml-1">Fecha</label>
-                    <input type="date" id="fecha_manual" class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white text-sm">
+                <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-center">
+                    <span class="block text-[9px] text-slate-500 uppercase font-black">Sorteo Detectado</span>
+                    <span id="sorteo-proximo" class="text-sm font-bold text-white">--:--</span>
                 </div>
-                <div>
-                    <label class="text-[10px] text-gray-500 uppercase font-black ml-1">Hora del Sorteo</label>
-                    <select id="hora" class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white text-sm">
-                        <option value="08:00">08:00 AM</option>
-                        <option value="09:00">09:00 AM</option>
-                        <option value="10:00">10:00 AM</option>
-                        <option value="11:00">11:00 AM</option>
-                        <option value="12:00">12:00 PM</option>
-                        <option value="13:00">01:00 PM</option>
-                        <option value="14:00">02:00 PM</option>
-                        <option value="15:00">03:00 PM</option>
-                        <option value="16:00">04:00 PM</option>
-                        <option value="17:00">05:00 PM</option>
-                        <option value="18:00">06:00 PM</option>
-                        <option value="19:00">07:00 PM</option>
-                    </select>
-                </div>
+                <input type="date" id="fecha_manual" class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-white text-xs font-bold text-center">
             </div>
 
-            <button id="btnGuardar" onclick="enviarDatos()" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-black py-4 rounded-lg shadow-lg transform active:scale-95 transition-all uppercase tracking-tighter">
-                💾 GUARDAR RESULTADO
+            <button onclick="registrarSorteo()" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-black py-4 rounded-xl shadow-[0_0_20px_rgba(202,138,4,0.3)] transition-all active:scale-95 uppercase">
+                📥 Registrar en Base de Datos
             </button>
         </div>
     </div>
 
-    <div id="lista-resultados" class="space-y-3">
-        <p class="text-center text-gray-600 text-xs italic">Organizando sorteos...</p>
+    <div id="contenedor-lista" class="space-y-3">
+        <div class="flex justify-between items-center px-1">
+            <h3 class="text-yellow-500 font-black text-xs uppercase tracking-widest">Secuencia del Día</h3>
+            <span class="text-slate-500 text-[10px]">Límite: 12 Sorteos</span>
+        </div>
+        <div id="lista-resultados">
+            </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
