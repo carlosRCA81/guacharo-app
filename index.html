@@ -10,6 +10,8 @@
         .hidden { display: none; }
         .bar-chart { height: 8px; border-radius: 4px; background: #1e293b; margin-top: 4px; }
         .bar-fill { height: 100%; background: #ca8a04; transition: width 0.6s ease; }
+        /* Animación para resaltar los números */
+        .glow-text { text-shadow: 0 0 10px rgba(234, 179, 8, 0.5); }
     </style>
 </head>
 <body class="bg-slate-950 text-white font-sans">
@@ -53,15 +55,22 @@
             </div>
         </div>
         <div id="lista-historial" class="space-y-4">
-            <p class="text-center text-slate-600 text-[10px]">Usa el buscador para ver días anteriores (ej: 01/04/2026)</p>
+            <p class="text-center text-slate-600 text-[10px]">Usa el buscador para ver días anteriores</p>
         </div>
     </section>
 
     <section id="vista-analisis" class="p-4 hidden">
-        <div id="contenedor-algoritmo" class="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-6">
-            <h3 class="text-yellow-500 font-black text-center text-sm uppercase italic">Esquema de Probabilidades</h3>
+        <div id="contenedor-algoritmo" class="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-4">
+            <h3 class="text-yellow-500 font-black text-center text-sm uppercase italic">Estudio del Algoritmo</h3>
             
-            <div class="flex gap-2 mb-2">
+            <div class="bg-yellow-600/10 border border-yellow-600/30 p-4 rounded-xl text-center shadow-inner">
+                <p class="text-[8px] text-yellow-500 font-black uppercase mb-2 tracking-[0.2em]">Más Probables Siguiente Sorteo</p>
+                <div id="pronostico-destacado" class="text-2xl font-black text-white glow-text italic">
+                    -- -- --
+                </div>
+            </div>
+
+            <div class="flex gap-2">
                 <select id="filtro_franja" onchange="generarEsquemaPorcentajes()" class="w-full bg-slate-800 p-3 rounded-lg border border-slate-700 text-white text-[10px] font-black uppercase outline-none focus:border-yellow-600">
                     <option value="TODO">-- Todas las Franjas --</option>
                     <option value="MANANA">Mañana (08am - 12pm)</option>
@@ -69,7 +78,7 @@
                 </select>
             </div>
 
-            <div id="graficos-porcentaje" class="space-y-4"></div>
+            <div id="graficos-porcentaje" class="space-y-4 mt-4"></div>
         </div>
     </section>
 
