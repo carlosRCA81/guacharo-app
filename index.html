@@ -41,8 +41,7 @@
                 <button onclick="registrarSorteo()" class="w-full bg-yellow-600 text-white font-black py-4 rounded-xl shadow-lg active:scale-95 transition-all uppercase text-xs">Guardar en Base de Datos</button>
             </div>
         </div>
-        <div id="lista-hoy" class="space-y-2">
-            </div>
+        <div id="lista-hoy" class="space-y-2"></div>
     </section>
 
     <section id="vista-historial" class="p-4 hidden">
@@ -61,8 +60,16 @@
     <section id="vista-analisis" class="p-4 hidden">
         <div id="contenedor-algoritmo" class="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-6">
             <h3 class="text-yellow-500 font-black text-center text-sm uppercase italic">Esquema de Probabilidades</h3>
-            <div id="graficos-porcentaje" class="space-y-4">
-                </div>
+            
+            <div class="flex gap-2 mb-2">
+                <select id="filtro_franja" onchange="generarEsquemaPorcentajes()" class="w-full bg-slate-800 p-3 rounded-lg border border-slate-700 text-white text-[10px] font-black uppercase outline-none focus:border-yellow-600">
+                    <option value="TODO">-- Todas las Franjas --</option>
+                    <option value="MANANA">Mañana (08am - 12pm)</option>
+                    <option value="TARDE">Tarde (01pm - 07pm)</option>
+                </select>
+            </div>
+
+            <div id="graficos-porcentaje" class="space-y-4"></div>
         </div>
     </section>
 
