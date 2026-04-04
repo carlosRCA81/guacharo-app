@@ -44,7 +44,7 @@ async function registrarSorteo() {
     }
 }
 
-// Cargar solo lo de hoy para la pestaña principal
+// Cargar solo lo de hoy
 async function cargarSorteosHoy() {
     const hoy = new Date().toISOString().split('T')[0];
     const { data } = await _supabase.from('control_guacharo')
@@ -66,7 +66,7 @@ async function cargarSorteosHoy() {
     });
 }
 
-// Buscar cualquier fecha (Almanaque)
+// Almanaque
 async function buscarPorFecha() {
     const fechaBusqueda = document.getElementById('filtro_fecha').value;
     const { data } = await _supabase.from('control_guacharo')
@@ -94,37 +94,45 @@ async function buscarPorFecha() {
     container.innerHTML += html;
 }
 
-// Lógica de porcentajes e inteligencia (CON FILTRO DE FRANJA)
+// INTELIGENCIA Y PREDICCIÓN
 async function generarEsquemaPorcentajes() {
     const franja = document.getElementById('filtro_franja').value;
-    let { data } = await _supabase.from('control_guacharo').select('animalito, hora_sorteo');
+    const { data } = await _supabase.from('control_guacharo').select('animalito, hora_sorteo');
     
-    // Filtro inteligente por hora
+    let datosFiltrados = data;
+
     if (franja === "MANANA") {
-        data = data.filter(d => {
+        datosFiltrados = data.filter(d => {
             const h = parseInt(d.hora_sorteo.split(':')[0]);
             return h >= 8 && h <= 12;
         });
     } else if (franja === "TARDE") {
-        data = data.filter(d => {
+        datosFiltrados = data.filter(d => {
             const h = parseInt(d.hora_sorteo.split(':')[0]);
             return h >= 13 && h <= 19;
         });
     }
 
-    const total = data.length;
+    const total = datosFiltrados.length;
     const container = document.getElementById('graficos-porcentaje');
+    const cajaPronostico = document.getElementById('pronostico-destacado');
     container.innerHTML = "";
 
     if (total === 0) {
-        container.innerHTML = "<p class='text-center text-slate-600 text-[10px]'>Sin datos registrados en esta franja.</p>";
+        container.innerHTML = "<p class='text-center text-slate-600 text-[10px]'>Sin datos suficientes.</p>";
+        cajaPronostico.innerText = "-- -- --";
         return;
     }
 
-    const conteo = data.reduce((acc, v) => { acc[v.animalito] = (acc[v.animalito] || 0) + 1; return acc; }, {});
-    const sorted = Object.entries(conteo).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    const conteo = datosFiltrados.reduce((acc, v) => { acc[v.animalito] = (acc[v.animalito] || 0) + 1; return acc; }, {});
+    const sorted = Object.entries(conteo).sort((a, b) => b[1] - a[1]);
+    
+    // MOSTRAR LOS 3 MÁS PROBABLES ARRIBA
+    const top3 = sorted.slice(0, 3).map(item => item[0]);
+    cajaPronostico.innerText = top3.join(' - ');
 
-    sorted.forEach(([num, cant]) => {
+    // GENERAR GRÁFICOS (TOP 8)
+    sorted.slice(0, 8).forEach(([num, cant]) => {
         const porc = ((cant / total) * 100).toFixed(1);
         container.innerHTML += `
             <div>
