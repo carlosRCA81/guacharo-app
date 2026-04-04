@@ -1,110 +1,118 @@
-const SUPABASE_URL = "https://iyvbufxkgycqcmdeclsf.supabase.co";
-const SUPABASE_KEY = "sb_publishable_Z3ze6gKwcKh91S9YBnacqA_3so-cPOC";
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const DB_URL = "https://iyvbufxkgycqcmdeclsf.supabase.co";
+const DB_KEY = "sb_publishable_Z3ze6gKwcKh91S9YBnacqA_3so-cPOC";
+const _supabase = supabase.createClient(DB_URL, DB_KEY);
 
-function cambiarPestana(vista) {
-    document.getElementById('vista-registro').classList.toggle('hidden', vista !== 'registro');
-    document.getElementById('vista-historial').classList.toggle('hidden', vista !== 'historial');
-    document.getElementById('vista-analisis').classList.toggle('hidden', vista !== 'analisis');
-    
-    document.getElementById('tab-reg').className = vista === 'registro' ? 'flex-1 py-4 font-black text-[10px] tab-active' : 'flex-1 py-4 font-black text-[10px] text-slate-500';
-    document.getElementById('tab-his').className = vista === 'historial' ? 'flex-1 py-4 font-black text-[10px] tab-active' : 'flex-1 py-4 font-black text-[10px] text-slate-500';
-    document.getElementById('tab-ana').className = vista === 'analisis' ? 'flex-1 py-4 font-black text-[10px] tab-active' : 'flex-1 py-4 font-black text-[10px] text-slate-500';
-    
-    if(vista === 'analisis') calcularPorcentajes();
-    if(vista === 'historial') cargarHistorialSemanal();
-}
-
+// Reloj y fecha inicial
 setInterval(() => {
-    document.getElementById('reloj-digital').innerText = new Date().toLocaleTimeString('en-GB');
+    document.getElementById('reloj').innerText = new Date().toLocaleTimeString('en-GB');
 }, 1000);
 
 document.addEventListener('DOMContentLoaded', () => {
-    cargarHoy();
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('fecha_hoy').value = hoy;
+    document.getElementById('filtro_fecha').value = hoy;
+    cargarSorteosHoy();
 });
 
+// Navegación de pestañas
+function cambiarPestana(id) {
+    document.getElementById('vista-registro').classList.toggle('hidden', id !== 'registro');
+    document.getElementById('vista-historial').classList.toggle('hidden', id !== 'historial');
+    document.getElementById('vista-analisis').classList.toggle('hidden', id !== 'analisis');
+
+    document.getElementById('tab-reg').className = id === 'registro' ? 'flex-1 py-4 font-black text-[10px] tab-active' : 'flex-1 py-4 font-black text-[10px] text-slate-500';
+    document.getElementById('tab-his').className = id === 'historial' ? 'flex-1 py-4 font-black text-[10px] tab-active' : 'flex-1 py-4 font-black text-[10px] text-slate-500';
+    document.getElementById('tab-ana').className = id === 'analisis' ? 'flex-1 py-4 font-black text-[10px] tab-active' : 'flex-1 py-4 font-black text-[10px] text-slate-500';
+
+    if (id === 'analisis') generarEsquemaPorcentajes();
+}
+
+// Guardar nuevo resultado
 async function registrarSorteo() {
-    const animal = document.getElementById('animalito').value.trim();
-    let hora = document.getElementById('hora_manual').value;
-    const hoy = new Date().toISOString().split('T')[0];
+    const num = document.getElementById('animalito').value;
+    const fecha = document.getElementById('fecha_hoy').value;
+    const hora = document.getElementById('hora_manual').value;
 
-    if (hora === "AUTO") {
-        const h = new Date().getHours();
-        hora = `${h < 10 ? '0'+h : h}:00`;
-    }
+    if (!num) return alert("Ingresa el resultado");
 
-    if (!animal) return alert("Ingresa el número");
-
-    const { error } = await _supabase.from('control_guacharo').insert([{ animalito: animal, fecha_sorteo: hoy, hora_sorteo: hora }]);
+    const { error } = await _supabase.from('control_guacharo').insert([{ animalito: num, fecha_sorteo: fecha, hora_sorteo: hora }]);
+    
     if (!error) {
         document.getElementById('animalito').value = "";
-        cargarHoy();
+        cargarSorteosHoy();
+        alert("Guardado con éxito");
     }
 }
 
-async function cargarHoy() {
+// Cargar solo lo de hoy para la pestaña principal
+async function cargarSorteosHoy() {
     const hoy = new Date().toISOString().split('T')[0];
-    const { data } = await _supabase.from('control_guacharo').select('*').eq('fecha_sorteo', hoy).order('hora_sorteo', { ascending: false });
-    
+    const { data } = await _supabase.from('control_guacharo')
+        .select('*')
+        .eq('fecha_sorteo', hoy)
+        .order('hora_sorteo', { ascending: false });
+
     const lista = document.getElementById('lista-hoy');
-    lista.innerHTML = data.length === 0 ? "<p class='text-center text-slate-600 text-[10px]'>Esperando resultados de hoy...</p>" : "";
-    data.forEach(item => {
-        lista.innerHTML += `<div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex justify-between items-center shadow-md">
-            <span class="text-2xl font-black">${item.animalito}</span>
-            <span class="text-yellow-600 font-mono font-bold text-xs">${item.hora_sorteo}</span>
-        </div>`;
+    lista.innerHTML = "";
+    data.forEach(s => {
+        lista.innerHTML += `
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex justify-between items-center shadow-lg border-l-4 border-l-yellow-600">
+                <div>
+                    <div class="text-[9px] text-slate-500 font-bold">${s.fecha_sorteo}</div>
+                    <div class="text-2xl font-black">${s.animalito}</div>
+                </div>
+                <div class="text-yellow-600 font-black text-xs italic">${s.hora_sorteo}</div>
+            </div>`;
     });
 }
 
-async function cargarHistorialSemanal() {
-    const { data } = await _supabase.from('control_guacharo').select('*').order('fecha_sorteo', { ascending: false }).order('hora_sorteo', { ascending: false }).limit(84);
-    const container = document.getElementById('lista-historial-completo');
+// Buscar cualquier fecha (Almanaque)
+async function buscarPorFecha() {
+    const fechaBusqueda = document.getElementById('filtro_fecha').value;
+    const { data } = await _supabase.from('control_guacharo')
+        .select('*')
+        .eq('fecha_sorteo', fechaBusqueda)
+        .order('hora_sorteo', { ascending: false });
+
+    const container = document.getElementById('lista-historial');
+    container.innerHTML = `<h4 class="text-blue-500 font-black text-center text-[10px] uppercase mb-4 tracking-widest italic">Resultados del ${fechaBusqueda}</h4>`;
+
+    if (data.length === 0) {
+        container.innerHTML += `<p class="text-center text-slate-700 text-xs py-10">No hay registros para este día.</p>`;
+        return;
+    }
+
+    let html = `<div class="grid grid-cols-2 gap-3">`;
+    data.forEach(s => {
+        html += `
+            <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 flex justify-between items-center">
+                <span class="text-lg font-black">${s.animalito}</span>
+                <span class="text-slate-500 font-mono text-[9px]">${s.hora_sorteo.substring(0,5)}</span>
+            </div>`;
+    });
+    html += `</div>`;
+    container.innerHTML += html;
+}
+
+// Lógica de porcentajes e inteligencia
+async function generarEsquemaPorcentajes() {
+    const { data } = await _supabase.from('control_guacharo').select('animalito');
+    const total = data.length;
+    const conteo = data.reduce((acc, v) => { acc[v.animalito] = (acc[v.animalito] || 0) + 1; return acc; }, {});
+    
+    const sorted = Object.entries(conteo).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    const container = document.getElementById('graficos-porcentaje');
     container.innerHTML = "";
 
-    // Agrupar por fecha
-    const grupos = data.reduce((r, a) => {
-        r[a.fecha_sorteo] = r[a.fecha_sorteo] || [];
-        r[a.fecha_sorteo].push(a);
-        return r;
-    }, {});
-
-    Object.entries(grupos).forEach(([fecha, sorteos]) => {
-        let html = `<div class="bg-slate-900/50 p-2 rounded-xl border border-slate-800/50">
-            <h4 class="text-blue-500 font-black text-[10px] mb-3 border-b border-slate-800 pb-1 uppercase">${fecha}</h4>
-            <div class="grid grid-cols-4 gap-2">`;
-        sorteos.forEach(s => {
-            html += `<div class="text-center bg-slate-800 p-2 rounded">
-                <div class="text-white font-black text-sm">${s.animalito}</div>
-                <div class="text-[7px] text-slate-500">${s.hora_sorteo.substring(0,5)}</div>
-            </div>`;
-        });
-        html += `</div></div>`;
-        container.innerHTML += html;
-    });
-}
-
-async function calcularPorcentajes() {
-    const { data } = await _supabase.from('control_guacharo').select('animalito').limit(200);
-    const total = data.length;
-    const conteo = data.reduce((acc, val) => { acc[val.animalito] = (acc[val.animalito] || 0) + 1; return acc; }, {});
-    
-    const esquema = document.getElementById('esquema-porcentaje');
-    esquema.innerHTML = `<h3 class="text-[10px] font-black text-slate-500 uppercase text-left mb-2 tracking-widest">Esquema de Salida (%)</h3>`;
-    
-    const ordenados = Object.entries(conteo).sort((a,b) => b[1] - a[1]);
-    
-    ordenados.slice(0, 6).forEach(([num, cant]) => {
+    sorted.forEach(([num, cant]) => {
         const porc = ((cant / total) * 100).toFixed(1);
-        esquema.innerHTML += `
-            <div class="text-left">
-                <div class="flex justify-between text-[10px] font-bold mb-1">
-                    <span>${num}</span>
+        container.innerHTML += `
+            <div>
+                <div class="flex justify-between text-[10px] font-black uppercase">
+                    <span>Animal/Número ${num}</span>
                     <span class="text-yellow-500">${porc}%</span>
                 </div>
                 <div class="bar-chart"><div class="bar-fill" style="width: ${porc}%"></div></div>
             </div>`;
     });
-
-    document.getElementById('num-caliente').innerText = ordenados[0] ? ordenados[0][0] : "--";
-    document.getElementById('num-frio').innerText = ordenados[ordenados.length-1] ? ordenados[ordenados.length-1][0] : "--";
 }
