@@ -94,22 +94,42 @@ async function buscarPorFecha() {
     container.innerHTML += html;
 }
 
-// Lógica de porcentajes e inteligencia
+// Lógica de porcentajes e inteligencia (CON FILTRO DE FRANJA)
 async function generarEsquemaPorcentajes() {
-    const { data } = await _supabase.from('control_guacharo').select('animalito');
-    const total = data.length;
-    const conteo = data.reduce((acc, v) => { acc[v.animalito] = (acc[v.animalito] || 0) + 1; return acc; }, {});
+    const franja = document.getElementById('filtro_franja').value;
+    let { data } = await _supabase.from('control_guacharo').select('animalito, hora_sorteo');
     
-    const sorted = Object.entries(conteo).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    // Filtro inteligente por hora
+    if (franja === "MANANA") {
+        data = data.filter(d => {
+            const h = parseInt(d.hora_sorteo.split(':')[0]);
+            return h >= 8 && h <= 12;
+        });
+    } else if (franja === "TARDE") {
+        data = data.filter(d => {
+            const h = parseInt(d.hora_sorteo.split(':')[0]);
+            return h >= 13 && h <= 19;
+        });
+    }
+
+    const total = data.length;
     const container = document.getElementById('graficos-porcentaje');
     container.innerHTML = "";
+
+    if (total === 0) {
+        container.innerHTML = "<p class='text-center text-slate-600 text-[10px]'>Sin datos registrados en esta franja.</p>";
+        return;
+    }
+
+    const conteo = data.reduce((acc, v) => { acc[v.animalito] = (acc[v.animalito] || 0) + 1; return acc; }, {});
+    const sorted = Object.entries(conteo).sort((a, b) => b[1] - a[1]).slice(0, 8);
 
     sorted.forEach(([num, cant]) => {
         const porc = ((cant / total) * 100).toFixed(1);
         container.innerHTML += `
             <div>
                 <div class="flex justify-between text-[10px] font-black uppercase">
-                    <span>Animal/Número ${num}</span>
+                    <span>Animal ${num}</span>
                     <span class="text-yellow-500">${porc}%</span>
                 </div>
                 <div class="bar-chart"><div class="bar-fill" style="width: ${porc}%"></div></div>
