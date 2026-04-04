@@ -3,81 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guácharo Intelligence</title>
+    <title>Guácharo Intelligence System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .tab-active { border-bottom: 4px solid #ca8a04; color: #eab308; }
         .hidden { display: none; }
+        .bar-chart { height: 10px; border-radius: 5px; background: #1e293b; overflow: hidden; }
+        .bar-fill { height: 100%; background: #ca8a04; transition: width 0.5s ease-in-out; }
     </style>
 </head>
 <body class="bg-slate-950 text-white font-sans">
     <nav class="flex border-b border-slate-800 bg-slate-900 sticky top-0 z-50">
-        <button onclick="cambiarPestana('registro')" id="tab-reg" class="flex-1 py-4 font-black text-xs uppercase tracking-tighter tab-active">Registro</button>
-        <button onclick="cambiarPestana('analisis')" id="tab-ana" class="flex-1 py-4 font-black text-xs uppercase tracking-tighter text-slate-500">Inteligencia</button>
+        <button onclick="cambiarPestana('registro')" id="tab-reg" class="flex-1 py-4 font-black text-[10px] uppercase tab-active text-center">Registro</button>
+        <button onclick="cambiarPestana('historial')" id="tab-his" class="flex-1 py-4 font-black text-[10px] uppercase text-slate-500 text-center">Historial</button>
+        <button onclick="cambiarPestana('analisis')" id="tab-ana" class="flex-1 py-4 font-black text-[10px] uppercase text-slate-500 text-center">Inteligencia</button>
     </nav>
 
     <section id="vista-registro" class="p-4">
-        <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-2xl mb-6">
+        <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 mb-6">
             <div class="flex justify-between items-center mb-4">
                 <span id="reloj-digital" class="text-yellow-500 font-mono font-bold text-xl">00:00:00</span>
-                <span class="text-[10px] bg-green-900/30 text-green-500 px-2 py-1 rounded border border-green-900">SISTEMA ACTIVO</span>
+                <span class="text-[9px] bg-blue-900/30 text-blue-400 px-2 py-1 rounded border border-blue-900">HOY</span>
             </div>
-
             <div class="space-y-4">
-                <input type="text" id="animalito" placeholder="Número o Animal" class="w-full p-4 rounded-xl bg-slate-800 border border-slate-700 text-white font-black text-2xl text-center outline-none focus:ring-2 focus:ring-yellow-500">
-                
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-[9px] text-slate-500 font-black uppercase ml-1">Fecha del Sorteo</label>
-                        <input type="date" id="fecha_manual" class="w-full bg-slate-800 p-3 rounded-xl border border-slate-700 text-white text-xs font-bold">
-                    </div>
-                    <div>
-                        <label class="text-[9px] text-slate-500 font-black uppercase ml-1">Hora (Manual)</label>
-                        <select id="hora_manual" class="w-full bg-slate-800 p-3 rounded-xl border border-slate-700 text-white text-xs font-bold">
-                            <option value="AUTO">Detectar ahora</option>
-                            <option value="08:00">08:00 AM</option><option value="09:00">09:00 AM</option>
-                            <option value="10:00">10:00 AM</option><option value="11:00">11:00 AM</option>
-                            <option value="12:00">12:00 PM</option><option value="13:00">01:00 PM</option>
-                            <option value="14:00">02:00 PM</option><option value="15:00">03:00 PM</option>
-                            <option value="16:00">04:00 PM</option><option value="17:00">05:00 PM</option>
-                            <option value="18:00">06:00 PM</option><option value="19:00">07:00 PM</option>
-                        </select>
-                    </div>
-                </div>
-
-                <button onclick="registrarSorteo()" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-black py-4 rounded-xl shadow-lg active:scale-95 transition-all">
-                    💾 GUARDAR EN BASE DE DATOS
-                </button>
+                <input type="text" id="animalito" placeholder="Animal o Número" class="w-full p-4 rounded-xl bg-slate-800 border border-slate-700 text-white font-black text-2xl text-center outline-none">
+                <select id="hora_manual" class="w-full bg-slate-800 p-3 rounded-xl border border-slate-700 text-white text-xs font-bold text-center">
+                    <option value="AUTO">-- HORA ACTUAL --</option>
+                    <option value="08:00">08:00 AM</option><option value="09:00">09:00 AM</option>
+                    <option value="10:00">10:00 AM</option><option value="11:00">11:00 AM</option>
+                    <option value="12:00">12:00 PM</option><option value="13:00">01:00 PM</option>
+                    <option value="14:00">02:00 PM</option><option value="15:00">03:00 PM</option>
+                    <option value="16:00">04:00 PM</option><option value="17:00">05:00 PM</option>
+                    <option value="18:00">06:00 PM</option><option value="19:00">07:00 PM</option>
+                </select>
+                <button onclick="registrarSorteo()" class="w-full bg-yellow-600 text-white font-black py-4 rounded-xl shadow-lg active:scale-95 transition-all">GUARDAR SORTEO</button>
             </div>
         </div>
-
-        <div id="lista-resultados" class="space-y-2">
-            <h3 class="text-xs font-black text-slate-500 uppercase px-1">Secuencia Reciente</h3>
+        <div id="lista-hoy" class="space-y-2">
             </div>
     </section>
 
-    <section id="vista-analisis" class="p-4 hidden">
-        <div class="grid grid-cols-2 gap-3 mb-6">
+    <section id="vista-historial" class="p-4 hidden">
+        <h3 class="text-xs font-black text-slate-500 uppercase mb-4 tracking-widest text-center">Resultados de la Semana</h3>
+        <div id="lista-historial-completo" class="space-y-6">
+            </div>
+    </section>
+
+    <section id="vista-analisis" class="p-4 hidden text-center">
+        <h2 class="text-yellow-500 font-black text-lg mb-6 italic uppercase">Algoritmo de Probabilidad</h2>
+        
+        <div id="esquema-porcentaje" class="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-4 mb-6">
+            </div>
+
+        <div class="grid grid-cols-2 gap-3">
             <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
-                <span class="text-[9px] text-red-500 font-black uppercase">Más Salidor 🔥</span>
+                <span class="text-[9px] text-red-500 font-black uppercase">Frecuente 🔥</span>
                 <div id="num-caliente" class="text-3xl font-black">--</div>
             </div>
             <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
-                <span class="text-[9px] text-blue-500 font-black uppercase">Más Frío ❄️</span>
+                <span class="text-[9px] text-blue-500 font-black uppercase">Ausente ❄️</span>
                 <div id="num-frio" class="text-3xl font-black">--</div>
             </div>
-        </div>
-
-        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 mb-6">
-            <h3 class="text-xs font-black text-yellow-500 uppercase mb-3">Predicción de Parejas (Si sale A, viene B)</h3>
-            <div id="patrones-secuencia" class="space-y-2 text-sm">
-                </div>
-        </div>
-
-        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
-            <h3 class="text-xs font-black text-slate-400 uppercase mb-3">Frecuencia General (7 días)</h3>
-            <div id="frecuencia-lista" class="grid grid-cols-4 gap-2 text-center text-[10px]">
-                </div>
         </div>
     </section>
 
