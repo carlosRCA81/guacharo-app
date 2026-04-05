@@ -1,61 +1,14 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>V-GATE NEXUS PRO</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .tab-active { border-bottom: 4px solid #eab308; color: #eab308; }
-        .bg-panel { background: #0f172a; border: 1px solid #1e293b; }
-        .hidden { display: none; }
-    </style>
-</head>
-<body class="bg-[#020617] text-slate-300">
-
-    <nav class="flex bg-[#0f172a] border-b border-slate-800 text-[10px] font-bold uppercase sticky top-0 z-50">
-        <button onclick="navegar('registro')" id="btn-registro" class="flex-1 py-4 tab-active">Registro</button>
-        <button onclick="navegar('historial')" id="btn-historial" class="flex-1 py-4">Historial</button>
-        <button onclick="navegar('inteligencia')" id="btn-inteligencia" class="flex-1 py-4">Inteligencia Pro</button>
-        <button onclick="navegar('estadistica')" id="btn-estadistica" class="flex-1 py-4">Estadística</button>
-    </nav>
-
-    <main id="panel-registro" class="p-4 space-y-4">
-        <div class="bg-panel p-6 rounded-2xl shadow-xl">
-            <div class="flex justify-between items-center mb-6">
-                <span id="reloj" class="text-2xl font-black text-yellow-500 font-mono">00:00:00</span>
-                <span class="bg-blue-900/30 text-blue-400 border border-blue-800 px-3 py-1 rounded text-[10px] font-bold">SCN-911 ACTIVO</span>
-            </div>
-            <input type="number" id="input-numero" placeholder="Ingresar Número" class="w-full bg-[#1e293b] p-6 rounded-xl text-center text-4xl font-black text-white border-2 border-transparent focus:border-yellow-500 outline-none mb-4">
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <input type="date" id="input-fecha" class="bg-[#1e293b] p-3 rounded-lg text-xs font-bold text-center">
-                <select id="input-hora" class="bg-[#1e293b] p-3 rounded-lg text-xs font-bold text-center">
-                    <option value="08:00">08:00 AM</option>
-                    <option value="13:00">01:00 PM</option>
-                    <option value="16:00">04:00 PM</option>
-                    <option value="19:00">07:00 PM</option>
-                </select>
-            </div>
-            <button onclick="guardarSorteo()" class="w-full bg-yellow-600 hover:bg-yellow-500 py-4 rounded-xl font-black uppercase text-sm text-slate-900 transition-all active:scale-95">Cargar Reporte</button>
-        </div>
-        <div id="lista-recientes" class="space-y-2"></div>
-    </main>
-
-    <section id="panel-inteligencia" class="p-4 hidden space-y-4">
-        <div class="bg-panel p-6 rounded-2xl text-center">
-            <h2 class="text-yellow-500 text-[10px] font-black uppercase tracking-widest mb-4 italic">Cálculo de Probabilidad Proyectada</h2>
-            <div id="prediccion-principal" class="text-4xl font-black text-white tracking-tighter mb-4">-- -- --</div>
-            <div class="bg-black/40 p-3 rounded-lg text-[10px] font-mono text-blue-400">Iniciando escaneo de patrones...</div>
-        </div>
-        <div id="probabilidades-lista" class="space-y-3"></div>
-    </section>
-
-    <section id="panel-estadistica" class="p-4 hidden space-y-4">
-        <h2 class="text-center text-yellow-500 text-[10px] font-black uppercase italic">Patrones por Día</h2>
-        <div id="contenedor-dias" class="space-y-3"></div>
-    </section>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="logic.js"></script>
-</body>
-</html>
+<div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl">
+    <table class="w-full text-left">
+        <thead class="bg-black/50 text-[10px] text-yellow-600 uppercase font-black">
+            <tr>
+                <th class="p-3">Num</th>
+                <th class="p-3">Día</th>
+                <th class="p-3">Raza</th>
+                <th class="p-3">Hora</th>
+            </tr>
+        </thead>
+        <tbody id="cuerpo-tabla">
+            </tbody>
+    </table>
+</div>
