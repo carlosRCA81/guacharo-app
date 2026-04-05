@@ -9,106 +9,107 @@ const FAMILIAS = {
     "INSECTO": [3, 4, 40, 43, 54, 56, 58, 59, 65]
 };
 
-// RELOJ
+// RELOJ EN TIEMPO REAL
 setInterval(() => { document.getElementById('reloj').innerText = new Date().toLocaleTimeString('en-GB'); }, 1000);
 
-// NAVEGACIÓN (Reparada)
+// NAVEGACIÓN BLINDADA
 function cambiarPestana(id) {
-    const vistas = ['registro', 'historial', 'analisis', 'semanal'];
-    vistas.forEach(v => document.getElementById(`vista-${v}`).classList.add('hidden'));
+    const ids = ['registro', 'historial', 'inteligencia', 'estadistica'];
+    ids.forEach(v => document.getElementById(`vista-${v}`).classList.add('hidden'));
     document.getElementById(`vista-${id}`).classList.remove('hidden');
 
-    // Estilo de botones
-    const map = { registro: 'reg', historial: 'his', analisis: 'ana', semanal: 'sem' };
-    vistas.forEach(v => {
-        document.getElementById(`tab-${map[v]}`).className = (v === id) ? 
+    const tabs = { registro: 'reg', historial: 'his', inteligencia: 'int', estadistica: 'est' };
+    ids.forEach(v => {
+        document.getElementById(`tab-${tabs[v]}`).className = (v === id) ? 
             'flex-1 py-4 font-black text-[9px] uppercase tab-active' : 
             'flex-1 py-4 font-black text-[9px] uppercase text-slate-500';
     });
 
-    if (id === 'registro') cargarSorteosHoy();
-    if (id === 'historial') cargarHistorialCompleto();
-    if (id === 'analisis') generarInteligencia();
-    if (id === 'semanal') generarEstadisticaSemanal();
+    if (id === 'registro') cargarHoy();
+    if (id === 'historial') cargarTodo();
+    if (id === 'inteligencia') correrAlgoritmo();
+    if (id === 'estadistica') analizarPatrones();
 }
 
-async function registrarSorteo() {
-    const num = document.getElementById('animalito').value;
-    const fec = document.getElementById('fecha_hoy').value;
-    const hor = document.getElementById('hora_manual').value;
-    if (!num) return;
+async function guardarSorteo() {
+    const animal = document.getElementById('animalito').value;
+    const fecha = document.getElementById('fecha_input').value;
+    const hora = document.getElementById('hora_input').value;
+    if (!animal) return alert("Ingrese un número válido");
 
-    await _supabase.from('control_guacharo').insert([{ animalito: num, fecha_sorteo: fec, hora_sorteo: `${hor}:00` }]);
+    await _supabase.from('control_guacharo').insert([{ animalito: animal, fecha_sorteo: fecha, hora_sorteo: `${hora}:00` }]);
     document.getElementById('animalito').value = "";
-    cargarSorteosHoy();
+    cargarHoy();
 }
 
-async function cargarSorteosHoy() {
+async function cargarHoy() {
     const hoy = new Date().toISOString().split('T')[0];
     const { data } = await _supabase.from('control_guacharo').select('*').eq('fecha_sorteo', hoy).order('hora_sorteo', { ascending: false });
     const list = document.getElementById('lista-hoy');
-    list.innerHTML = data.map(s => `
-        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex justify-between items-center border-l-4 border-l-yellow-600 shadow-md">
-            <span class="text-2xl font-black">${s.animalito}</span>
-            <span class="text-yellow-600 font-mono text-[10px] font-bold italic">${s.hora_sorteo.substring(0,5)}</span>
-        </div>
-    `).join('');
+    list.innerHTML = data.map(s => {
+        const fam = Object.keys(FAMILIAS).find(k => FAMILIAS[k].includes(parseInt(s.animalito))) || "OTRO";
+        return `
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex justify-between items-center border-l-4 border-l-yellow-600">
+                <div><p class="text-[7px] font-black text-slate-500 uppercase">${fam}</p><p class="text-2xl font-black">${s.animalito}</p></div>
+                <span class="text-yellow-600 font-mono text-[10px] font-bold italic">${s.hora_sorteo.substring(0,5)}</span>
+            </div>`;
+    }).join('');
 }
 
-async function cargarHistorialCompleto() {
+async function cargarTodo() {
     const { data } = await _supabase.from('control_guacharo').select('*').order('created_at', { ascending: false });
-    document.getElementById('lista-historial-completo').innerHTML = data.map(s => `
+    document.getElementById('contenedor-historial').innerHTML = data.map(s => `
         <div class="bg-slate-900/50 p-3 rounded-lg border border-slate-800 flex justify-between text-[10px] items-center">
             <span class="font-black text-white w-8">${s.animalito}</span>
-            <span class="text-slate-500">${s.fecha_sorteo}</span>
+            <span class="text-slate-500 font-bold">${s.fecha_sorteo}</span>
             <span class="text-yellow-600 italic font-bold">${s.hora_sorteo.substring(0,5)}</span>
-        </div>
-    `).join('');
+        </div>`).join('');
 }
 
-async function generarInteligencia() {
-    const { data } = await _supabase.from('control_guacharo').select('*').order('created_at', { ascending: true });
+async function correrAlgoritmo() {
+    const { data } = await _supabase.from('control_guacharo').select('*');
     if (!data.length) return;
 
-    const counts = data.reduce((acc, v) => { acc[v.animalito] = (acc[v.animalito] || 0) + 1; return acc; }, {});
-    const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+    const conteo = data.reduce((acc, v) => { acc[v.animalito] = (acc[v.animalito] || 0) + 1; return acc; }, {});
+    const tops = Object.entries(conteo).sort((a,b) => b[1]-a[1]);
     
-    document.getElementById('pronostico-destacado').innerText = sorted.slice(0,3).map(x => x[0]).join(' - ');
+    document.getElementById('resultado-algoritmo').innerText = tops.slice(0,3).map(x => x[0]).join(' - ');
     
-    document.getElementById('graficos-frecuencia').innerHTML = sorted.slice(0,6).map(([num, cant]) => {
-        const porc = ((cant / data.length) * 100).toFixed(1);
+    document.getElementById('graficas-frecuencia').innerHTML = tops.slice(0,5).map(([num, cant]) => {
+        const perc = ((cant / data.length) * 100).toFixed(1);
         return `<div>
-            <div class="flex justify-between text-[8px] font-black uppercase mb-1"><span>Animal ${num}</span><span>${porc}%</span></div>
-            <div class="bar-chart"><div class="bar-fill" style="width: ${porc}%"></div></div>
+            <div class="flex justify-between text-[8px] font-black uppercase"><span>Animal ${num}</span><span>${perc}%</span></div>
+            <div class="bar-chart"><div class="bar-fill" style="width: ${perc}%"></div></div>
         </div>`;
     }).join('');
 }
 
-async function generarEstadisticaSemanal() {
+async function analizarPatrones() {
     const { data } = await _supabase.from('control_guacharo').select('*');
-    const dias = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
-    const container = document.getElementById('contenedor-semanal');
+    const diasSemana = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
     
-    const resumen = data.reduce((acc, s) => {
-        const d = dias[new Date(s.fecha_sorteo + 'T00:00:00').getDay()];
+    const inteligencia = data.reduce((acc, s) => {
+        const d = diasSemana[new Date(s.fecha_sorteo + 'T00:00:00').getDay()];
         const fam = Object.keys(FAMILIAS).find(k => FAMILIAS[k].includes(parseInt(s.animalito))) || "OTRO";
-        if (!acc[d]) acc[d] = {};
-        acc[d][fam] = (acc[d][fam] || 0) + 1;
+        if (!acc[d]) acc[d] = { animales: {}, familias: {} };
+        acc[d].animales[s.animalito] = (acc[d].animales[s.animalito] || 0) + 1;
+        acc[d].familias[fam] = (acc[d].familias[fam] || 0) + 1;
         return acc;
     }, {});
 
-    container.innerHTML = dias.map(d => {
-        if (!resumen[d]) return '';
-        const dom = Object.entries(resumen[d]).sort((a,b) => b[1]-a[1])[0][0];
+    document.getElementById('contenedor-patrones').innerHTML = diasSemana.map(d => {
+        if (!inteligencia[d]) return '';
+        const domFam = Object.entries(inteligencia[d].familias).sort((a,b) => b[1]-a[1])[0][0];
+        const topAnim = Object.entries(inteligencia[d].animales).sort((a,b) => b[1]-a[1]).slice(0,2).map(x => x[0]).join(' y ');
         return `
-            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex justify-between items-center shadow-lg">
-                <span class="font-black text-[10px]">${d}</span>
-                <span class="text-yellow-600 font-bold italic text-[10px]">DOMINIO: ${dom}</span>
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex justify-between items-center border-l-4 border-l-yellow-600 shadow-lg">
+                <div><p class="font-black text-[10px]">${d}</p><p class="text-yellow-600 font-bold italic text-[8px] uppercase">DOMINIO: ${domFam}</p></div>
+                <div class="text-right"><p class="text-[7px] text-slate-500 font-bold uppercase">Tendencia</p><p class="text-white font-black text-sm">${topAnim}</p></div>
             </div>`;
     }).join('');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('fecha_hoy').value = new Date().toISOString().split('T')[0];
-    cargarSorteosHoy();
+    document.getElementById('fecha_input').value = new Date().toISOString().split('T')[0];
+    cargarHoy();
 });
