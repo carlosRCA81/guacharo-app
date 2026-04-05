@@ -3,59 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>V-GATE NEXUS PRO</title>
+    <title>V-GATE NEXUS ANALYTICS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .tab-active { border-bottom: 4px solid #ca8a04; color: #eab308; }
         .hidden { display: none; }
-        .bar-chart { height: 6px; border-radius: 3px; background: #1e293b; margin-top: 4px; }
-        .bar-fill { height: 100%; background: #ca8a04; }
+        .bar-chart { height: 8px; border-radius: 4px; background: #1e293b; margin: 8px 0; }
+        .bar-fill { height: 100%; background: #ca8a04; border-radius: 4px; transition: width 0.5s ease; }
     </style>
 </head>
 <body class="bg-slate-950 text-white font-sans">
     <nav class="flex border-b border-slate-800 bg-slate-900 sticky top-0 z-50">
         <button onclick="cambiarPestana('registro')" id="tab-reg" class="flex-1 py-4 font-black text-[9px] uppercase tab-active">Registro</button>
         <button onclick="cambiarPestana('historial')" id="tab-his" class="flex-1 py-4 font-black text-[9px] uppercase text-slate-500">Historial</button>
-        <button onclick="cambiarPestana('analisis')" id="tab-ana" class="flex-1 py-4 font-black text-[9px] uppercase text-slate-500 italic">Inteligencia</button>
-        <button onclick="cambiarPestana('semanal')" id="tab-sem" class="flex-1 py-4 font-black text-[9px] uppercase text-slate-500">Estadística</button>
+        <button onclick="cambiarPestana('inteligencia')" id="tab-int" class="flex-1 py-4 font-black text-[9px] uppercase text-slate-500 italic">Inteligencia</button>
+        <button onclick="cambiarPestana('estadistica')" id="tab-est" class="flex-1 py-4 font-black text-[9px] uppercase text-slate-500">Estadística</button>
     </nav>
 
     <section id="vista-registro" class="p-4">
-        <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 mb-4 shadow-xl">
+        <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 mb-6 shadow-xl">
             <div class="flex justify-between items-center mb-4">
-                <span id="reloj" class="text-yellow-500 font-mono font-bold text-xl">00:00:00</span>
+                <span id="reloj" class="text-yellow-500 font-mono font-bold text-xl tracking-tighter">00:00:00</span>
                 <span class="text-[8px] bg-blue-900/30 text-blue-400 px-2 py-1 rounded border border-blue-900 font-black italic">SCN-911 ACTIVO</span>
             </div>
-            <input type="text" id="animalito" placeholder="Número" class="w-full p-4 rounded-xl bg-slate-800 border border-slate-700 text-white font-black text-4xl text-center mb-4 outline-none focus:border-yellow-600">
+            <input type="text" id="animalito" placeholder="Ingresar Número" class="w-full p-4 rounded-xl bg-slate-800 border border-slate-700 text-white font-black text-4xl text-center mb-4 outline-none focus:border-yellow-600 shadow-inner">
             <div class="grid grid-cols-2 gap-2 mb-4">
-                <input type="date" id="fecha_hoy" class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-white text-[10px] font-bold text-center">
-                <select id="hora_manual" class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-white text-[10px] font-bold text-center">
+                <input type="date" id="fecha_input" class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-white text-[10px] font-bold text-center">
+                <select id="hora_input" class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-white text-[10px] font-bold text-center">
                     <option value="08:00">08:00 AM</option><option value="12:00">12:00 PM</option><option value="16:00">04:00 PM</option><option value="19:00">07:00 PM</option>
                 </select>
             </div>
-            <button onclick="registrarSorteo()" class="w-full bg-yellow-600 text-white font-black py-4 rounded-xl shadow-lg uppercase text-xs">Cargar Reporte</button>
+            <button onclick="guardarSorteo()" class="w-full bg-yellow-600 text-white font-black py-4 rounded-xl shadow-lg uppercase text-xs hover:bg-yellow-500 transition-colors">Cargar Reporte</button>
         </div>
         <div id="lista-hoy" class="space-y-2"></div>
     </section>
 
     <section id="vista-historial" class="p-4 hidden">
-        <h3 class="text-slate-500 font-black text-[10px] uppercase mb-4 tracking-widest text-center">Registros Generales</h3>
-        <div id="lista-historial-completo" class="space-y-2"></div>
+        <h3 class="text-slate-500 font-black text-[10px] uppercase mb-4 tracking-widest text-center italic">Registros Generales</h3>
+        <div id="contenedor-historial" class="space-y-2"></div>
     </section>
 
-    <section id="vista-analisis" class="p-4 hidden">
-        <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 mb-4">
-            <p class="text-[8px] text-yellow-500 font-black uppercase mb-3 text-center italic">Escaneo de Probabilidades</p>
-            <div id="pronostico-destacado" class="text-4xl font-black text-white text-center mb-4">-- -- --</div>
-            <div id="bitacora" class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-[10px] font-mono text-slate-300 shadow-inner"></div>
+    <section id="vista-inteligencia" class="p-4 hidden">
+        <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 mb-4 shadow-2xl">
+            <h4 class="text-[8px] text-yellow-500 font-black uppercase mb-4 text-center tracking-widest">Escaneo de Probabilidades</h4>
+            <div id="resultado-algoritmo" class="text-4xl font-black text-white text-center mb-6 tracking-widest">-- -- --</div>
+            <div id="graficas-frecuencia" class="space-y-4"></div>
         </div>
-        <div id="graficos-frecuencia" class="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-4"></div>
     </section>
 
-    <section id="vista-semanal" class="p-4 hidden">
-        <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-2xl mb-4">
-            <h3 class="text-yellow-500 font-black text-center text-xs uppercase italic mb-6">Patrones por Día</h3>
-            <div id="contenedor-semanal" class="space-y-3"></div>
+    <section id="vista-estadistica" class="p-4 hidden">
+        <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-2xl">
+            <h3 class="text-yellow-500 font-black text-center text-xs uppercase italic mb-6 tracking-widest">Patrones por Día</h3>
+            <div id="contenedor-patrones" class="space-y-3"></div>
         </div>
     </section>
 
