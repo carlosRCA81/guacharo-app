@@ -9,75 +9,106 @@ const FAMILIAS = {
     "INSECTO": [3, 4, 40, 43, 54, 56, 58, 59, 65]
 };
 
+// RELOJ
+setInterval(() => { document.getElementById('reloj').innerText = new Date().toLocaleTimeString('en-GB'); }, 1000);
+
+// NAVEGACIÓN (Reparada)
 function cambiarPestana(id) {
     const vistas = ['registro', 'historial', 'analisis', 'semanal'];
-    vistas.forEach(v => document.getElementById(`vista-${v}`).classList.toggle('hidden', v !== id));
-    
+    vistas.forEach(v => document.getElementById(`vista-${v}`).classList.add('hidden'));
+    document.getElementById(`vista-${id}`).classList.remove('hidden');
+
+    // Estilo de botones
+    const map = { registro: 'reg', historial: 'his', analisis: 'ana', semanal: 'sem' };
+    vistas.forEach(v => {
+        document.getElementById(`tab-${map[v]}`).className = (v === id) ? 
+            'flex-1 py-4 font-black text-[9px] uppercase tab-active' : 
+            'flex-1 py-4 font-black text-[9px] uppercase text-slate-500';
+    });
+
+    if (id === 'registro') cargarSorteosHoy();
+    if (id === 'historial') cargarHistorialCompleto();
+    if (id === 'analisis') generarInteligencia();
     if (id === 'semanal') generarEstadisticaSemanal();
+}
+
+async function registrarSorteo() {
+    const num = document.getElementById('animalito').value;
+    const fec = document.getElementById('fecha_hoy').value;
+    const hor = document.getElementById('hora_manual').value;
+    if (!num) return;
+
+    await _supabase.from('control_guacharo').insert([{ animalito: num, fecha_sorteo: fec, hora_sorteo: `${hor}:00` }]);
+    document.getElementById('animalito').value = "";
+    cargarSorteosHoy();
+}
+
+async function cargarSorteosHoy() {
+    const hoy = new Date().toISOString().split('T')[0];
+    const { data } = await _supabase.from('control_guacharo').select('*').eq('fecha_sorteo', hoy).order('hora_sorteo', { ascending: false });
+    const list = document.getElementById('lista-hoy');
+    list.innerHTML = data.map(s => `
+        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex justify-between items-center border-l-4 border-l-yellow-600 shadow-md">
+            <span class="text-2xl font-black">${s.animalito}</span>
+            <span class="text-yellow-600 font-mono text-[10px] font-bold italic">${s.hora_sorteo.substring(0,5)}</span>
+        </div>
+    `).join('');
+}
+
+async function cargarHistorialCompleto() {
+    const { data } = await _supabase.from('control_guacharo').select('*').order('created_at', { ascending: false });
+    document.getElementById('lista-historial-completo').innerHTML = data.map(s => `
+        <div class="bg-slate-900/50 p-3 rounded-lg border border-slate-800 flex justify-between text-[10px] items-center">
+            <span class="font-black text-white w-8">${s.animalito}</span>
+            <span class="text-slate-500">${s.fecha_sorteo}</span>
+            <span class="text-yellow-600 italic font-bold">${s.hora_sorteo.substring(0,5)}</span>
+        </div>
+    `).join('');
+}
+
+async function generarInteligencia() {
+    const { data } = await _supabase.from('control_guacharo').select('*').order('created_at', { ascending: true });
+    if (!data.length) return;
+
+    const counts = data.reduce((acc, v) => { acc[v.animalito] = (acc[v.animalito] || 0) + 1; return acc; }, {});
+    const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+    
+    document.getElementById('pronostico-destacado').innerText = sorted.slice(0,3).map(x => x[0]).join(' - ');
+    
+    document.getElementById('graficos-frecuencia').innerHTML = sorted.slice(0,6).map(([num, cant]) => {
+        const porc = ((cant / data.length) * 100).toFixed(1);
+        return `<div>
+            <div class="flex justify-between text-[8px] font-black uppercase mb-1"><span>Animal ${num}</span><span>${porc}%</span></div>
+            <div class="bar-chart"><div class="bar-fill" style="width: ${porc}%"></div></div>
+        </div>`;
+    }).join('');
 }
 
 async function generarEstadisticaSemanal() {
     const { data } = await _supabase.from('control_guacharo').select('*');
-    if (!data || data.length === 0) return;
-
     const dias = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
-    const inteligencia = {};
-
-    // 1. Organizar datos por día
-    data.forEach(s => {
-        const d = new Date(s.fecha_sorteo + 'T00:00:00').getDay();
-        const nombreDia = dias[d];
-        
-        if (!inteligencia[nombreDia]) {
-            inteligencia[nombreDia] = { animales: {}, familias: {} };
-        }
-
-        // Contar animales individuales
-        inteligencia[nombreDia].animales[s.animalito] = (inteligencia[nombreDia].animales[s.animalito] || 0) + 1;
-
-        // Contar familias
-        const fam = Object.keys(FAMILIAS).find(k => FAMILIAS[k].includes(parseInt(s.animalito))) || "OTRO";
-        inteligencia[nombreDia].familias[fam] = (inteligencia[nombreDia].familias[fam] || 0) + 1;
-    });
-
     const container = document.getElementById('contenedor-semanal');
-    container.innerHTML = "";
+    
+    const resumen = data.reduce((acc, s) => {
+        const d = dias[new Date(s.fecha_sorteo + 'T00:00:00').getDay()];
+        const fam = Object.keys(FAMILIAS).find(k => FAMILIAS[k].includes(parseInt(s.animalito))) || "OTRO";
+        if (!acc[d]) acc[d] = {};
+        acc[d][fam] = (acc[d][fam] || 0) + 1;
+        return acc;
+    }, {});
 
-    dias.forEach(dia => {
-        if (inteligencia[dia]) {
-            // Encontrar familia dominante
-            const domFam = Object.entries(inteligencia[dia].familias).sort((a,b) => b[1]-a[1])[0][0];
-            
-            // Encontrar los 2 animales más frecuentes de ese día
-            const topAnimales = Object.entries(inteligencia[dia].animales)
-                .sort((a,b) => b[1]-a[1])
-                .slice(0, 2)
-                .map(a => a[0])
-                .join(" y ");
-
-            container.innerHTML += `
-                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 shadow-lg border-l-4 border-l-yellow-600">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <div class="text-white font-black text-xs tracking-tighter">${dia}</div>
-                            <div class="text-yellow-600 font-bold italic text-[9px] uppercase">Dominio: ${domFam}</div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-[8px] text-slate-500 font-bold uppercase">Tendencia Animal</div>
-                            <div class="text-white font-black text-sm glow-text">${topAnimales}</div>
-                        </div>
-                    </div>
-                    <div class="w-full bg-slate-900 h-1 rounded-full overflow-hidden">
-                        <div class="bg-yellow-600 h-full" style="width: 70%"></div>
-                    </div>
-                </div>
-            `;
-        }
-    });
+    container.innerHTML = dias.map(d => {
+        if (!resumen[d]) return '';
+        const dom = Object.entries(resumen[d]).sort((a,b) => b[1]-a[1])[0][0];
+        return `
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex justify-between items-center shadow-lg">
+                <span class="font-black text-[10px]">${d}</span>
+                <span class="text-yellow-600 font-bold italic text-[10px]">DOMINIO: ${dom}</span>
+            </div>`;
+    }).join('');
 }
 
-// Inicialización
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('fecha_hoy').value = new Date().toISOString().split('T')[0];
-    generarEstadisticaSemanal();
+    cargarSorteosHoy();
 });
