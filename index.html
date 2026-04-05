@@ -1,14 +1,127 @@
-<div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl">
-    <table class="w-full text-left">
-        <thead class="bg-black/50 text-[10px] text-yellow-600 uppercase font-black">
-            <tr>
-                <th class="p-3">Num</th>
-                <th class="p-3">Día</th>
-                <th class="p-3">Raza</th>
-                <th class="p-3">Hora</th>
-            </tr>
-        </thead>
-        <tbody id="cuerpo-tabla">
-            </tbody>
-    </table>
-</div>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V-GATE NEXUS PRO | Inteligencia de Lotería</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #020617; color: #cbd5e1; }
+        .tab-active { border-bottom: 4px solid #ca8a04; color: #eab308; background: #1e293b; }
+        .bg-panel { background: #0f172a; border: 1px solid #1e293b; }
+        .hidden { display: none; }
+        /* Colores de Raza */
+        .bg-agua { background-color: #1d4ed8; color: white; }
+        .bg-aire { background-color: #0ea5e9; color: #020617; }
+        .bg-tierra { background-color: #713f12; color: white; }
+        .bg-insecto { background-color: #15803d; color: white; }
+    </style>
+</head>
+<body class="font-sans antialiased">
+
+    <nav class="flex sticky top-0 z-50 bg-[#0f172a] border-b border-slate-800 overflow-x-auto">
+        <button onclick="cambiarVista('registro')" id="btn-registro" class="flex-1 py-4 text-[10px] font-black uppercase tab-active transition-all">Registro</button>
+        <button onclick="cambiarVista('matriz')" id="btn-matriz" class="flex-1 py-4 text-[10px] font-black uppercase text-slate-500">Matriz Excel</button>
+        <button onclick="cambiarVista('algoritmo')" id="btn-algoritmo" class="flex-1 py-4 text-[10px] font-black uppercase text-slate-500 italic">Algoritmo Pro</button>
+    </nav>
+
+    <main class="p-4 max-w-lg mx-auto">
+
+        <section id="vista-registro" class="space-y-4">
+            <div class="bg-panel p-6 rounded-2xl shadow-2xl">
+                <div class="flex justify-between items-center mb-6">
+                    <div id="reloj" class="text-2xl font-black text-yellow-500 font-mono tracking-tighter">00:00:00</div>
+                    <div class="text-[8px] bg-red-900/20 text-red-500 border border-red-900 px-2 py-1 rounded font-black italic uppercase">Sistema Activo</div>
+                </div>
+
+                <div class="relative mb-6">
+                    <input type="text" id="num_input" placeholder="00" 
+                        class="w-full bg-[#1e293b] p-6 rounded-2xl text-center text-6xl font-black text-white border-2 border-transparent focus:border-yellow-600 outline-none shadow-inner transition-all">
+                    <label class="absolute top-2 left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-500 uppercase">Animalito / Número</label>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <div class="flex flex-col">
+                        <label class="text-[9px] font-bold text-slate-500 mb-1 ml-2 uppercase tracking-widest">Fecha del Sorteo</label>
+                        <input type="date" id="fec_input" class="bg-[#1e293b] p-4 rounded-xl text-xs font-bold text-center border border-slate-700 text-white">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[9px] font-bold text-slate-500 mb-1 ml-2 uppercase tracking-widest">Hora / Turno</label>
+                        <select id="hor_input" class="bg-[#1e293b] p-4 rounded-xl text-xs font-bold text-center border border-slate-700 text-white appearance-none">
+                            <option value="08:00">08:00 AM</option>
+                            <option value="09:00">09:00 AM</option>
+                            <option value="10:00">10:00 AM</option>
+                            <option value="11:00">11:00 AM</option>
+                            <option value="12:00">12:00 PM</option>
+                            <option value="13:00">01:00 PM</option>
+                            <option value="16:00">04:00 PM</option>
+                            <option value="19:00">07:00 PM</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button onclick="registrarSorteo()" 
+                    class="w-full bg-yellow-600 hover:bg-yellow-500 py-5 rounded-2xl font-black uppercase text-xs text-slate-950 shadow-lg active:scale-95 transition-all flex justify-center items-center gap-2">
+                    <span>Cargar en Base de Datos</span>
+                </button>
+            </div>
+        </section>
+
+        <section id="vista-matriz" class="hidden">
+            <div class="bg-panel rounded-2xl overflow-hidden shadow-2xl border border-slate-800">
+                <table class="w-full text-[10px] border-collapse">
+                    <thead class="bg-slate-950 text-yellow-600 uppercase font-black italic">
+                        <tr class="border-b border-slate-800">
+                            <th class="p-4 text-center">Hora</th>
+                            <th class="p-4 text-left">Info Animal</th>
+                            <th class="p-4 text-center">Raza</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpo-tabla">
+                        </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="vista-algoritmo" class="hidden">
+            <div class="bg-panel p-6 rounded-2xl border-l-4 border-l-yellow-600">
+                <h3 class="text-yellow-500 font-black text-[10px] uppercase mb-6 tracking-widest text-center italic">Predicción Siguiente Movimiento</h3>
+                <div id="lista-saltos" class="space-y-4 font-mono text-[11px]">
+                    </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+
+    <script>
+        // Función simple para cambiar pestañas
+        function cambiarVista(id) {
+            const vistas = ['registro', 'matriz', 'algoritmo'];
+            vistas.forEach(v => {
+                document.getElementById(`vista-${v}`).classList.add('hidden');
+                document.getElementById(`btn-${v}`).classList.remove('tab-active');
+                document.getElementById(`btn-${v}`).classList.add('text-slate-500');
+            });
+            document.getElementById(`vista-${id}`).classList.remove('hidden');
+            document.getElementById(`btn-${id}`).classList.add('tab-active');
+            document.getElementById(`btn-${id}`).classList.remove('text-slate-500');
+
+            // Cargar datos según la pestaña
+            if(id === 'matriz') cargarHistorial();
+            if(id === 'algoritmo') analizarSaltos();
+        }
+
+        // Reloj táctico
+        setInterval(() => {
+            const r = document.getElementById('reloj');
+            if(r) r.innerText = new Date().toLocaleTimeString('en-GB');
+        }, 1000);
+
+        // Fecha por defecto hoy
+        document.getElementById('fec_input').value = new Date().toISOString().split('T')[0];
+    </script>
+</body>
+</html>
