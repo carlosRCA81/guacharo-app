@@ -3,81 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>V-GATE NEXUS PRO - Intelligence System</title>
+    <title>V-GATE NEXUS PRO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .tab-active { border-bottom: 3px solid #eab308; color: #eab308; background: #1e293b; }
+        .tab-active { border-bottom: 4px solid #eab308; color: #eab308; }
+        .bg-panel { background: #0f172a; border: 1px solid #1e293b; }
         .hidden { display: none; }
-        .bg-agua { background: #1d4ed8; } /* Azul Ballena/Delfín */
-        .bg-tierra { background: #78350f; } /* Marrón */
-        .bg-aire { background: #0ea5e9; } /* Celeste Paloma/75 */
-        .bg-insecto { background: #15803d; } /* Verde */
-        .cell-excel { border: 1px solid #1e293b; padding: 8px; text-align: center; font-weight: 900; }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-200 font-sans">
+<body class="bg-[#020617] text-slate-300">
 
-    <nav class="flex sticky top-0 z-50 bg-slate-900 border-b border-slate-800 overflow-x-auto">
-        <button onclick="ver('registro')" id="btn-registro" class="flex-1 py-4 text-[10px] font-black uppercase tab-active">Registro</button>
-        <button onclick="ver('matriz')" id="btn-matriz" class="flex-1 py-4 text-[10px] font-black uppercase">Matriz Excel</button>
-        <button onclick="ver('inteligencia')" id="btn-inteligencia" class="flex-1 py-4 text-[10px] font-black uppercase italic">Algoritmo</button>
-        <button onclick="ver('saltos')" id="btn-saltos" class="flex-1 py-4 text-[10px] font-black uppercase">Saltos</button>
+    <nav class="flex bg-[#0f172a] border-b border-slate-800 text-[10px] font-bold uppercase sticky top-0 z-50">
+        <button onclick="navegar('registro')" id="btn-registro" class="flex-1 py-4 tab-active">Registro</button>
+        <button onclick="navegar('historial')" id="btn-historial" class="flex-1 py-4">Historial</button>
+        <button onclick="navegar('inteligencia')" id="btn-inteligencia" class="flex-1 py-4">Inteligencia Pro</button>
+        <button onclick="navegar('estadistica')" id="btn-estadistica" class="flex-1 py-4">Estadística</button>
     </nav>
 
-    <section id="panel-registro" class="p-4">
-        <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-2xl mb-6">
+    <main id="panel-registro" class="p-4 space-y-4">
+        <div class="bg-panel p-6 rounded-2xl shadow-xl">
             <div class="flex justify-between items-center mb-6">
-                <div id="reloj" class="text-2xl font-black text-yellow-500 font-mono">00:00:00</div>
-                <div class="text-[8px] bg-red-900/20 text-red-500 border border-red-900 px-2 py-1 rounded font-black">SCANNER ACTIVO</div>
+                <span id="reloj" class="text-2xl font-black text-yellow-500 font-mono">00:00:00</span>
+                <span class="bg-blue-900/30 text-blue-400 border border-blue-800 px-3 py-1 rounded text-[10px] font-bold">SCN-911 ACTIVO</span>
             </div>
-            <div class="space-y-4">
-                <input type="number" id="num_input" placeholder="N° ANIMAL" class="w-full bg-slate-800 border-2 border-slate-700 p-5 rounded-xl text-center text-5xl font-black text-white focus:border-yellow-600 outline-none">
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="date" id="fec_input" class="bg-slate-800 p-4 rounded-xl border border-slate-700 font-bold text-xs text-center">
-                    <select id="hor_input" class="bg-slate-800 p-4 rounded-xl border border-slate-700 font-bold text-xs text-center">
-                        <option value="08:00">08:00 AM</option><option value="12:00">12:00 PM</option>
-                        <option value="16:00">04:00 PM</option><option value="19:00">07:00 PM</option>
-                    </select>
-                </div>
-                <button onclick="registrar()" class="w-full bg-yellow-600 py-5 rounded-xl font-black uppercase text-sm shadow-lg active:scale-95 transition-all">Cargar a Base de Datos</button>
+            <input type="number" id="input-numero" placeholder="Ingresar Número" class="w-full bg-[#1e293b] p-6 rounded-xl text-center text-4xl font-black text-white border-2 border-transparent focus:border-yellow-500 outline-none mb-4">
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <input type="date" id="input-fecha" class="bg-[#1e293b] p-3 rounded-lg text-xs font-bold text-center">
+                <select id="input-hora" class="bg-[#1e293b] p-3 rounded-lg text-xs font-bold text-center">
+                    <option value="08:00">08:00 AM</option>
+                    <option value="13:00">01:00 PM</option>
+                    <option value="16:00">04:00 PM</option>
+                    <option value="19:00">07:00 PM</option>
+                </select>
             </div>
+            <button onclick="guardarSorteo()" class="w-full bg-yellow-600 hover:bg-yellow-500 py-4 rounded-xl font-black uppercase text-sm text-slate-900 transition-all active:scale-95">Cargar Reporte</button>
         </div>
-        <div id="log-hoy" class="space-y-2"></div>
+        <div id="lista-recientes" class="space-y-2"></div>
+    </main>
+
+    <section id="panel-inteligencia" class="p-4 hidden space-y-4">
+        <div class="bg-panel p-6 rounded-2xl text-center">
+            <h2 class="text-yellow-500 text-[10px] font-black uppercase tracking-widest mb-4 italic">Cálculo de Probabilidad Proyectada</h2>
+            <div id="prediccion-principal" class="text-4xl font-black text-white tracking-tighter mb-4">-- -- --</div>
+            <div class="bg-black/40 p-3 rounded-lg text-[10px] font-mono text-blue-400">Iniciando escaneo de patrones...</div>
+        </div>
+        <div id="probabilidades-lista" class="space-y-3"></div>
     </section>
 
-    <section id="panel-matriz" class="p-4 hidden">
-        <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden shadow-2xl">
-            <table class="w-full text-[10px]">
-                <thead class="bg-slate-950 text-yellow-500 uppercase">
-                    <tr>
-                        <th class="p-3 border border-slate-800">HORA</th>
-                        <th class="p-3 border border-slate-800">LUN</th>
-                        <th class="p-3 border border-slate-800">MAR</th>
-                        <th class="p-3 border border-slate-800">MIE</th>
-                        <th class="p-3 border border-slate-800">JUE</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-excel-body">
-                    </tbody>
-            </table>
-        </div>
-    </section>
-
-    <section id="panel-inteligencia" class="p-4 hidden">
-        <div id="status-algoritmo" class="bg-slate-900 p-5 rounded-2xl border border-slate-800 mb-4">
-            <h3 class="text-center text-[9px] font-black uppercase text-slate-500 mb-4">Análisis de Razas y Dominio</h3>
-            <div id="chart-familias" class="space-y-6"></div>
-        </div>
-    </section>
-
-    <section id="panel-saltos" class="p-4 hidden">
-        <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800">
-            <h3 class="text-center text-[9px] font-black uppercase text-yellow-500 mb-6">Si sale X, probablemente sigue Y</h3>
-            <div id="lista-saltos" class="space-y-4 font-mono text-xs"></div>
-        </div>
+    <section id="panel-estadistica" class="p-4 hidden space-y-4">
+        <h2 class="text-center text-yellow-500 text-[10px] font-black uppercase italic">Patrones por Día</h2>
+        <div id="contenedor-dias" class="space-y-3"></div>
     </section>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js"></script>
+    <script src="logic.js"></script>
 </body>
 </html>
