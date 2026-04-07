@@ -1,66 +1,74 @@
 const DB_URL = "https://iyvbufxkgycqcmdeclsf.supabase.co";
 const DB_KEY = "sb_publishable_Z3ze6gKwcKh91S9YBnacqA_3so-cPOC";
-const _supabase = supabase.createClient(DB_URL, DB_KEY);
+const _gbi = supabase.createClient(DB_URL, DB_KEY);
 
-// DICCIONARIO DE RAZAS (Aquí es donde rompemos el algoritmo)
-const RAZAS = {
-    "0": { n: "Delfín", f: "AGUA", c: "bg-blue-600" },
-    "00": { n: "Ballena", f: "AGUA", c: "bg-blue-800" },
-    "1": { n: "Carnero", f: "TIERRA", c: "bg-amber-900" },
-    "14": { n: "Paloma", f: "AIRE", c: "bg-sky-400" },
-    "75": { n: "Guácharo", f: "AIRE", c: "bg-sky-600" }
-};
+// CLAVE DE ACCESO (Defínela aquí, Carlos)
+const MASTER_KEY = "CARLOS2026"; 
 
-// FUNCIÓN PARA GUARDAR (Apunta a tu tabla real)
-async function registrarSorteo() {
-    const num = document.getElementById('num_input').value;
-    const fec = document.getElementById('fec_input').value;
-    const hor = document.getElementById('hor_input').value;
-
-    if(!num || !fec) return alert("Faltan datos");
-
-    const info = RAZAS[num] || { n: "Animal", f: "TIERRA", c: "bg-slate-700" };
-    const dias = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
-    const diaNom = dias[new Date(fec + 'T00:00:00').getDay()];
-
-    const { error } = await _supabase.from('control_guacharo').insert([{
-        animalito: num, 
-        nombre_animal: info.n,
-        familia: info.f,
-        fecha_sorteo: fec,
-        hora_sorteo: hor + ":00",
-        dia_semana: diaNom
-    }]);
-
-    if (!error) {
-        alert("¡REGISTRADO EN CONTROL_GUACHARO!");
-        cargarHistorial();
+function validarAcceso() {
+    const pass = document.getElementById('access_key').value;
+    if(pass === MASTER_KEY) {
+        document.getElementById('lock-screen').classList.add('hidden');
+        document.getElementById('main-system').classList.remove('hidden');
+        cargarMatriz();
+    } else {
+        const err = document.getElementById('error_msg');
+        err.classList.remove('hidden');
+        setTimeout(() => err.classList.add('hidden'), 3000);
     }
 }
 
-// FUNCIÓN PARA VER EL EXCEL (Historial con colores)
-async function cargarHistorial() {
-    const { data } = await _supabase
-        .from('control_guacharo')
-        .select('*')
+async function registrarEnGBI() {
+    const num = document.getElementById('num_input').value;
+    const hor = document.getElementById('hor_input').value;
+
+    if(!num || !hor) return alert("Faltan datos");
+
+    // PASO 1: Consultar la raza del animal automáticamente
+    const { data: especie } = await _gbi.from('gbi_especies').select('*').eq('id', num).single();
+
+    if(!especie) return alert("Número no registrado en el ADN");
+
+    // PASO 2: Guardar el resultado
+    const { error } = await _gbi.from('gbi_resultados').insert([{
+        animal_id: num,
+        hora: hor + ":00",
+        periodo_dia: parseInt(hor) < 12 ? 'MAÑANA' : 'TARDE'
+    }]);
+
+    if (!error) {
+        alert("REGISTRO BIOMÉTRICO EXITOSO");
+        cargarMatriz();
+    }
+}
+
+async function cargarMatriz() {
+    // Consulta avanzada uniendo tablas
+    const { data, error } = await _gbi
+        .from('gbi_resultados')
+        .select('*, gbi_especies(*)')
         .order('id', { ascending: false })
-        .limit(20);
+        .limit(10);
 
-    const tabla = document.getElementById('cuerpo-tabla');
-    if (!tabla) return;
-
-    tabla.innerHTML = data.map(r => `
-        <tr class="border-b border-slate-800 text-[11px] bg-slate-900/30">
-            <td class="p-3 font-black text-yellow-500 text-lg">${r.animalito}</td>
-            <td class="p-3 font-bold">${r.dia_semana || ''}</td>
-            <td class="p-3">
-                <span class="px-2 py-1 rounded font-black ${r.familia === 'AGUA' ? 'bg-blue-600' : (r.familia === 'AIRE' ? 'bg-sky-400 text-black' : 'bg-amber-800')}">
-                    ${r.familia || 'TIERRA'}
+    const tbody = document.getElementById('tabla-gbi');
+    tbody.innerHTML = data.map(r => `
+        <tr class="border-b border-slate-100 hover:bg-slate-50 transition-all">
+            <td class="p-4 font-mono text-slate-400">${r.hora.substring(0,5)}</td>
+            <td class="p-4 font-black text-slate-800 text-lg">${r.animal_id} - ${r.gbi_especies.nombre}</td>
+            <td class="p-4">
+                <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase" 
+                      style="background: ${r.gbi_especies.color_hex}22; color: ${r.gbi_especies.color_hex}; border: 1px solid ${r.gbi_especies.color_hex}44">
+                    ${r.gbi_especies.familia}
                 </span>
             </td>
-            <td class="p-3 text-slate-500">${r.hora_sorteo.substring(0,5)}</td>
+            <td class="p-4 text-[10px] text-slate-400 italic">Analizando...</td>
+            <td class="p-4"><span class="w-2 h-2 rounded-full bg-green-500 inline-block animate-pulse"></span></td>
         </tr>
     `).join('');
 }
 
-document.addEventListener('DOMContentLoaded', cargarHistorial);
+// Reloj
+setInterval(() => {
+    const r = document.getElementById('reloj_pro');
+    if(r) r.innerText = new Date().toLocaleTimeString('en-GB');
+}, 1000);
