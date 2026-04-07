@@ -1,172 +1,64 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GBI-SCANNER V2.0 | Biometric Intelligence</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        body { font-family: ui-sans-serif, system-ui, sans-serif; }
-        .gbi-border { border: 4px solid #0f172a; shadow: 4px 4px 0px #0f172a; }
-    </style>
-</head>
-<body class="bg-slate-200 p-2 min-h-screen">
+<div class="p-4 bg-gray-900 text-white min-h-screen">
+    <h2 class="text-xl font-bold mb-4 text-green-400">V-GATE NEXUS: Matriz de Inteligencia</h2>
 
-    <div id="lock-screen" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-100">
-        <div class="bg-white p-8 rounded-xl border-4 border-slate-900 shadow-[8px_8px_0px_#0f172a] text-center w-80">
-            <h2 class="text-[10px] font-black uppercase tracking-[0.3em] mb-6 text-slate-500">GBI System Access</h2>
-            <input type="password" id="access_key" placeholder="••••••••" class="w-full border-4 border-slate-900 p-4 rounded text-center mb-4 text-2xl font-bold tracking-tighter">
-            <button onclick="validarAcceso()" class="w-full bg-slate-900 text-white py-4 rounded font-black text-xs uppercase tracking-widest active:scale-95 transition-transform">Desbloquear</button>
-        </div>
-    </div>
-
-    <div id="main-system" style="display: none;">
-        <nav class="bg-white border-4 border-slate-900 p-4 mb-4 flex justify-between items-center rounded-xl shadow-[4px_4px_0px_#0f172a]">
-            <div class="flex items-center gap-3">
-                <div class="bg-amber-600 text-white px-2 py-1 rounded font-black text-sm italic">GBI</div>
-                <div class="leading-none">
-                    <p class="text-[10px] font-black uppercase tracking-tight">Biometric Intelligence</p>
-                    <p class="text-[8px] font-bold text-slate-400 uppercase">V2.0 Production</p>
-                </div>
+    <div class="bg-gray-800 p-4 rounded-lg mb-6 border border-gray-700">
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-xs text-gray-400">Hora</label>
+                <input type="time" id="input_hora" class="w-full bg-gray-700 rounded p-2 text-white border-none">
             </div>
-            <div id="reloj_pro" class="text-xl font-mono font-black text-slate-900">00:00:00</div>
-        </nav>
-
-        <div class="space-y-4">
-            <section class="bg-white border-4 border-slate-900 p-5 rounded-xl shadow-[4px_4px_0px_#0f172a]">
-                <h3 class="text-[10px] font-black uppercase mb-4 text-amber-700 underline decoration-2 underline-offset-4">Registro de Sorteo</h3>
-                <div class="relative mb-4">
-                    <input type="number" id="num_input" placeholder="Nº" class="w-full border-4 border-slate-900 p-6 rounded-xl text-6xl text-center font-black focus:outline-none focus:bg-slate-50">
-                    <span class="absolute top-2 left-2 text-[10px] font-black text-slate-300 uppercase italic">Número Animal</span>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-2 mb-4">
-                    <div class="flex flex-col">
-                        <label class="text-[8px] font-black uppercase ml-1">Fecha</label>
-                        <input type="date" id="fec_input" value="2026-04-01" class="border-2 border-slate-900 p-2 rounded font-bold text-sm bg-white">
-                    </div>
-                    <div class="flex flex-col">
-                        <label class="text-[8px] font-black uppercase ml-1">Horario</label>
-                        <select id="hor_input" class="border-2 border-slate-900 p-2 rounded font-bold text-sm bg-white uppercase">
-                            <option value="08:00:00">08:00 AM</option><option value="09:00:00">09:00 AM</option>
-                            <option value="10:00:00">10:00 AM</option><option value="11:00:00">11:00 AM</option>
-                            <option value="12:00:00">12:00 PM</option><option value="13:00:00">01:00 PM</option>
-                            <option value="16:00:00">04:00 PM</option><option value="19:00:00">07:00 PM</option>
-                        </select>
-                    </div>
-                </div>
-                <button onclick="registrarEnGBI()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase text-xs shadow-[0px_4px_0px_#475569] active:translate-y-1 active:shadow-none transition-all">Procesar y Guardar</button>
-            </section>
-
-            <section class="bg-white border-4 border-slate-900 p-4 rounded-xl shadow-[4px_4px_0px_#0f172a]">
-                <p class="text-[8px] font-black uppercase mb-1 text-slate-400">Buscador de Patrones</p>
-                <input type="text" id="filtro" onkeyup="cargarMatriz()" placeholder="BUSCAR FAMILIA O FECHA..." class="w-full bg-slate-50 border-2 border-slate-200 p-3 rounded font-bold text-xs uppercase focus:border-slate-900 outline-none">
-            </section>
-
-            <section class="bg-white border-4 border-slate-900 rounded-xl shadow-[4px_4px_0px_#0f172a] overflow-hidden">
-                <div class="bg-slate-900 p-3 text-white flex justify-between items-center italic">
-                    <span class="text-[9px] font-black uppercase tracking-widest">Sucesión de Resultados 2026</span>
-                    <span class="text-[8px] bg-green-500 px-2 py-0.5 rounded text-black font-black">IA ONLINE</span>
-                </div>
-                <div class="max-h-[500px] overflow-y-auto bg-white">
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-50 border-b-2 border-slate-900 text-[9px] font-black uppercase">
-                            <tr>
-                                <th class="p-3">Hora</th>
-                                <th class="p-3">Animal / ADN</th>
-                                <th class="p-3">Familia</th>
-                                <th class="p-3 text-center">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabla-gbi" class="divide-y-2 divide-slate-100 font-bold text-xs uppercase">
-                            </tbody>
-                    </table>
-                </div>
-                <div class="bg-slate-900 p-2 text-right">
-                    <span id="counter" class="text-amber-500 font-black text-[10px]">INICIANDO ESCÁNER...</span>
-                </div>
-            </section>
+            <div>
+                <label class="block text-xs text-gray-400">Número</label>
+                <input type="number" id="input_numero" placeholder="Ej. 75" class="w-full bg-gray-700 rounded p-2 text-white border-none">
+            </div>
         </div>
+        <button onclick="registrarDato()" class="w-full mt-4 bg-green-600 hover:bg-green-500 py-2 rounded font-bold transition">
+            REGISTRAR EN MATRIZ
+        </button>
     </div>
 
-    <script>
-        const DB_URL = "https://iyvbufxkgycqcmdeclsf.supabase.co";
-        const DB_KEY = "sb_publishable_Z3ze6gKwcKh91S9YBnacqA_3so-cPOC";
-        const _gbi = supabase.createClient(DB_URL, DB_KEY);
-
-        function validarAcceso() {
-            const key = document.getElementById('access_key').value;
-            if(key === "CARLOS2026") {
-                document.getElementById('lock-screen').style.display = 'none';
-                document.getElementById('main-system').style.display = 'block';
-                cargarMatriz();
-                setInterval(() => {
-                    document.getElementById('reloj_pro').innerText = new Date().toLocaleTimeString('en-GB');
-                }, 1000);
-            } else { alert("ACCESO DENEGADO"); }
-        }
-
-        async function cargarMatriz() {
-            const filtro = document.getElementById('filtro').value.toUpperCase();
-            
-            // Consulta avanzada con unión de tablas
-            let query = _gbi.from('gbi_resultados').select('*, gbi_especies(*)').order('fecha', {ascending: false}).order('hora', {ascending: false});
-
-            const { data, error } = await query;
-            if (error) return console.error(error);
-
-            const filtrados = data.filter(r => 
-                r.fecha.includes(filtro) || 
-                (r.gbi_especies && r.gbi_especies.familia.toUpperCase().includes(filtro)) ||
-                r.animal_id.toString().includes(filtro)
-            );
-
-            document.getElementById('counter').innerText = `${filtrados.length} REGISTROS ACTIVOS`;
-            
-            const tbody = document.getElementById('tabla-gbi');
-            tbody.innerHTML = filtrados.map(r => `
-                <tr class="${r.animal_id == 75 ? 'bg-amber-50' : ''}">
-                    <td class="p-3 text-[10px] text-slate-400">${r.fecha.split('-').reverse().join('/')}<br><span class="text-slate-900 font-black">${r.hora.substring(0,5)}</span></td>
-                    <td class="p-3">
-                        <div class="flex items-center gap-2">
-                            <span class="text-2xl font-black ${r.animal_id == 75 ? 'text-amber-600 underline' : 'text-slate-900'}">${r.animal_id}</span>
-                            <span class="text-[8px] text-slate-400 tracking-tighter">${r.gbi_especies ? r.gbi_especies.nombre : 'S/N'}</span>
-                        </div>
-                    </td>
-                    <td class="p-3 text-[9px]">
-                        <span class="px-2 py-1 rounded shadow-sm text-white" style="background:${r.gbi_especies ? r.gbi_especies.color_hex : '#000'}">
-                            ${r.gbi_especies ? r.gbi_especies.familia : 'PROCESANDO'}
-                        </span>
-                    </td>
-                    <td class="p-3 text-center">
-                        <span class="text-[8px] text-green-600 font-black">OK</span>
-                    </td>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse bg-gray-800 rounded-lg overflow-hidden">
+            <thead class="bg-gray-700 text-gray-300 text-xs uppercase">
+                <tr>
+                    <th class="p-3 border-b border-gray-600">Hora</th>
+                    <th class="p-3 border-b border-gray-600">N°</th>
+                    <th class="p-3 border-b border-gray-600">Animal</th>
+                    <th class="p-3 border-b border-gray-600">Reino</th>
+                    <th class="p-3 border-b border-gray-600">Grupo</th>
                 </tr>
-            `).join('');
-        }
+            </thead>
+            <tbody id="tabla_matriz" class="text-sm">
+                </tbody>
+        </table>
+    </div>
+</div>
 
-        async function registrarEnGBI() {
-            const num = document.getElementById('num_input').value;
-            const fec = document.getElementById('fec_input').value;
-            const hor = document.getElementById('hor_input').value;
+<script>
+// El "ADN" de los animales para el Radar de Reinos
+const base_datos_animales = {
+    75: { nombre: "Mono", reino: "Tierra", grupo: "Primates" },
+    12: { nombre: "Caballo", reino: "Fuego", grupo: "Mamíferos" },
+    0:  { nombre: "Delfín", reino: "Agua", grupo: "Acuáticos" }
+    // Aquí iremos añadiendo el resto de la lista
+};
 
-            if(!num || !fec) return alert("COMPLETE LA FICHA DE SEGURIDAD");
+function registrarDato() {
+    const num = document.getElementById('input_numero').value;
+    const hora = document.getElementById('input_hora').value;
+    const info = base_datos_animales[num] || { nombre: "S/N", reino: "Desconocido", grupo: "General" };
 
-            const { error } = await _gbi.from('gbi_resultados').insert([{ 
-                animal_id: parseInt(num), 
-                fecha: fec, 
-                hora: hor 
-            }]);
-
-            if(!error) {
-                alert("MOVIMIENTO REGISTRADO EN HISTORIAL");
-                document.getElementById('num_input').value = "";
-                cargarMatriz();
-            } else {
-                alert("ERROR DE RED: " + error.message);
-            }
-        }
-    </script>
-</body>
-</html>
+    // Aquí iría tu fetch a Supabase para guardar, 
+    // pero primero vamos a visualizarlo en la Matriz
+    const fila = `
+        <tr class="border-b border-gray-700 hover:bg-gray-750 transition">
+            <td class="p-3 text-gray-400 font-mono">${hora}</td>
+            <td class="p-3 font-bold text-green-400">${num}</td>
+            <td class="p-3 font-semibold">${info.nombre}</td>
+            <td class="p-3"><span class="px-2 py-1 rounded text-xs bg-blue-900 text-blue-200">${info.reino}</span></td>
+            <td class="p-3 text-gray-500 text-xs">${info.grupo}</td>
+        </tr>
+    `;
+    document.getElementById('tabla_matriz').innerHTML = fila + document.getElementById('tabla_matriz').innerHTML;
+}
+</script>
