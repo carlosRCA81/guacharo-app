@@ -1,64 +1,128 @@
-<div class="p-4 bg-gray-900 text-white min-h-screen">
-    <h2 class="text-xl font-bold mb-4 text-green-400">V-GATE NEXUS: Matriz de Inteligencia</h2>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GBI-SCANNER V2.0 | Biometric Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .gbi-card { border: 3px solid #0f172a; box-shadow: 5px 5px 0px #0f172a; }
+        .bg-grid { background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 20px 20px; }
+    </style>
+</head>
+<body class="bg-slate-100 bg-grid min-h-screen p-4 font-sans">
 
-    <div class="bg-gray-800 p-4 rounded-lg mb-6 border border-gray-700">
-        <div class="grid grid-cols-2 gap-4">
+    <header class="bg-white gbi-card p-4 rounded-xl mb-6 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="bg-amber-600 text-white p-2 rounded font-black text-xs">GBI</div>
             <div>
-                <label class="block text-xs text-gray-400">Hora</label>
-                <input type="time" id="input_hora" class="w-full bg-gray-700 rounded p-2 text-white border-none">
-            </div>
-            <div>
-                <label class="block text-xs text-gray-400">Número</label>
-                <input type="number" id="input_numero" placeholder="Ej. 75" class="w-full bg-gray-700 rounded p-2 text-white border-none">
+                <h1 class="text-[10px] font-black uppercase tracking-widest text-slate-400">Biometric Intelligence</h1>
+                <p class="text-xs font-bold text-slate-900">V2.0 PRODUCTION</p>
             </div>
         </div>
-        <button onclick="registrarDato()" class="w-full mt-4 bg-green-600 hover:bg-green-500 py-2 rounded font-bold transition">
-            REGISTRAR EN MATRIZ
-        </button>
-    </div>
+        <div id="clock" class="text-xl font-mono font-black">00:00:00</div>
+    </header>
 
-    <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse bg-gray-800 rounded-lg overflow-hidden">
-            <thead class="bg-gray-700 text-gray-300 text-xs uppercase">
-                <tr>
-                    <th class="p-3 border-b border-gray-600">Hora</th>
-                    <th class="p-3 border-b border-gray-600">N°</th>
-                    <th class="p-3 border-b border-gray-600">Animal</th>
-                    <th class="p-3 border-b border-gray-600">Reino</th>
-                    <th class="p-3 border-b border-gray-600">Grupo</th>
+    <section class="bg-white gbi-card p-6 rounded-2xl mb-6">
+        <h2 class="text-[10px] font-black uppercase mb-4 text-amber-700 underline underline-offset-4">Registro de Sorteo</h2>
+        <div class="relative mb-6">
+            <input type="number" id="num_input" placeholder="Nº" class="w-full border-4 border-slate-900 p-8 rounded-2xl text-7xl text-center font-black focus:bg-slate-50 outline-none">
+            <label class="absolute top-2 left-4 text-[10px] font-black text-slate-300 uppercase italic">Número Animal</label>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <input type="date" id="fec_input" class="border-2 border-slate-900 p-4 rounded-xl font-bold bg-white">
+            <select id="hor_input" class="border-2 border-slate-900 p-4 rounded-xl font-bold bg-white uppercase text-sm">
+                <option value="08:00:00">08:00 AM</option><option value="09:00:00">09:00 AM</option>
+                <option value="10:00:00">10:00 AM</option><option value="11:00:00">11:00 AM</option>
+                <option value="12:00:00">12:00 PM</option><option value="01:00:00">01:00 PM</option>
+                <option value="04:00:00">04:00 PM</option><option value="07:00:00">07:00 PM</option>
+            </select>
+        </div>
+        <button onclick="registrar()" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-[0px_6px_0px_#475569] active:translate-y-1 active:shadow-none transition-all">Procesar y Guardar</button>
+    </section>
+
+    <section class="bg-white gbi-card rounded-2xl overflow-hidden">
+        <div class="bg-slate-900 p-4 flex justify-between items-center">
+            <span class="text-[10px] font-black text-white uppercase tracking-tighter">Sucesión de Resultados 2026</span>
+            <span class="bg-green-500 text-[8px] font-black px-2 py-1 rounded">IA ONLINE</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 border-b-2 border-slate-900 text-[10px] font-black uppercase">
+                    <tr>
+                        <th class="p-4">Hora</th>
+                        <th class="p-4">Animal</th>
+                        <th class="p-4">Familia</th>
+                        <th class="p-4 text-amber-600">Escoltaba a</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-gbi" class="font-bold text-xs uppercase divide-y-2 divide-slate-100">
+                    </tbody>
+            </table>
+        </div>
+        <div id="status-bar" class="p-3 bg-slate-50 text-[9px] font-black text-center text-slate-400 italic uppercase">Iniciando Escáner Algorítmico...</div>
+    </section>
+
+    <script>
+        const SB_URL = "https://iyvbufxkgycqcmdeclsf.supabase.co";
+        const SB_KEY = "sb_publishable_Z3ze6gKwcKh91S9YBnacqA_3so-cPOC";
+        const _gbi = supabase.createClient(SB_URL, SB_KEY);
+
+        // Reloj en tiempo real
+        setInterval(() => {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-GB');
+        }, 1000);
+
+        async function cargar() {
+            // Consultamos la VISTA de inteligencia que creamos en el SQL
+            const { data, error } = await _gbi.from('matriz_inteligencia').select('*').order('fecha', {ascending: false}).order('hora', {ascending: false});
+            
+            if(error) return console.error(error);
+            
+            document.getElementById('status-bar').innerText = `${data.length} Movimientos Analizados`;
+            const tbody = document.getElementById('tabla-gbi');
+            tbody.innerHTML = data.map(r => `
+                <tr class="${r.animal_id == 75 ? 'bg-amber-50' : ''}">
+                    <td class="p-4"><span class="text-slate-400 block text-[8px]">${r.fecha}</span>${r.hora.substring(0,5)}</td>
+                    <td class="p-4">
+                        <span class="text-2xl font-black ${r.animal_id == 75 ? 'text-amber-600' : 'text-slate-900'}">${r.animal_id}</span>
+                        <span class="block text-[8px] text-slate-400">${r.nombre}</span>
+                    </td>
+                    <td class="p-4">
+                        <span class="px-2 py-1 rounded-full text-[9px] text-white" style="background:${r.color_hex}">${r.familia}</span>
+                    </td>
+                    <td class="p-4 text-amber-600 italic text-[10px] font-black">
+                        ${r.salio_antes ? '→ ' + r.salio_antes : '--'}
+                    </td>
                 </tr>
-            </thead>
-            <tbody id="tabla_matriz" class="text-sm">
-                </tbody>
-        </table>
-    </div>
-</div>
+            `).join('');
+        }
 
-<script>
-// El "ADN" de los animales para el Radar de Reinos
-const base_datos_animales = {
-    75: { nombre: "Mono", reino: "Tierra", grupo: "Primates" },
-    12: { nombre: "Caballo", reino: "Fuego", grupo: "Mamíferos" },
-    0:  { nombre: "Delfín", reino: "Agua", grupo: "Acuáticos" }
-    // Aquí iremos añadiendo el resto de la lista
-};
+        async function registrar() {
+            const num = document.getElementById('num_input').value;
+            const fec = document.getElementById('fec_input').value;
+            const hor = document.getElementById('hor_input').value;
 
-function registrarDato() {
-    const num = document.getElementById('input_numero').value;
-    const hora = document.getElementById('input_hora').value;
-    const info = base_datos_animales[num] || { nombre: "S/N", reino: "Desconocido", grupo: "General" };
+            if(!num || !fec) return alert("DATOS INCOMPLETOS");
 
-    // Aquí iría tu fetch a Supabase para guardar, 
-    // pero primero vamos a visualizarlo en la Matriz
-    const fila = `
-        <tr class="border-b border-gray-700 hover:bg-gray-750 transition">
-            <td class="p-3 text-gray-400 font-mono">${hora}</td>
-            <td class="p-3 font-bold text-green-400">${num}</td>
-            <td class="p-3 font-semibold">${info.nombre}</td>
-            <td class="p-3"><span class="px-2 py-1 rounded text-xs bg-blue-900 text-blue-200">${info.reino}</span></td>
-            <td class="p-3 text-gray-500 text-xs">${info.grupo}</td>
-        </tr>
-    `;
-    document.getElementById('tabla_matriz').innerHTML = fila + document.getElementById('tabla_matriz').innerHTML;
-}
-</script>
+            const { error } = await _gbi.from('gbi_resultados').insert([{ 
+                animal_id: parseInt(num), 
+                fecha: fec, 
+                hora: hor 
+            }]);
+
+            if(!error) {
+                document.getElementById('num_input').value = "";
+                cargar();
+            } else {
+                alert("ERROR DE SINCRONIZACIÓN: " + error.message);
+            }
+        }
+
+        document.getElementById('fec_input').valueAsDate = new Date();
+        cargar();
+    </script>
+</body>
+</html>
