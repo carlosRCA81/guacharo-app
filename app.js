@@ -3,28 +3,29 @@
 // ==========================================
 const CONFIG = {
     URL: "https://iyvbufxkgycqcmdeclsf.supabase.co",
-    // Llave verificada sin espacios ni errores de copia
+    // Esta es tu API Key limpia de cualquier error de copia
     KEY: "EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5dmJ1ZnhrZ3ljcWNtZGVjbHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzOTE5NTMsImV4cCI6MjA4OTk2Nzk1M30.Rt6XfnsvWu1Efwb3-fVOyHCmz7aCJXHpIJxaxGzuThw",
-    CLAVE: "2026" 
+    CLAVE_MAESTRA: "2026" 
 };
 
 // ==========================================
-// ACCESO AL SISTEMA
+// CONTROL DE ACCESO
 // ==========================================
 function login() {
-    const acceso = prompt("SISTEMA CRCA BLINDADO - CLAVE:");
-    if (acceso === CONFIG.CLAVE) {
+    const pass = prompt("SISTEMA CRCA - INGRESE CLAVE:");
+    if (pass === CONFIG.CLAVE_MAESTRA) {
+        // Establecer fecha por defecto (Día de hoy)
         const hoy = new Date().toISOString().split('T')[0];
         document.getElementById('fecha_registro').value = hoy;
         consultarAlgoritmo();
     } else {
-        alert("Clave incorrecta.");
-        document.body.innerHTML = "<h1 style='color:red; text-align:center;'>ACCESO DENEGADO</h1>";
+        alert("Clave denegada.");
+        document.body.innerHTML = "<div style='background:black; color:red; height:100vh; display:flex; align-items:center; justify-content:center;'><h1>BLOQUEADO</h1></div>";
     }
 }
 
 // ==========================================
-// GUARDAR RESULTADO
+// REGISTRO DE DATOS (ANOTAR)
 // ==========================================
 async function guardarResultado() {
     const fecha = document.getElementById('fecha_registro').value;
@@ -37,12 +38,16 @@ async function guardarResultado() {
         const res = await fetch(`${CONFIG.URL}/rest/v1/resultados_crca`, {
             method: 'POST',
             headers: {
-                'apikey': CONFIG.KEY,
-                'Authorization': `Bearer ${CONFIG.KEY}`,
+                'apikey': CONFIG.KEY.trim(), // Limpia espacios accidentales
+                'Authorization': `Bearer ${CONFIG.KEY.trim()}`,
                 'Content-Type': 'application/json',
                 'Prefer': 'return=minimal'
             },
-            body: JSON.stringify({ fecha: fecha, hora: hora, numero: numero })
+            body: JSON.stringify({ 
+                fecha: fecha, 
+                hora: hora, 
+                numero: numero 
+            })
         });
 
         if (res.ok) {
@@ -50,20 +55,23 @@ async function guardarResultado() {
             consultarAlgoritmo();
         } else {
             const err = await res.json();
-            alert("Error del Sistema: " + err.message);
+            alert("Fallo de API: " + err.message);
         }
     } catch (e) {
-        alert("Falla de Conexión");
+        alert("Error de conexión");
     }
 }
 
 // ==========================================
-// CONSULTAR Y RENDERIZAR
+// CONSULTA Y RADAR DEL 75
 // ==========================================
 async function consultarAlgoritmo() {
     try {
-        const res = await fetch(`${CONFIG.URL}/rest/v1/vista_analisis_crca?order=fecha.desc,hora.desc&limit=20`, {
-            headers: { 'apikey': CONFIG.KEY, 'Authorization': `Bearer ${CONFIG.KEY}` }
+        const res = await fetch(`${CONFIG.URL}/rest/v1/vista_analisis_crca?order=fecha.desc,hora.desc&limit=25`, {
+            headers: { 
+                'apikey': CONFIG.KEY.trim(), 
+                'Authorization': `Bearer ${CONFIG.KEY.trim()}` 
+            }
         });
         const datos = await res.json();
         
@@ -71,30 +79,33 @@ async function consultarAlgoritmo() {
         tbody.innerHTML = '';
         
         datos.forEach(row => {
-            const resaltado = row.numero === '75' ? 'bg-yellow-900/40 text-yellow-400 font-bold' : 'border-t border-slate-700';
+            const es75 = row.numero === '75';
+            const clase = es75 ? 'bg-yellow-900/50 text-yellow-400 font-bold border-y border-yellow-500' : 'border-t border-slate-700';
+            
             tbody.innerHTML += `
-                <tr class="${resaltado}">
-                    <td class="p-3">${row.fecha.split('-').reverse().join('/')}</td>
-                    <td class="p-3">${row.hora.substring(0,5)}</td>
+                <tr class="${clase}">
+                    <td class="p-3 text-[10px]">${row.fecha.split('-').reverse().join('/')}</td>
+                    <td class="p-3 font-bold">${row.hora.substring(0,5)}</td>
                     <td class="p-3 text-center text-lg">${row.numero}</td>
-                    <td class="p-3">${row.animal} <span class="text-[9px] opacity-40 uppercase">[${row.elemento}]</span></td>
+                    <td class="p-3">${row.animal} <span class="text-[8px] opacity-40 uppercase">[${row.elemento}]</span></td>
                 </tr>
             `;
         });
         
-        ejecutarRadar(datos);
-    } catch (e) { console.error(e); }
+        actualizarRadar(datos);
+    } catch (e) { console.error("Error al cargar:", e); }
 }
 
-function ejecutarRadar(datos) {
+function actualizarRadar(datos) {
     const radar = document.getElementById('status-75');
     const index = datos.findIndex(d => d.numero === '75');
+    
     if (index === -1) {
         radar.innerHTML = "⚠️ ALERTA: Guácharo (75) en zona de alta probabilidad.";
-        radar.className = "text-sm mt-1 text-red-400 animate-pulse font-bold";
+        radar.className = "text-sm mt-1 text-red-500 animate-pulse font-black";
     } else {
         radar.innerHTML = `Análisis: El 75 tiene ${index} sorteos de retraso.`;
-        radar.className = "text-sm mt-1 text-yellow-500";
+        radar.className = "text-sm mt-1 text-yellow-500 font-medium";
     }
 }
 
