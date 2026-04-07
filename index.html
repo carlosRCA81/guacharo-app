@@ -3,77 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador CRCA - V-GATE NEXUS</title>
+    <title>Analizador CRCA - Inteligencia Blindada</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { background-color: #1a2233; color: #e2e8f0; font-family: sans-serif; }
-        .card { background-color: #242f44; border: 1px solid #334155; border-radius: 12px; }
-        select, input { background-color: #0f172a !important; border: 1px solid #475569 !important; color: #fbbf24 !important; outline: none; }
-        input:focus { border-color: #3b82f6 !important; }
+        body { background-color: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .active-tab { color: #3b82f6; border-top: 3px solid #3b82f6; }
     </style>
 </head>
-<body class="p-4">
+<body class="pb-20">
 
-    <header class="text-center mb-6">
-        <h1 class="text-2xl font-black text-blue-500 tracking-widest">ANALIZADOR CRCA</h1>
-        <p class="text-[10px] text-slate-500 uppercase font-bold">Inteligencia de Datos Blindada</p>
+    <header class="p-4 border-b border-slate-800 bg-slate-900 sticky top-0 z-50">
+        <h1 class="text-center text-xl font-black tracking-widest text-blue-500">ANALIZADOR CRCA</h1>
+        <p class="text-[10px] text-center text-slate-500 font-bold uppercase">Software de Estudio de Algoritmos - Guácharo Activo</p>
     </header>
 
-    <div class="card p-4 mb-4">
-        <label class="text-[10px] uppercase text-slate-400 font-bold mb-2 block">Fecha de los Datos (Día/Mes/Año)</label>
-        <input type="date" id="fecha_registro" class="w-full p-3 rounded font-bold text-lg">
-    </div>
-
-    <div class="card p-4 mb-4">
-        <div class="grid grid-cols-2 gap-3">
-            <div>
-                <label class="text-[10px] uppercase text-slate-400 font-bold">Sorteo</label>
-                <select id="hora" class="w-full p-3 rounded font-bold">
-                    <option value="08:00">08:00 AM</option>
-                    <option value="09:00">09:00 AM</option>
-                    <option value="10:00">10:00 AM</option>
-                    <option value="11:00">11:00 AM</option>
-                    <option value="12:00">12:00 PM</option>
-                    <option value="13:00">01:00 PM</option>
-                    <option value="14:00">02:00 PM</option>
-                    <option value="15:00">03:00 PM</option>
-                    <option value="16:00">04:00 PM</option>
-                    <option value="17:00">05:00 PM</option>
-                    <option value="18:00">06:00 PM</option>
-                    <option value="19:00">07:00 PM</option>
-                </select>
+    <main class="p-4 max-w-lg mx-auto">
+        
+        <section id="anotar" class="tab-content active space-y-4">
+            <div class="bg-slate-900/50 border border-slate-800 p-4 rounded-xl">
+                <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase">Fecha de los Datos (Estudio Histórico)</label>
+                <input type="date" id="fecha_registro" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-lg text-yellow-500 font-bold text-center focus:outline-none focus:border-blue-500">
             </div>
-            <div>
-                <label class="text-[10px] uppercase text-slate-400 font-bold">Número</label>
-                <input type="text" id="numero" placeholder="00-75" class="w-full p-3 rounded text-center text-xl font-black">
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-slate-900/50 border border-slate-800 p-4 rounded-xl">
+                    <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase">Sorteo</label>
+                    <select id="hora" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-lg text-sm appearance-none text-center">
+                        <option value="08:00">08:00 AM</option>
+                        <option value="09:00">09:00 AM</option>
+                        <option value="10:00">10:00 AM</option>
+                        <option value="11:00">11:00 AM</option>
+                        <option value="12:00">12:00 PM</option>
+                        <option value="13:00">01:00 PM</option>
+                        <option value="14:00">02:00 PM</option>
+                        <option value="15:00">03:00 PM</option>
+                        <option value="16:00">04:00 PM</option>
+                        <option value="17:00">05:00 PM</option>
+                        <option value="18:00">06:00 PM</option>
+                        <option value="19:00">07:00 PM</option>
+                    </select>
+                </div>
+                <div class="bg-slate-900/50 border border-slate-800 p-4 rounded-xl">
+                    <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase">Número (00-75)</label>
+                    <input type="text" id="numero" placeholder="--" maxlength="2" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-lg text-xl font-black text-center text-white focus:outline-none focus:border-green-500">
+                </div>
             </div>
-        </div>
 
-        <div class="grid grid-cols-2 gap-3 mt-4">
-            <button onclick="guardarResultado()" class="bg-green-700 hover:bg-green-600 p-4 rounded-lg font-black text-white shadow-lg uppercase transition-all active:scale-95">Anotar</button>
-            <button onclick="limpiarCampos()" class="bg-red-700 hover:bg-red-600 p-4 rounded-lg font-black text-white shadow-lg uppercase transition-all active:scale-95">Borrar</button>
-        </div>
-    </div>
+            <button onclick="guardarResultado()" class="w-full bg-green-700 hover:bg-green-600 p-4 rounded-xl font-black text-white transition shadow-lg shadow-green-900/20 uppercase tracking-widest">Anotar Jugada</button>
+            <button onclick="limpiarCampos()" class="w-full bg-red-900/30 border border-red-800/50 text-red-500 p-3 rounded-xl font-bold text-xs uppercase">Borrar Entrada</button>
+        </section>
 
-    <div class="card p-4 border-l-4 border-yellow-500 mb-4">
-        <h3 class="text-xs font-bold text-yellow-500 uppercase tracking-tighter">Radar del Guácharo (75)</h3>
-        <p id="status-75" class="text-sm mt-1 text-slate-300 font-medium italic">Esperando sincronización de base de datos...</p>
-    </div>
+        <section id="radar" class="tab-content space-y-4">
+            <div class="bg-yellow-900/20 border border-yellow-700/50 p-4 rounded-xl text-center">
+                <h2 class="text-yellow-500 font-black uppercase text-sm mb-2">Monitor Guácharo (75)</h2>
+                <div id="status-75" class="text-xs text-slate-300">Esperando sincronización de base de datos...</div>
+            </div>
+            <div id="historial-75" class="space-y-2">
+                </div>
+        </section>
 
-    <div class="overflow-x-auto rounded-xl shadow-2xl">
-        <table class="w-full card text-left text-xs">
-            <thead class="bg-slate-800 text-slate-400 border-b border-slate-600">
-                <tr>
-                    <th class="p-3">FECHA</th>
-                    <th class="p-3">HORA</th>
-                    <th class="p-3 text-center">Nº</th>
-                    <th class="p-3">ANIMAL</th>
-                </tr>
-            </thead>
-            <tbody id="tabla-resultados">
-                </tbody>
-        </table>
-    </div>
+        <section id="estudio" class="tab-content space-y-4">
+            <div class="bg-blue-900/20 border border-blue-700/50 p-4 rounded-xl">
+                <h2 class="text-blue-400 font-black uppercase text-xs mb-3">Top Números Calientes</h2>
+                <div id="lista-calientes" class="grid grid-cols-4 gap-2"></div>
+            </div>
+            <div class="bg-slate-900/50 border border-slate-800 p-4 rounded-xl">
+                <h2 class="text-slate-400 font-black uppercase text-xs mb-3 text-center">Historial de Hoy</h2>
+                <table class="w-full text-sm">
+                    <thead><tr class="text-[10px] text-slate-500 uppercase border-b border-slate-800">
+                        <th class="p-2 text-left">Hora</th><th class="p-2 text-center">N°</th><th class="p-2 text-right">Animal</th>
+                    </tr></thead>
+                    <tbody id="tabla-hoy"></tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <nav class="fixed bottom-0 left-0 right-0 bg-slate-950 border-t border-slate-800 flex justify-around p-2 text-[10px] uppercase font-bold">
+        <button onclick="switchTab('anotar')" class="flex flex-col items-center p-2 tab-btn active-tab" id="btn-anotar">
+            <i class="fas fa-edit text-lg mb-1"></i>Anotar
+        </button>
+        <button onclick="switchTab('estudio')" class="flex flex-col items-center p-2 tab-btn" id="btn-estudio">
+            <i class="fas fa-chart-line text-lg mb-1"></i>Estudio
+        </button>
+        <button onclick="switchTab('radar')" class="flex flex-col items-center p-2 tab-btn" id="btn-radar">
+            <i class="fas fa-bullseye text-lg mb-1"></i>Radar 75
+        </button>
+    </nav>
 
     <script src="app.js"></script>
 </body>
