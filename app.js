@@ -1,62 +1,66 @@
+// CONFIGURACIÓN DE CONEXIÓN
 const DB_URL = "https://iyvbufxkgycqcmdeclsf.supabase.co";
 const DB_KEY = "sb_publishable_Z3ze6gKwcKh91S9YBnacqA_3so-cPOC";
 const _gbi = supabase.createClient(DB_URL, DB_KEY);
 const MASTER_KEY = "CARLOS2026";
 
-// Función de Desbloqueo Corregida
+// FUNCIÓN DE ACCESO DIRECTO
 function validarAcceso() {
     const input = document.getElementById('access_key').value.trim();
-    console.log("Validando TOKEN..."); // Para depuración en consola
     
-    if(input === MASTER_KEY) {
-        document.getElementById('lock-screen').classList.add('hidden');
+    if (input === MASTER_KEY) {
+        alert("ACCESO AUTORIZADO. INICIANDO ESCÁNER...");
+        document.getElementById('lock-screen').style.display = 'none';
         document.getElementById('main-system').classList.remove('hidden');
-        cargarMatriz(); // Carga el historial de abril al entrar
+        document.getElementById('main-system').style.display = 'block';
+        cargarMatriz(); 
     } else {
-        alert("TOKEN INCORRECTO: ACCESO DENEGADO");
+        alert("TOKEN INVÁLIDO");
     }
 }
 
-// Carga de Historial para el Estudio de Seguidillas
+// CARGA DE DATOS PARA ESTUDIO DE ALGORITMO
 async function cargarMatriz() {
-    console.log("Sincronizando con matriz GBI...");
-    const { data, error } = await _gbi
-        .from('gbi_resultados')
-        .select('*, gbi_especies(*)')
-        .order('fecha', {ascending: false})
-        .order('hora', {ascending: false});
+    try {
+        const { data, error } = await _gbi
+            .from('gbi_resultados')
+            .select('*, gbi_especies(*)')
+            .order('fecha', {ascending: false})
+            .order('hora', {ascending: false});
 
-    if (error) {
-        console.error("Error de Sincronización:", error);
-        return;
+        if (error) throw error;
+
+        const count = data ? data.length : 0;
+        document.getElementById('counter').innerText = `${count} MOVIMIENTOS DETECTADOS`;
+        
+        if(count === 0) alert("AVISO: BASE DE DATOS VACÍA O SIN CONEXIÓN");
+        
+        renderizarTabla(data);
+    } catch (err) {
+        alert("ERROR CRÍTICO GBI: " + err.message);
     }
-    
-    document.getElementById('counter').innerText = `${data.length} MOVIMIENTOS DETECTADOS`;
-    renderizarTabla(data);
 }
 
 function renderizarTabla(data) {
     const tbody = document.getElementById('tabla-gbi');
-    tbody.innerHTML = (data || []).map(r => `
-        <tr class="hover:bg-amber-50 border-b border-slate-200">
-            <td class="p-3">
-                <div class="text-[9px] text-slate-500 font-bold">${r.fecha}</div>
-                <div class="text-xs font-black">${r.hora.substring(0,5)}</div>
+    if (!data) return;
+
+    tbody.innerHTML = data.map(r => `
+        <tr style="border-bottom: 1px solid #ddd;">
+            <td style="padding: 10px;">
+                <div style="font-size: 10px; color: gray;">${r.fecha}</div>
+                <div style="font-weight: 900;">${r.hora.substring(0,5)}</div>
             </td>
-            <td class="p-3">
-                <div class="flex items-center gap-2">
-                    <span class="text-xl font-black ${r.animal_id == 75 ? 'text-amber-600' : 'text-slate-900'}">${r.animal_id}</span>
-                    <span class="text-[8px] uppercase font-bold text-slate-400">${r.gbi_especies ? r.gbi_especies.nombre : 'S/N'}</span>
-                </div>
+            <td style="padding: 10px;">
+                <span style="font-size: 20px; font-weight: 900; ${r.animal_id == 75 ? 'color: #d97706;' : ''}">${r.animal_id}</span>
+                <span style="font-size: 9px; color: #999; text-transform: uppercase; margin-left: 5px;">${r.gbi_especies ? r.gbi_especies.nombre : ''}</span>
             </td>
-            <td class="p-3 text-center">
-                <span class="px-2 py-1 rounded text-[8px] text-white font-black" style="background: ${r.gbi_especies ? r.gbi_especies.color_hex : '#ccc'}">
-                    ${r.gbi_especies ? r.gbi_especies.familia : 'ESTUDIANDO'}
+            <td style="padding: 10px; text-align: center;">
+                <span style="background: ${r.gbi_especies ? r.gbi_especies.color_hex : '#000'}; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">
+                    ${r.gbi_especies ? r.gbi_especies.familia : 'PROCESANDO'}
                 </span>
             </td>
-            <td class="p-3 text-center">
-                <div class="text-[8px] bg-green-500 text-white px-2 py-0.5 rounded-full inline-block font-black">VALIDADO</div>
-            </td>
+            <td style="padding: 10px; text-align: center; color: green; font-size: 10px; font-weight: 900;">OK</td>
         </tr>
     `).join('');
 }
@@ -66,16 +70,25 @@ async function registrarEnGBI() {
     const fec = document.getElementById('fec_input').value;
     const hor = document.getElementById('hor_input').value;
 
-    if(!num || !fec) return alert("DATOS INCOMPLETOS");
+    if(!num || !fec) return alert("COMPLETE LOS CAMPOS");
 
     const { error } = await _gbi.from('gbi_resultados').insert([{
-        animal_id: num, fecha: fec, hora: hor + ":00"
+        animal_id: parseInt(num), 
+        fecha: fec, 
+        hora: hor + ":00"
     }]);
 
     if(!error) {
+        alert("MOVIMIENTO GUARDADO");
         document.getElementById('num_input').value = "";
         cargarMatriz();
     } else {
-        alert("ERROR: EL NÚMERO " + num + " NO ESTÁ EN EL ADN");
+        alert("ERROR AL GUARDAR: " + error.message);
     }
 }
+
+// Inicializar reloj
+setInterval(() => { 
+    const r = document.getElementById('reloj_pro');
+    if(r) r.innerText = new Date().toLocaleTimeString('en-GB'); 
+}, 1000);
