@@ -5,85 +5,102 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GBI-SCANNER | Intelligence System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { background-color: #f1f5f9; color: #0f172a; font-family: 'Segoe UI', sans-serif; }
-        .blueprint-grid { background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 25px 25px; }
-        .glass-panel { background: white; border: 3px solid #0f172a; box-shadow: 8px 8px 0px #0f172a; }
-        .input-pro { border: 2px solid #0f172a; font-weight: 900; background: #fff; }
-        .hidden { display: none; }
-        .row-anim { animation: fadeIn 0.5s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="blueprint-grid min-h-screen p-2">
+<body class="bg-slate-100 min-h-screen p-2">
 
     <div id="lock-screen" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-200">
-        <div class="glass-panel p-8 rounded-xl text-center max-w-xs w-full">
+        <div class="bg-white p-8 rounded-xl border-4 border-slate-900 shadow-[8px_8px_0px_#0f172a] text-center max-w-xs w-full">
             <h2 class="text-xs font-black uppercase tracking-[0.3em] mb-6">GBI System Access</h2>
-            <input type="password" id="access_key" placeholder="TOKEN" class="w-full input-pro p-4 rounded text-center mb-4 text-xl">
+            <input type="password" id="access_key" placeholder="TOKEN" class="w-full border-2 border-slate-900 p-4 rounded text-center mb-4 text-xl font-bold">
             <button onclick="validarAcceso()" class="w-full bg-slate-900 text-white py-4 rounded font-black text-xs uppercase tracking-widest">Desbloquear</button>
         </div>
     </div>
 
-    <div id="main-system" class="hidden">
-        <nav class="glass-panel mb-6 p-4 flex justify-between items-center rounded-xl">
+    <div id="main-system" style="display: none;">
+        <nav class="bg-white border-4 border-slate-900 p-4 mb-4 flex justify-between items-center rounded-xl shadow-[4px_4px_0px_#0f172a]">
             <div class="flex items-center gap-2">
                 <span class="bg-amber-600 text-white px-2 py-1 rounded font-black">GBI</span>
-                <span class="text-[10px] font-bold leading-tight uppercase">Algorithmic Scanner<br>v2.0 PRO</span>
+                <span class="text-[10px] font-bold uppercase">Algorithmic Scanner v2.0</span>
             </div>
-            <div id="reloj_pro" class="text-lg font-mono font-black">00:00:00</div>
+            <div id="reloj_pro" class="text-lg font-mono font-black">--:--:--</div>
         </nav>
 
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-            <div class="lg:col-span-1 space-y-4">
-                <section class="glass-panel p-4 rounded-xl">
-                    <h3 class="text-[10px] font-black uppercase mb-3 border-b-2 border-slate-900">Ingreso de Datos</h3>
-                    <div class="space-y-3">
-                        <input type="text" id="num_input" placeholder="Nº" class="w-full input-pro p-4 rounded text-4xl text-center">
-                        <input type="date" id="fec_input" class="w-full input-pro p-2 rounded text-xs text-center">
-                        <select id="hor_input" class="w-full input-pro p-2 rounded text-xs uppercase">
-                            <option value="08:00">08:00 AM</option><option value="09:00">09:00 AM</option>
-                            <option value="10:00">10:00 AM</option><option value="11:00">11:00 AM</option>
-                            <option value="12:00">12:00 PM</option><option value="13:00">01:00 PM</option>
-                            <option value="14:00">02:00 PM</option><option value="15:00">03:00 PM</option>
-                            <option value="16:00">04:00 PM</option><option value="17:00">05:00 PM</option>
-                            <option value="18:00">06:00 PM</option><option value="19:00">07:00 PM</option>
-                        </select>
-                        <button onclick="registrarEnGBI()" class="w-full bg-slate-900 text-white py-4 rounded font-black uppercase text-xs">Guardar Movimiento</button>
-                    </div>
-                </section>
+        <div class="space-y-4">
+            <section class="bg-white border-4 border-slate-900 p-4 rounded-xl shadow-[4px_4px_0px_#0f172a]">
+                <input type="number" id="num_input" placeholder="Nº" class="w-full border-2 border-slate-900 p-4 rounded text-4xl text-center font-black mb-2">
+                <input type="date" id="fec_input" class="w-full border-2 border-slate-900 p-2 rounded mb-2 font-bold text-center">
+                <select id="hor_input" class="w-full border-2 border-slate-900 p-2 rounded mb-4 font-bold uppercase text-center">
+                    <option value="08:00:00">08:00 AM</option><option value="09:00:00">09:00 AM</option>
+                    <option value="10:00:00">10:00 AM</option><option value="11:00:00">11:00 AM</option>
+                    <option value="12:00:00">12:00 PM</option><option value="13:00:00">01:00 PM</option>
+                    <option value="14:00:00">02:00 PM</option><option value="15:00:00">03:00 PM</option>
+                    <option value="16:00:00">04:00 PM</option><option value="17:00:00">05:00 PM</option>
+                    <option value="18:00:00">06:00 PM</option><option value="19:00:00">07:00 PM</option>
+                </select>
+                <button onclick="registrarEnGBI()" class="w-full bg-slate-900 text-white py-4 rounded font-black uppercase text-xs">Guardar Movimiento</button>
+            </section>
 
-                <section class="glass-panel p-4 rounded-xl bg-amber-50">
-                    <h3 class="text-[10px] font-black uppercase mb-2">Filtro de Seguidilla</h3>
-                    <input type="text" id="search_input" onkeyup="filtrarMatriz()" placeholder="BUSCAR FAMILIA O FECHA..." class="w-full input-pro p-3 rounded text-[10px] uppercase">
-                </section>
-            </div>
-
-            <div class="lg:col-span-3">
-                <section class="glass-panel rounded-xl overflow-hidden min-h-[500px]">
-                    <div class="bg-slate-900 p-3 text-white flex justify-between text-[10px] font-black uppercase">
-                        <span>Historial de Movimientos Apr-2026</span>
-                        <span id="counter" class="text-amber-400">0 REGISTROS</span>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
-                            <thead class="bg-slate-200 text-[10px] font-black uppercase border-b-2 border-slate-900">
-                                <tr>
-                                    <th class="p-3">Fecha/Hora</th>
-                                    <th class="p-3">Animal / ADN</th>
-                                    <th class="p-3 text-center">Familia</th>
-                                    <th class="p-3 text-center">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabla-gbi" class="divide-y divide-slate-300 font-bold"></tbody>
-                        </table>
-                    </div>
-                </section>
-            </div>
+            <section class="bg-white border-4 border-slate-900 rounded-xl shadow-[4px_4px_0px_#0f172a] overflow-hidden">
+                <div class="bg-slate-900 p-2 text-white flex justify-between text-[10px] font-black uppercase">
+                    <span>Historial Abril 2026</span>
+                    <span id="counter" class="text-amber-400">0 REGISTROS</span>
+                </div>
+                <div class="max-h-[400px] overflow-y-auto">
+                    <table class="w-full text-xs font-bold text-left">
+                        <tbody id="tabla-gbi" class="divide-y-2 divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </section>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js"></script>
+    <script>
+        const DB_URL = "https://iyvbufxkgycqcmdeclsf.supabase.co";
+        const DB_KEY = "sb_publishable_Z3ze6gKwcKh91S9YBnacqA_3so-cPOC";
+        const _gbi = supabase.createClient(DB_URL, DB_KEY);
+
+        function validarAcceso() {
+            const key = document.getElementById('access_key').value;
+            if(key === "CARLOS2026") {
+                document.getElementById('lock-screen').style.display = 'none';
+                document.getElementById('main-system').style.display = 'block';
+                cargarMatriz();
+                iniciarReloj();
+            } else { alert("TOKEN INVÁLIDO"); }
+        }
+
+        function iniciarReloj() {
+            setInterval(() => {
+                document.getElementById('reloj_pro').innerText = new Date().toLocaleTimeString('en-GB');
+            }, 1000);
+        }
+
+        async function cargarMatriz() {
+            const { data, error } = await _gbi.from('gbi_resultados').select('*, gbi_especies(*)').order('fecha', {ascending: false}).order('hora', {ascending: false});
+            if (error) return console.error(error);
+            document.getElementById('counter').innerText = `${data.length} MOVIMIENTOS`;
+            document.getElementById('tabla-gbi').innerHTML = data.map(r => `
+                <tr>
+                    <td class="p-3 border-r-2 border-slate-50 text-[10px] uppercase">${r.fecha}<br>${r.hora.substring(0,5)}</td>
+                    <td class="p-3 text-lg font-black text-center ${r.animal_id == 75 ? 'bg-amber-100 text-amber-700' : ''}">${r.animal_id}</td>
+                    <td class="p-3 text-right"><span class="bg-slate-800 text-white px-2 py-1 rounded text-[8px] uppercase font-black">${r.gbi_especies ? r.gbi_especies.familia : '---'}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        async function registrarEnGBI() {
+            const num = document.getElementById('num_input').value;
+            const fec = document.getElementById('fec_input').value;
+            const hor = document.getElementById('hor_input').value;
+            if(!num || !fec) return alert("FALTAN DATOS");
+
+            const { error } = await _gbi.from('gbi_resultados').insert([{ animal_id: parseInt(num), fecha: fec, hora: hor }]);
+            if(!error) { 
+                document.getElementById('num_input').value = "";
+                cargarMatriz(); 
+            } else { alert("ERROR AL GUARDAR"); }
+        }
+    </script>
 </body>
 </html>
