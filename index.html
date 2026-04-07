@@ -1,52 +1,89 @@
-const DB_URL = "https://iyvbufxkgycqcmdeclsf.supabase.co";
-const DB_KEY = "sb_publishable_Z3ze6gKwcKh91S9YBnacqA_3so-cPOC";
-const _gbi = supabase.createClient(DB_URL, DB_KEY);
-const MASTER_KEY = "CARLOS2026";
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GBI-SCANNER | Intelligence System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #f1f5f9; color: #0f172a; font-family: 'Segoe UI', sans-serif; }
+        .blueprint-grid { background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 25px 25px; }
+        .glass-panel { background: white; border: 3px solid #0f172a; box-shadow: 8px 8px 0px #0f172a; }
+        .input-pro { border: 2px solid #0f172a; font-weight: 900; background: #fff; }
+        .hidden { display: none; }
+        .row-anim { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="blueprint-grid min-h-screen p-2">
 
-async function cargarMatriz() {
-    // Traemos TODO el archivo para el estudio comparativo semanal
-    const { data, error } = await _gbi
-        .from('gbi_resultados')
-        .select('*, gbi_especies(*)')
-        .order('fecha', {ascending: false})
-        .order('hora', {ascending: false});
+    <div id="lock-screen" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-200">
+        <div class="glass-panel p-8 rounded-xl text-center max-w-xs w-full">
+            <h2 class="text-xs font-black uppercase tracking-[0.3em] mb-6">GBI System Access</h2>
+            <input type="password" id="access_key" placeholder="TOKEN" class="w-full input-pro p-4 rounded text-center mb-4 text-xl">
+            <button onclick="validarAcceso()" class="w-full bg-slate-900 text-white py-4 rounded font-black text-xs uppercase tracking-widest">Desbloquear</button>
+        </div>
+    </div>
 
-    if (error) return console.error("ERROR DE ENLACE:", error);
-    
-    document.getElementById('counter').innerText = `${data.length} MOVIMIENTOS ARCHIVADOS`;
-    renderizarTabla(data);
-    analizarGuacharo(data); // Activamos el estudio especial del 75
-}
+    <div id="main-system" class="hidden">
+        <nav class="glass-panel mb-6 p-4 flex justify-between items-center rounded-xl">
+            <div class="flex items-center gap-2">
+                <span class="bg-amber-600 text-white px-2 py-1 rounded font-black">GBI</span>
+                <span class="text-[10px] font-bold leading-tight uppercase">Algorithmic Scanner<br>v2.0 PRO</span>
+            </div>
+            <div id="reloj_pro" class="text-lg font-mono font-black">00:00:00</div>
+        </nav>
 
-function analizarGuacharo(data) {
-    // Lógica para estudiar con qué animales sale el 75 (Guácharo)
-    const apariciones75 = data.filter(r => r.animal_id == 75);
-    console.log("Estudio Guácharo:", apariciones75.length, "veces detectado.");
-}
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+            <div class="lg:col-span-1 space-y-4">
+                <section class="glass-panel p-4 rounded-xl">
+                    <h3 class="text-[10px] font-black uppercase mb-3 border-b-2 border-slate-900">Ingreso de Datos</h3>
+                    <div class="space-y-3">
+                        <input type="text" id="num_input" placeholder="Nº" class="w-full input-pro p-4 rounded text-4xl text-center">
+                        <input type="date" id="fec_input" class="w-full input-pro p-2 rounded text-xs text-center">
+                        <select id="hor_input" class="w-full input-pro p-2 rounded text-xs uppercase">
+                            <option value="08:00">08:00 AM</option><option value="09:00">09:00 AM</option>
+                            <option value="10:00">10:00 AM</option><option value="11:00">11:00 AM</option>
+                            <option value="12:00">12:00 PM</option><option value="13:00">01:00 PM</option>
+                            <option value="14:00">02:00 PM</option><option value="15:00">03:00 PM</option>
+                            <option value="16:00">04:00 PM</option><option value="17:00">05:00 PM</option>
+                            <option value="18:00">06:00 PM</option><option value="19:00">07:00 PM</option>
+                        </select>
+                        <button onclick="registrarEnGBI()" class="w-full bg-slate-900 text-white py-4 rounded font-black uppercase text-xs">Guardar Movimiento</button>
+                    </div>
+                </section>
 
-function renderizarTabla(data) {
-    const tbody = document.getElementById('tabla-gbi');
-    tbody.innerHTML = (data || []).map(r => `
-        <tr class="hover:bg-amber-50 transition-all border-b border-slate-200">
-            <td class="p-3">
-                <div class="text-[9px] text-slate-400 font-bold">${new Date(r.fecha).toLocaleDateString('es-VE')}</div>
-                <div class="text-xs font-black">${r.hora.substring(0,5)}</div>
-            </td>
-            <td class="p-3">
-                <div class="flex items-center gap-2">
-                    <span class="text-xl font-black ${r.animal_id == 75 ? 'text-amber-600' : 'text-slate-900'}">${r.animal_id}</span>
-                    <span class="text-[8px] uppercase font-bold text-slate-400">${r.gbi_especies.nombre}</span>
-                </div>
-            </td>
-            <td class="p-3 text-center">
-                <span class="px-2 py-1 rounded text-[8px] text-white font-black" style="background: ${r.gbi_especies.color_hex}">
-                    ${r.gbi_especies.familia}
-                </span>
-            </td>
-            <td class="p-3 text-center">
-                <div class="text-[8px] font-black italic text-slate-400">${r.dia_semana || 'COMPLETADO'}</div>
-            </td>
-        </tr>
-    `).join('');
-}
-// ... (mantenemos el resto de funciones de registrar y validar igual)
+                <section class="glass-panel p-4 rounded-xl bg-amber-50">
+                    <h3 class="text-[10px] font-black uppercase mb-2">Filtro de Seguidilla</h3>
+                    <input type="text" id="search_input" onkeyup="filtrarMatriz()" placeholder="BUSCAR FAMILIA O FECHA..." class="w-full input-pro p-3 rounded text-[10px] uppercase">
+                </section>
+            </div>
+
+            <div class="lg:col-span-3">
+                <section class="glass-panel rounded-xl overflow-hidden min-h-[500px]">
+                    <div class="bg-slate-900 p-3 text-white flex justify-between text-[10px] font-black uppercase">
+                        <span>Historial de Movimientos Apr-2026</span>
+                        <span id="counter" class="text-amber-400">0 REGISTROS</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-200 text-[10px] font-black uppercase border-b-2 border-slate-900">
+                                <tr>
+                                    <th class="p-3">Fecha/Hora</th>
+                                    <th class="p-3">Animal / ADN</th>
+                                    <th class="p-3 text-center">Familia</th>
+                                    <th class="p-3 text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-gbi" class="divide-y divide-slate-300 font-bold"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+</body>
+</html>
