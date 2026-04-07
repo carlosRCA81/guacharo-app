@@ -3,92 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador CRCA - Guácharo Activo</title>
+    <title>Analizador CRCA - V-GATE NEXUS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #1e293b; color: #f8fafc; }
-        .card { background-color: #334155; border: 1px solid #475569; }
-        .btn-action { transition: all 0.3s; }
-        .btn-action:active { transform: scale(0.95); }
+        body { background-color: #1a2233; color: #e2e8f0; font-family: sans-serif; }
+        .card { background-color: #242f44; border: 1px solid #334155; border-radius: 12px; }
+        select, input { background-color: #0f172a !important; border: 1px solid #475569 !important; color: #fbbf24 !important; outline: none; }
+        input:focus { border-color: #3b82f6 !important; }
     </style>
 </head>
-<body class="p-4 font-sans">
+<body class="p-4">
 
-    <header class="mb-6 text-center">
-        <h1 class="text-2xl font-bold text-blue-400">ANALIZADOR CRCA</h1>
-        <p class="text-xs text-slate-400">Sistema de Predicción V-GATE NEXUS</p>
+    <header class="text-center mb-6">
+        <h1 class="text-2xl font-black text-blue-500 tracking-widest">ANALIZADOR CRCA</h1>
+        <p class="text-[10px] text-slate-500 uppercase font-bold">Inteligencia de Datos Blindada</p>
     </header>
 
-    <div class="card p-5 rounded-xl shadow-2xl mb-6">
-        <h2 class="text-lg font-semibold mb-4 border-b border-slate-500 pb-2">Registrar Sorteo</h2>
-        
-        <div class="grid grid-cols-2 gap-4">
+    <div class="card p-4 mb-4">
+        <label class="text-[10px] uppercase text-slate-400 font-bold mb-2 block">Fecha de los Datos (Día/Mes/Año)</label>
+        <input type="date" id="fecha_registro" class="w-full p-3 rounded font-bold text-lg">
+    </div>
+
+    <div class="card p-4 mb-4">
+        <div class="grid grid-cols-2 gap-3">
             <div>
-                <label class="block text-xs mb-1">Hora del Sorteo</label>
-                <select id="hora" class="w-full bg-slate-800 p-2 rounded border border-slate-600">
+                <label class="text-[10px] uppercase text-slate-400 font-bold">Sorteo</label>
+                <select id="hora" class="w-full p-3 rounded font-bold">
                     <option value="08:00">08:00 AM</option>
                     <option value="09:00">09:00 AM</option>
                     <option value="10:00">10:00 AM</option>
                     <option value="11:00">11:00 AM</option>
                     <option value="12:00">12:00 PM</option>
                     <option value="13:00">01:00 PM</option>
-                    <option value="17:00">05:00 PM</option> </select>
+                    <option value="14:00">02:00 PM</option>
+                    <option value="15:00">03:00 PM</option>
+                    <option value="16:00">04:00 PM</option>
+                    <option value="17:00">05:00 PM</option>
+                    <option value="18:00">06:00 PM</option>
+                    <option value="19:00">07:00 PM</option>
+                </select>
             </div>
             <div>
-                <label class="block text-xs mb-1">Número Ganador</label>
-                <input type="text" id="numero" placeholder="Ej: 00 o 75" 
-                       class="w-full bg-slate-800 p-2 rounded border border-slate-600 text-center font-bold text-yellow-400">
+                <label class="text-[10px] uppercase text-slate-400 font-bold">Número</label>
+                <input type="text" id="numero" placeholder="00-75" class="w-full p-3 rounded text-center text-xl font-black">
             </div>
         </div>
 
-        <div class="flex gap-2 mt-4">
-            <button onclick="guardarResultado()" class="btn-action flex-1 bg-green-600 hover:bg-green-500 p-3 rounded-lg font-bold shadow-lg">
-                ANOTAR
-            </button>
-            <button onclick="limpiarCampos()" class="btn-action bg-red-600 hover:bg-red-500 p-3 rounded-lg font-bold shadow-lg">
-                BORRAR
-            </button>
+        <div class="grid grid-cols-2 gap-3 mt-4">
+            <button onclick="guardarResultado()" class="bg-green-700 hover:bg-green-600 p-4 rounded-lg font-black text-white shadow-lg uppercase transition-all active:scale-95">Anotar</button>
+            <button onclick="limpiarCampos()" class="bg-red-700 hover:bg-red-600 p-4 rounded-lg font-black text-white shadow-lg uppercase transition-all active:scale-95">Borrar</button>
         </div>
     </div>
 
-    <div class="card p-4 rounded-xl border-l-4 border-yellow-500 mb-6">
-        <h3 class="text-sm font-bold text-yellow-500 uppercase">Radar del Guácharo (75)</h3>
-        <div id="status-75" class="text-xs mt-1">Esperando datos para analizar patrón...</div>
+    <div class="card p-4 border-l-4 border-yellow-500 mb-4">
+        <h3 class="text-xs font-bold text-yellow-500 uppercase tracking-tighter">Radar del Guácharo (75)</h3>
+        <p id="status-75" class="text-sm mt-1 text-slate-300 font-medium italic">Esperando sincronización de base de datos...</p>
     </div>
 
-    <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm card rounded-xl overflow-hidden">
-            <thead class="bg-slate-700 text-slate-300">
+    <div class="overflow-x-auto rounded-xl shadow-2xl">
+        <table class="w-full card text-left text-xs">
+            <thead class="bg-slate-800 text-slate-400 border-b border-slate-600">
                 <tr>
-                    <th class="p-3">Hora</th>
+                    <th class="p-3">FECHA</th>
+                    <th class="p-3">HORA</th>
                     <th class="p-3 text-center">Nº</th>
-                    <th class="p-3">Animal</th>
+                    <th class="p-3">ANIMAL</th>
                 </tr>
             </thead>
             <tbody id="tabla-resultados">
-                <tr class="border-t border-slate-600">
-                    <td class="p-3 text-slate-400" colspan="3 text-center">No hay registros hoy</td>
-                </tr>
-            </tbody>
+                </tbody>
         </table>
     </div>
 
-    <script>
-        // Aquí conectaremos con tu Supabase usando el link que ya tienes
-        function limpiarCampos() {
-            document.getElementById('numero').value = '';
-            console.log("Campos limpios");
-        }
-
-        async function guardarResultado() {
-            const num = document.getElementById('numero').value;
-            const hora = document.getElementById('hora').value;
-            
-            if(!num) return alert("Escribe un número");
-            
-            // Lógica para enviar a Supabase (Paso siguiente)
-            console.log(`Guardando: ${num} a las ${hora}`);
-        }
-    </script>
+    <script src="app.js"></script>
 </body>
 </html>
