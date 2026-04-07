@@ -6,80 +6,81 @@
     <title>GBI-SCANNER | Intelligence System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #f8fafc; color: #0f172a; font-family: 'Segoe UI', sans-serif; }
-        .blueprint-grid { background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 30px 30px; }
-        .glass-panel { background: white; border: 2.5px solid #1e293b; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-        .input-pro { border: 2.5px solid #334155; color: #000; font-weight: 900; background: #fff; }
+        body { background-color: #f1f5f9; color: #0f172a; font-family: 'Segoe UI', sans-serif; }
+        .blueprint-grid { background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 25px 25px; }
+        .glass-panel { background: white; border: 3px solid #0f172a; box-shadow: 8px 8px 0px #0f172a; }
+        .input-pro { border: 2px solid #0f172a; font-weight: 900; background: #fff; }
         .hidden { display: none; }
+        .row-anim { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="blueprint-grid min-h-screen">
+<body class="blueprint-grid min-h-screen p-2">
 
-    <div id="lock-screen" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-100">
-        <div class="glass-panel p-10 rounded-3xl text-center max-w-sm w-full mx-4 border-amber-600">
-            <div class="text-4xl mb-2">🦅</div>
-            <h2 class="text-[10px] font-black uppercase tracking-[0.4em] text-amber-700 mb-6">GBI System Access</h2>
-            <input type="password" id="access_key" placeholder="TOKEN" class="w-full input-pro p-4 rounded-xl text-center mb-4 text-2xl">
-            <button onclick="validarAcceso()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-amber-700">Entrar</button>
+    <div id="lock-screen" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-200">
+        <div class="glass-panel p-8 rounded-xl text-center max-w-xs w-full">
+            <h2 class="text-xs font-black uppercase tracking-[0.3em] mb-6">GBI System Access</h2>
+            <input type="password" id="access_key" placeholder="TOKEN" class="w-full input-pro p-4 rounded text-center mb-4 text-xl">
+            <button onclick="validarAcceso()" class="w-full bg-slate-900 text-white py-4 rounded font-black text-xs uppercase tracking-widest">Desbloquear</button>
         </div>
     </div>
 
     <div id="main-system" class="hidden">
-        <nav class="bg-white border-b-4 border-slate-900 p-4 flex justify-between items-center sticky top-0 z-50">
-            <div class="flex items-center gap-3">
-                <span class="bg-amber-600 text-white px-3 py-1 rounded font-black text-xl italic shadow-md">GBI</span>
-                <span class="text-[10px] font-bold text-slate-600 uppercase">Biometric Intelligence<br>v2.0 Production</span>
+        <nav class="glass-panel mb-6 p-4 flex justify-between items-center rounded-xl">
+            <div class="flex items-center gap-2">
+                <span class="bg-amber-600 text-white px-2 py-1 rounded font-black">GBI</span>
+                <span class="text-[10px] font-bold leading-tight uppercase">Algorithmic Scanner<br>v2.0 PRO</span>
             </div>
-            <div id="reloj_pro" class="text-xl font-mono font-black text-slate-800">00:00:00</div>
+            <div id="reloj_pro" class="text-lg font-mono font-black">00:00:00</div>
         </nav>
 
-        <main class="p-4 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-1 space-y-6">
-                <section class="glass-panel p-6 rounded-3xl">
-                    <h3 class="text-[10px] font-black text-amber-700 uppercase mb-4 tracking-widest underline">Registro de Sorteo</h3>
-                    <div class="space-y-4">
-                        <input type="text" id="num_input" placeholder="0 - 75" class="w-full input-pro p-6 rounded-2xl text-6xl text-center">
-                        <div class="grid grid-cols-2 gap-2">
-                            <input type="date" id="fec_input" class="input-pro p-3 rounded-xl text-[10px] text-center">
-                            <select id="hor_input" class="input-pro p-3 rounded-xl text-xs bg-white">
-                                <option value="08:00">08:00 AM</option><option value="09:00">09:00 AM</option>
-                                <option value="10:00">10:00 AM</option><option value="11:00">11:00 AM</option>
-                                <option value="12:00">12:00 PM</option><option value="13:00">01:00 PM</option>
-                                <option value="14:00">02:00 PM</option><option value="15:00">03:00 PM</option>
-                                <option value="16:00">04:00 PM</option><option value="17:00">05:00 PM</option>
-                                <option value="18:00">06:00 PM</option><option value="19:00">07:00 PM</option>
-                            </select>
-                        </div>
-                        <button onclick="registrarEnGBI()" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase text-xs shadow-lg hover:bg-amber-700 transition-all">Procesar y Guardar</button>
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+            <div class="lg:col-span-1 space-y-4">
+                <section class="glass-panel p-4 rounded-xl">
+                    <h3 class="text-[10px] font-black uppercase mb-3 border-b-2 border-slate-900">Ingreso de Datos</h3>
+                    <div class="space-y-3">
+                        <input type="text" id="num_input" placeholder="Nº" class="w-full input-pro p-4 rounded text-4xl text-center">
+                        <input type="date" id="fec_input" class="w-full input-pro p-2 rounded text-xs text-center">
+                        <select id="hor_input" class="w-full input-pro p-2 rounded text-xs uppercase">
+                            <option value="08:00">08:00 AM</option><option value="09:00">09:00 AM</option>
+                            <option value="10:00">10:00 AM</option><option value="11:00">11:00 AM</option>
+                            <option value="12:00">12:00 PM</option><option value="13:00">01:00 PM</option>
+                            <option value="14:00">02:00 PM</option><option value="15:00">03:00 PM</option>
+                            <option value="16:00">04:00 PM</option><option value="17:00">05:00 PM</option>
+                            <option value="18:00">06:00 PM</option><option value="19:00">07:00 PM</option>
+                        </select>
+                        <button onclick="registrarEnGBI()" class="w-full bg-slate-900 text-white py-4 rounded font-black uppercase text-xs">Guardar Movimiento</button>
                     </div>
                 </section>
 
-                <section class="glass-panel p-6 rounded-3xl bg-slate-50">
-                    <h3 class="text-[10px] font-black text-slate-500 uppercase mb-4 tracking-widest italic">Buscador de Patrones</h3>
-                    <input type="text" id="search_input" onkeyup="filtrarMatriz()" placeholder="BUSCAR ANIMAL O FAMILIA..." class="w-full input-pro p-3 rounded-xl text-[10px] uppercase">
+                <section class="glass-panel p-4 rounded-xl bg-amber-50">
+                    <h3 class="text-[10px] font-black uppercase mb-2">Filtro de Seguidilla</h3>
+                    <input type="text" id="search_input" onkeyup="filtrarMatriz()" placeholder="BUSCAR FAMILIA O FECHA..." class="w-full input-pro p-3 rounded text-[10px] uppercase">
                 </section>
             </div>
 
-            <div class="lg:col-span-2">
-                <section class="glass-panel rounded-3xl overflow-hidden min-h-[600px]">
-                    <div class="bg-slate-900 p-4 flex justify-between items-center text-white">
-                        <h3 class="text-[9px] font-black uppercase tracking-[0.2em] italic">Sucesión de Resultados 2026</h3>
-                        <span class="text-[9px] bg-green-500 text-slate-900 px-2 py-1 rounded font-bold">IA ONLINE</span>
+            <div class="lg:col-span-3">
+                <section class="glass-panel rounded-xl overflow-hidden min-h-[500px]">
+                    <div class="bg-slate-900 p-3 text-white flex justify-between text-[10px] font-black uppercase">
+                        <span>Historial de Movimientos Apr-2026</span>
+                        <span id="counter" class="text-amber-400">0 REGISTROS</span>
                     </div>
-                    <table class="w-full">
-                        <thead class="bg-slate-100 text-[10px] text-slate-600 font-black uppercase border-b-2 border-slate-200">
-                            <tr>
-                                <th class="p-4 text-left">Hora</th>
-                                <th class="p-4 text-left">Animal / ADN</th>
-                                <th class="p-4 text-center">Familia</th>
-                                <th class="p-4 text-center">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabla-gbi" class="font-bold text-sm"></tbody>
-                    </table>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-200 text-[10px] font-black uppercase border-b-2 border-slate-900">
+                                <tr>
+                                    <th class="p-3">Fecha/Hora</th>
+                                    <th class="p-3">Animal / ADN</th>
+                                    <th class="p-3 text-center">Familia</th>
+                                    <th class="p-3 text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-gbi" class="divide-y divide-slate-300 font-bold"></tbody>
+                        </table>
+                    </div>
                 </section>
             </div>
-        </main>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
