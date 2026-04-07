@@ -3,126 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GBI-SCANNER V2.0 | Biometric Intelligence</title>
+    <title>Analizador CRCA - Guácharo Activo</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        .gbi-card { border: 3px solid #0f172a; box-shadow: 5px 5px 0px #0f172a; }
-        .bg-grid { background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 20px 20px; }
+        body { background-color: #1e293b; color: #f8fafc; }
+        .card { background-color: #334155; border: 1px solid #475569; }
+        .btn-action { transition: all 0.3s; }
+        .btn-action:active { transform: scale(0.95); }
     </style>
 </head>
-<body class="bg-slate-100 bg-grid min-h-screen p-4 font-sans">
+<body class="p-4 font-sans">
 
-    <header class="bg-white gbi-card p-4 rounded-xl mb-6 flex justify-between items-center">
-        <div class="flex items-center gap-3">
-            <div class="bg-amber-600 text-white p-2 rounded font-black text-xs">GBI</div>
-            <div>
-                <h1 class="text-[10px] font-black uppercase tracking-widest text-slate-400">Biometric Intelligence</h1>
-                <p class="text-xs font-bold text-slate-900">V2.0 PRODUCTION</p>
-            </div>
-        </div>
-        <div id="clock" class="text-xl font-mono font-black">00:00:00</div>
+    <header class="mb-6 text-center">
+        <h1 class="text-2xl font-bold text-blue-400">ANALIZADOR CRCA</h1>
+        <p class="text-xs text-slate-400">Sistema de Predicción V-GATE NEXUS</p>
     </header>
 
-    <section class="bg-white gbi-card p-6 rounded-2xl mb-6">
-        <h2 class="text-[10px] font-black uppercase mb-4 text-amber-700 underline underline-offset-4">Registro de Sorteo</h2>
-        <div class="relative mb-6">
-            <input type="number" id="num_input" placeholder="Nº" class="w-full border-4 border-slate-900 p-8 rounded-2xl text-7xl text-center font-black focus:bg-slate-50 outline-none">
-            <label class="absolute top-2 left-4 text-[10px] font-black text-slate-300 uppercase italic">Número Animal</label>
-        </div>
+    <div class="card p-5 rounded-xl shadow-2xl mb-6">
+        <h2 class="text-lg font-semibold mb-4 border-b border-slate-500 pb-2">Registrar Sorteo</h2>
         
-        <div class="grid grid-cols-2 gap-4 mb-6">
-            <input type="date" id="fec_input" class="border-2 border-slate-900 p-4 rounded-xl font-bold bg-white">
-            <select id="hor_input" class="border-2 border-slate-900 p-4 rounded-xl font-bold bg-white uppercase text-sm">
-                <option value="08:00:00">08:00 AM</option><option value="09:00:00">09:00 AM</option>
-                <option value="10:00:00">10:00 AM</option><option value="11:00:00">11:00 AM</option>
-                <option value="12:00:00">12:00 PM</option><option value="01:00:00">01:00 PM</option>
-                <option value="04:00:00">04:00 PM</option><option value="07:00:00">07:00 PM</option>
-            </select>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-xs mb-1">Hora del Sorteo</label>
+                <select id="hora" class="w-full bg-slate-800 p-2 rounded border border-slate-600">
+                    <option value="08:00">08:00 AM</option>
+                    <option value="09:00">09:00 AM</option>
+                    <option value="10:00">10:00 AM</option>
+                    <option value="11:00">11:00 AM</option>
+                    <option value="12:00">12:00 PM</option>
+                    <option value="13:00">01:00 PM</option>
+                    <option value="17:00">05:00 PM</option> </select>
+            </div>
+            <div>
+                <label class="block text-xs mb-1">Número Ganador</label>
+                <input type="text" id="numero" placeholder="Ej: 00 o 75" 
+                       class="w-full bg-slate-800 p-2 rounded border border-slate-600 text-center font-bold text-yellow-400">
+            </div>
         </div>
-        <button onclick="registrar()" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-[0px_6px_0px_#475569] active:translate-y-1 active:shadow-none transition-all">Procesar y Guardar</button>
-    </section>
 
-    <section class="bg-white gbi-card rounded-2xl overflow-hidden">
-        <div class="bg-slate-900 p-4 flex justify-between items-center">
-            <span class="text-[10px] font-black text-white uppercase tracking-tighter">Sucesión de Resultados 2026</span>
-            <span class="bg-green-500 text-[8px] font-black px-2 py-1 rounded">IA ONLINE</span>
+        <div class="flex gap-2 mt-4">
+            <button onclick="guardarResultado()" class="btn-action flex-1 bg-green-600 hover:bg-green-500 p-3 rounded-lg font-bold shadow-lg">
+                ANOTAR
+            </button>
+            <button onclick="limpiarCampos()" class="btn-action bg-red-600 hover:bg-red-500 p-3 rounded-lg font-bold shadow-lg">
+                BORRAR
+            </button>
         </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left">
-                <thead class="bg-slate-50 border-b-2 border-slate-900 text-[10px] font-black uppercase">
-                    <tr>
-                        <th class="p-4">Hora</th>
-                        <th class="p-4">Animal</th>
-                        <th class="p-4">Familia</th>
-                        <th class="p-4 text-amber-600">Escoltaba a</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-gbi" class="font-bold text-xs uppercase divide-y-2 divide-slate-100">
-                    </tbody>
-            </table>
-        </div>
-        <div id="status-bar" class="p-3 bg-slate-50 text-[9px] font-black text-center text-slate-400 italic uppercase">Iniciando Escáner Algorítmico...</div>
-    </section>
+    </div>
+
+    <div class="card p-4 rounded-xl border-l-4 border-yellow-500 mb-6">
+        <h3 class="text-sm font-bold text-yellow-500 uppercase">Radar del Guácharo (75)</h3>
+        <div id="status-75" class="text-xs mt-1">Esperando datos para analizar patrón...</div>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm card rounded-xl overflow-hidden">
+            <thead class="bg-slate-700 text-slate-300">
+                <tr>
+                    <th class="p-3">Hora</th>
+                    <th class="p-3 text-center">Nº</th>
+                    <th class="p-3">Animal</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-resultados">
+                <tr class="border-t border-slate-600">
+                    <td class="p-3 text-slate-400" colspan="3 text-center">No hay registros hoy</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 
     <script>
-        const SB_URL = "https://iyvbufxkgycqcmdeclsf.supabase.co";
-        const SB_KEY = "sb_publishable_Z3ze6gKwcKh91S9YBnacqA_3so-cPOC";
-        const _gbi = supabase.createClient(SB_URL, SB_KEY);
-
-        // Reloj en tiempo real
-        setInterval(() => {
-            document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-GB');
-        }, 1000);
-
-        async function cargar() {
-            // Consultamos la VISTA de inteligencia que creamos en el SQL
-            const { data, error } = await _gbi.from('matriz_inteligencia').select('*').order('fecha', {ascending: false}).order('hora', {ascending: false});
-            
-            if(error) return console.error(error);
-            
-            document.getElementById('status-bar').innerText = `${data.length} Movimientos Analizados`;
-            const tbody = document.getElementById('tabla-gbi');
-            tbody.innerHTML = data.map(r => `
-                <tr class="${r.animal_id == 75 ? 'bg-amber-50' : ''}">
-                    <td class="p-4"><span class="text-slate-400 block text-[8px]">${r.fecha}</span>${r.hora.substring(0,5)}</td>
-                    <td class="p-4">
-                        <span class="text-2xl font-black ${r.animal_id == 75 ? 'text-amber-600' : 'text-slate-900'}">${r.animal_id}</span>
-                        <span class="block text-[8px] text-slate-400">${r.nombre}</span>
-                    </td>
-                    <td class="p-4">
-                        <span class="px-2 py-1 rounded-full text-[9px] text-white" style="background:${r.color_hex}">${r.familia}</span>
-                    </td>
-                    <td class="p-4 text-amber-600 italic text-[10px] font-black">
-                        ${r.salio_antes ? '→ ' + r.salio_antes : '--'}
-                    </td>
-                </tr>
-            `).join('');
+        // Aquí conectaremos con tu Supabase usando el link que ya tienes
+        function limpiarCampos() {
+            document.getElementById('numero').value = '';
+            console.log("Campos limpios");
         }
 
-        async function registrar() {
-            const num = document.getElementById('num_input').value;
-            const fec = document.getElementById('fec_input').value;
-            const hor = document.getElementById('hor_input').value;
-
-            if(!num || !fec) return alert("DATOS INCOMPLETOS");
-
-            const { error } = await _gbi.from('gbi_resultados').insert([{ 
-                animal_id: parseInt(num), 
-                fecha: fec, 
-                hora: hor 
-            }]);
-
-            if(!error) {
-                document.getElementById('num_input').value = "";
-                cargar();
-            } else {
-                alert("ERROR DE SINCRONIZACIÓN: " + error.message);
-            }
+        async function guardarResultado() {
+            const num = document.getElementById('numero').value;
+            const hora = document.getElementById('hora').value;
+            
+            if(!num) return alert("Escribe un número");
+            
+            // Lógica para enviar a Supabase (Paso siguiente)
+            console.log(`Guardando: ${num} a las ${hora}`);
         }
-
-        document.getElementById('fec_input').valueAsDate = new Date();
-        cargar();
     </script>
 </body>
 </html>
