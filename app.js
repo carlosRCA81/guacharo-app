@@ -1,87 +1,48 @@
-// Configuración de tu "Cerebro" (Sustituye con tus datos de Supabase)
-const SUPABASE_URL = 'TU_URL_DE_SUPABASE';
-const SUPABASE_KEY = 'TU_ANON_KEY';
+// 1. CONFIGURACIÓN DEL SISTEMA (Pon tus datos aquí)
+const CONFIG = {
+    URL: "https://TU_PROYECTO.supabase.co", // Búscalo en Settings > API
+    KEY: "TU_ANON_KEY_LARGA",              // Búscalo en Settings > API
+    CLAVE_MAESTRA: "1234"                  // Cambia esto por tu clave secreta
+};
 
-// Función para guardar el resultado y que el sistema analice
+// 2. FUNCIÓN DE BLOQUEO (Login)
+function verificarAcceso() {
+    const pass = prompt("SISTEMA BLINDADO CRCA - INGRESE CLAVE:");
+    if (pass === CONFIG.CLAVE_MAESTRA) {
+        alert("Acceso Concedido. Sistema V-GATE Online.");
+        consultarAlgoritmo(); // Carga la data
+    } else {
+        alert("Clave Incorrecta. Bloqueando acceso.");
+        document.body.innerHTML = "<h1 style='color:red; text-align:center; margin-top:50px;'>ACCESO DENEGADO</h1>";
+    }
+}
+
+// 3. FUNCIÓN PARA GUARDAR (Conexión Real)
 async function guardarResultado() {
     const num = document.getElementById('numero').value.trim();
     const horaSorteo = document.getElementById('hora').value;
 
-    if (!num) {
-        alert("Introduce un número o animal");
-        return;
-    }
+    if (!num) return alert("Indique el número ganador.");
 
-    // Insertar en la tabla que creamos juntos
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/resultados_crca`, {
-        method: 'POST',
-        headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify({
-            numero: num,
-            hora: horaSorteo,
-            // La fecha se pone sola por el DEFAULT que pusimos en SQL
-        })
-    });
+    try {
+        const response = await fetch(`${CONFIG.URL}/rest/v1/resultados_crca`, {
+            method: 'POST',
+            headers: {
+                'apikey': CONFIG.KEY,
+                'Authorization': `Bearer ${CONFIG.KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ numero: num, hora: horaSorteo })
+        });
 
-    if (response.ok) {
-        alert("✅ Registrado en el Analizador CRCA");
-        document.getElementById('numero').value = ''; // Limpia el campo
-        consultarAlgoritmo(); // Actualiza la tabla y el radar
-    } else {
-        const error = await response.json();
-        alert("❌ Error: " + error.message);
-    }
-}
-
-// Función para consultar la VISTA que creamos (El Algoritmo)
-async function consultarAlgoritmo() {
-    // Consultamos la vista_analisis_crca que une número con animal y frecuencia
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/vista_analisis_crca?order=id.desc&limit=10`, {
-        headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`
+        if (response.ok) {
+            document.getElementById('numero').value = '';
+            consultarAlgoritmo(); // Refresca la tabla automáticamente
         }
-    });
-
-    const datos = await response.json();
-    actualizarInterfaz(datos);
-}
-
-function actualizarInterfaz(datos) {
-    const tabla = document.getElementById('tabla-resultados');
-    const radar = document.getElementById('status-75');
-    tabla.innerHTML = '';
-
-    datos.forEach(row => {
-        // Lógica de resaltado automático:
-        // Si el animal es el 75 (Guácharo), resaltamos con fuego
-        const esGuacharo = row.numero === '75';
-        const filaClase = esGuacharo ? 'bg-yellow-900 text-yellow-200 font-bold' : 'border-t border-slate-700';
-
-        tabla.innerHTML += `
-            <tr class="${filaClase}">
-                <td class="p-3">${row.hora}</td>
-                <td class="p-3 text-center">${row.numero}</td>
-                <td class="p-3">${row.animal} <span class="text-[10px] opacity-50">(${row.elemento})</span></td>
-            </tr>
-        `;
-    });
-
-    // Radar del 75: Si no ha salido en los últimos 10 sorteos, dar alerta
-    const salioReciente = datos.some(d => d.numero === '75');
-    if (!salioReciente) {
-        radar.innerHTML = "⚠️ ALERTA: El Guácharo (75) tiene alta probabilidad de salida.";
-        radar.className = "text-xs mt-1 text-red-400 font-bold animate-pulse";
-    } else {
-        radar.innerHTML = "El Guácharo (75) salió recientemente. Analizando nuevo ciclo.";
-        radar.className = "text-xs mt-1 text-green-400";
+    } catch (err) {
+        console.error("Error de conexión:", err);
     }
 }
 
-// Cargar datos al abrir la web
-consultarAlgoritmo();
+// Inicia el sistema pidiendo clave
+window.onload = verificarAcceso;
