@@ -1,81 +1,109 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador CRCA - V-GATE NEXUS</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { background-color: #1a2233; color: #e2e8f0; font-family: sans-serif; }
-        .card { background-color: #242f44; border: 1px solid #334155; border-radius: 12px; }
-        select, input { background-color: #0f172a !important; border: 1px solid #475569 !important; color: #fbbf24 !important; }
-    </style>
-</head>
-<body class="p-4">
+// ==========================================
+// CONFIGURACIÓN ANALIZADOR CRCA
+// ==========================================
+const CONFIG = {
+    URL: "https://iyvbufxkgycqcmdeclsf.supabase.co",
+    KEY: "EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5dmJ1ZnhrZ3ljcWNtZGVjbHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzOTE5NTMsImV4cCI6MjA4OTk2Nzk1M30.Rt6XfnsvWu1Efwb3-fVOyHCmz7aCJXHpIJxaxGzuThw",
+    CLAVE: "2026" 
+};
 
-    <header class="text-center mb-6">
-        <h1 class="text-2xl font-black text-blue-500 tracking-widest">ANALIZADOR CRCA</h1>
-        <p class="text-[10px] text-slate-500 uppercase">Inteligencia de Datos Blindada</p>
-    </header>
+// ==========================================
+// ACCESO BLINDADO
+// ==========================================
+function login() {
+    const acceso = prompt("SISTEMA CRCA BLINDADO - CLAVE:");
+    if (acceso === CONFIG.CLAVE) {
+        // Establecer fecha de hoy por defecto en el input
+        const hoy = new Date().toISOString().split('T')[0];
+        document.getElementById('fecha_registro').value = hoy;
+        consultarAlgoritmo();
+    } else {
+        document.body.innerHTML = "<div style='background:black; color:red; height:100vh; display:flex; align-items:center; justify-content:center; font-family:sans-serif;'><h1>ACCESO DENEGADO</h1></div>";
+    }
+}
 
-    <div class="card p-4 mb-4">
-        <h2 class="text-xs font-bold text-slate-400 mb-3 uppercase">Configuración de Fecha</h2>
-        <div class="grid grid-cols-3 gap-2">
-            <input type="date" id="fecha_registro" class="col-span-3 p-3 rounded font-bold">
-        </div>
-    </div>
+// ==========================================
+// GUARDAR EN SUPABASE
+// ==========================================
+async function guardarResultado() {
+    const fecha = document.getElementById('fecha_registro').value;
+    const hora = document.getElementById('hora').value;
+    const numero = document.getElementById('numero').value.trim();
 
-    <div class="card p-4 mb-4">
-        <div class="grid grid-cols-2 gap-3">
-            <div>
-                <label class="text-[10px] uppercase text-slate-400">Sorteo Hora</label>
-                <select id="hora" class="w-full p-3 rounded font-bold">
-                    <option value="08:00">08:00 AM</option>
-                    <option value="09:00">09:00 AM</option>
-                    <option value="10:00">10:00 AM</option>
-                    <option value="11:00">11:00 AM</option>
-                    <option value="12:00">12:00 PM</option>
-                    <option value="13:00">01:00 PM</option>
-                    <option value="14:00">02:00 PM</option>
-                    <option value="15:00">03:00 PM</option>
-                    <option value="16:00">04:00 PM</option>
-                    <option value="17:00">05:00 PM</option>
-                    <option value="18:00">06:00 PM</option>
-                    <option value="19:00">07:00 PM</option>
-                </select>
-            </div>
-            <div>
-                <label class="text-[10px] uppercase text-slate-400">Número</label>
-                <input type="text" id="numero" placeholder="00-75" class="w-full p-3 rounded text-center text-xl font-black">
-            </div>
-        </div>
+    if (!numero || !fecha) return alert("Error: Falta Fecha o Número");
 
-        <div class="grid grid-cols-2 gap-3 mt-4">
-            <button onclick="guardarResultado()" class="bg-green-700 hover:bg-green-600 p-4 rounded-lg font-black text-white shadow-lg uppercase">Anotar</button>
-            <button onclick="limpiarCampos()" class="bg-red-700 hover:bg-red-600 p-4 rounded-lg font-black text-white shadow-lg uppercase">Borrar</button>
-        </div>
-    </div>
+    try {
+        const res = await fetch(`${CONFIG.URL}/rest/v1/resultados_crca`, {
+            method: 'POST',
+            headers: {
+                'apikey': CONFIG.KEY,
+                'Authorization': `Bearer ${CONFIG.KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({ fecha: fecha, hora: hora, numero: numero })
+        });
 
-    <div id="radar-container" class="card p-4 border-l-4 border-yellow-500 mb-4">
-        <h3 class="text-xs font-bold text-yellow-500 uppercase">Radar del Guácharo (75)</h3>
-        <p id="status-75" class="text-sm mt-1 text-slate-300">Iniciando escaneo de algoritmos...</p>
-    </div>
+        if (res.ok) {
+            document.getElementById('numero').value = '';
+            consultarAlgoritmo();
+        } else {
+            alert("Error al registrar");
+        }
+    } catch (e) {
+        alert("Falla de Conexión");
+    }
+}
 
-    <div class="overflow-x-auto shadow-xl">
-        <table class="w-full card text-left text-xs">
-            <thead class="bg-slate-800 text-slate-400">
-                <tr>
-                    <th class="p-3">FECHA</th>
-                    <th class="p-3">HORA</th>
-                    <th class="p-3 text-center">Nº</th>
-                    <th class="p-3">ANIMAL</th>
-                </tr>
-            </thead>
-            <tbody id="tabla-resultados">
-                </tbody>
-        </table>
-    </div>
+// ==========================================
+// CONSULTAR ALGORITMO Y RESALTAR
+// ==========================================
+async function consultarAlgoritmo() {
+    try {
+        const res = await fetch(`${CONFIG.URL}/rest/v1/vista_analisis_crca?order=fecha.desc,hora.desc&limit=20`, {
+            headers: { 'apikey': CONFIG.KEY, 'Authorization': `Bearer ${CONFIG.KEY}` }
+        });
+        const datos = await res.json();
+        renderizarTabla(datos);
+        ejecutarRadar(datos);
+    } catch (e) { console.log(e); }
+}
 
-    <script src="app.js"></script>
-</body>
-</html>
+function renderizarTabla(datos) {
+    const tbody = document.getElementById('tabla-resultados');
+    tbody.innerHTML = '';
+    
+    datos.forEach(row => {
+        const resaltado = row.numero === '75' ? 'bg-yellow-900/40 text-yellow-400 font-bold' : 'border-t border-slate-700';
+        tbody.innerHTML += `
+            <tr class="${resaltado}">
+                <td class="p-3">${row.fecha.split('-').reverse().join('/')}</td>
+                <td class="p-3">${row.hora.substring(0,5)}</td>
+                <td class="p-3 text-center text-lg">${row.numero}</td>
+                <td class="p-3">${row.animal} <span class="text-[9px] opacity-40 uppercase">[${row.elemento}]</span></td>
+            </tr>
+        `;
+    });
+}
+
+function ejecutarRadar(datos) {
+    const radar = document.getElementById('status-75');
+    const ultimaVez = datos.findIndex(d => d.numero === '75');
+
+    if (ultimaVez === -1) {
+        radar.innerHTML = "⚠️ ALERTA: Guácharo (75) no detectado en el ciclo actual. ALTA PROBABILIDAD.";
+        radar.className = "text-sm mt-1 text-red-400 font-black animate-pulse";
+    } else if (ultimaVez === 0) {
+        radar.innerHTML = "OBJETIVO CAPTURADO: 75 salió en el último sorteo. Reiniciando ciclo.";
+        radar.className = "text-sm mt-1 text-green-400 font-bold";
+    } else {
+        radar.innerHTML = `ANÁLISIS: El 75 tiene ${ultimaVez} sorteos sin salir. Monitoreando vecinos...`;
+        radar.className = "text-sm mt-1 text-yellow-500";
+    }
+}
+
+function limpiarCampos() {
+    document.getElementById('numero').value = '';
+}
+
+window.onload = login;
