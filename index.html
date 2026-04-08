@@ -3,123 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador CRCA</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Guácharo Intelligence Suite</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .bg-guacharo { background-color: #0f172a; }
+        .card { background: #1e293b; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid #334155; }
+        input, select { background: #0f172a !important; border: 1px solid #475569 !important; color: white !important; }
+        .btn-tab { transition: all 0.3s; border-bottom: 3px solid transparent; }
+        .btn-tab.active { border-color: #eab308; color: #eab308; }
+    </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen">
-    <header class="bg-slate-800 p-4 border-b border-amber-600 flex justify-between items-center shadow-2xl">
-        <h1 class="text-xl font-bold text-amber-500 uppercase">Analizador CRCA</h1>
-        <div id="status_pill" class="px-3 py-1 rounded-full bg-red-900/30 border border-red-500 text-red-500 text-[10px] font-mono font-bold animate-pulse">● DESCONECTADO</div>
-    </header>
+<body class="bg-guacharo text-slate-200 font-sans min-h-screen">
 
-    <main class="container mx-auto p-4 space-y-6">
-        <section class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
-            <h2 class="text-amber-500 font-bold mb-4 text-xs uppercase tracking-widest italic">📥 Registro de Datos</h2>
-            <form id="formCaptura" class="grid gap-4">
-                <input type="date" id="fecha" required class="bg-slate-700 p-4 rounded-xl text-white border border-slate-600 outline-none focus:border-amber-500 transition-all">
-                <select id="hora" required class="bg-slate-700 p-4 rounded-xl text-white border border-slate-600 outline-none focus:border-amber-500 transition-all">
-                    <option value="08:00 AM">08:00 AM</option><option value="09:00 AM">09:00 AM</option>
-                    <option value="10:00 AM">10:00 AM</option><option value="11:00 AM">11:00 AM</option>
-                    <option value="12:00 PM">12:00 PM</option><option value="01:00 PM">01:00 PM</option>
-                    <option value="04:00 PM">04:00 PM</option><option value="05:00 PM">05:00 PM</option>
-                    <option value="06:00 PM">06:00 PM</option><option value="07:00 PM">07:00 PM</option>
-                </select>
-                <input type="number" id="numero" placeholder="Escribe el Número" required class="bg-slate-700 p-4 rounded-xl text-white text-2xl font-black border border-slate-600 outline-none focus:border-amber-500 transition-all">
-                <button type="submit" id="btnGuardar" class="bg-amber-600 hover:bg-amber-500 text-white font-black py-5 rounded-xl uppercase shadow-lg shadow-amber-900/20 active:scale-95 transition-all">GUARDAR RESULTADO</button>
-            </form>
-        </section>
+    <nav class="bg-slate-900 p-4 sticky top-0 z-50 shadow-2xl border-b border-slate-800">
+        <h1 class="text-xl font-black text-yellow-500 text-center tracking-tighter italic">GUÁCHARO NEXUS 2026</h1>
+        <div class="flex justify-around mt-4 text-[10px] font-bold uppercase tracking-widest">
+            <button onclick="showTab('registro', this)" class="btn-tab active pb-1">Registro</button>
+            <button onclick="showTab('analisis75', this)" class="btn-tab pb-1 text-slate-400">Análisis 75</button>
+            <button onclick="showTab('stats', this)" class="btn-tab pb-1 text-slate-400">Estadísticas</button>
+        </div>
+    </nav>
 
-        <section class="bg-slate-800 p-6 rounded-2xl border border-amber-500/30">
-            <h2 class="text-center text-amber-500 font-black mb-4 italic tracking-widest text-xs">📡 RADAR GUÁCHARO (75)</h2>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 text-center">
-                    <p class="text-[9px] text-slate-500 font-bold uppercase mb-1">Antes</p>
-                    <div id="antes75" class="text-2xl font-black text-amber-400">--</div>
-                </div>
-                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 text-center">
-                    <p class="text-[9px] text-slate-500 font-bold uppercase mb-1">Después</p>
-                    <div id="despues75" class="text-2xl font-black text-amber-400">--</div>
-                </div>
+    <main class="p-4 max-w-md mx-auto">
+        
+        <section id="registro" class="tab-content active">
+            <div class="card">
+                <h2 class="text-sm font-bold mb-4 text-yellow-500 flex items-center">
+                    <span class="mr-2">📝</span> NUEVA JUGADA DEL DÍA
+                </h2>
+                <form id="formRegistro" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[10px] uppercase text-slate-400 font-bold">Número</label>
+                            <input type="number" id="num" min="0" max="75" placeholder="0-75" class="w-full p-3 rounded-lg outline-none focus:ring-2 focus:ring-yellow-500" required>
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase text-slate-400 font-bold">Animal</label>
+                            <input type="text" id="nombre" placeholder="Ej: Águila" class="w-full p-3 rounded-lg outline-none uppercase" required>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[10px] uppercase text-slate-400 font-bold">Fecha</label>
+                            <input type="date" id="fecha" class="w-full p-3 rounded-lg text-sm">
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase text-slate-400 font-bold">Hora Sorteo</label>
+                            <select id="hora" class="w-full p-3 rounded-lg text-sm">
+                                <option value="08:00:00">08:00 AM</option>
+                                <option value="09:00:00">09:00 AM</option>
+                                <option value="10:00:00">10:00 AM</option>
+                                <option value="11:00:00">11:00 AM</option>
+                                <option value="12:00:00">12:00 PM</option>
+                                <option value="13:00:00">01:00 PM</option>
+                                <option value="14:00:00">02:00 PM</option>
+                                <option value="15:00:00">03:00 PM</option>
+                                <option value="16:00:00">04:00 PM</option>
+                                <option value="17:00:00">05:00 PM</option>
+                                <option value="18:00:00">06:00 PM</option>
+                                <option value="19:00:00">07:00 PM</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btnGuardar" class="w-full bg-yellow-600 hover:bg-yellow-500 py-4 rounded-xl font-black text-black shadow-lg shadow-yellow-900/20 active:scale-95 transition-all">
+                        GUARDAR EN BASE DE DATOS
+                    </button>
+                </form>
             </div>
         </section>
 
-        <section class="bg-slate-800 rounded-2xl overflow-hidden border border-slate-700">
-            <div class="p-4 bg-slate-700/50 font-bold text-[10px] text-slate-300 uppercase italic tracking-wider">📊 Últimos Registros</div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-slate-900 text-slate-500 text-[10px]">
-                        <tr><th class="p-4 font-bold">HORA</th><th class="p-4 text-center">N°</th><th class="p-4">ANIMAL</th></tr>
+        <section id="analisis75" class="tab-content">
+            <h2 class="text-sm font-bold mb-4 text-blue-400">🔍 HISTORIAL DE PRECURSORES (75)</h2>
+            <div id="listaPrecursores" class="space-y-3">
+                </div>
+        </section>
+
+        <section id="stats" class="tab-content">
+            <h2 class="text-sm font-bold mb-4 text-green-400">📊 DASHBOARD ALGORÍTMICO</h2>
+            <div class="card p-0 overflow-hidden">
+                <table class="w-full text-xs text-left">
+                    <thead class="bg-slate-800 text-slate-400 font-bold uppercase">
+                        <tr>
+                            <th class="p-3">Animal</th>
+                            <th class="p-3 text-center">Hits</th>
+                            <th class="p-3 text-center">Retraso</th>
+                        </tr>
                     </thead>
-                    <tbody id="cuerpoTabla" class="divide-y divide-slate-700/50"></tbody>
+                    <tbody id="tablaStats" class="divide-y divide-slate-700">
+                        </tbody>
                 </table>
             </div>
         </section>
     </main>
 
     <script>
-        const U = "https://iyvbufxkgycqcmdeclsf.supabase.co"; 
-        const K = "EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5dmJ1ZnhrZ3ljcWNtZGVjbHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzOTE5NTMsImV4cCI6MjA4OTk2Nzk1M30.Rt6XfnsvWu1Efwb3-fVOyHCmz7aCJXHpIJxaxGzuThw";
+        // CONFIGURACIÓN DE CONEXIÓN
+        const SUPABASE_URL = "https://iyvbufxkgycqmdeclslf.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5dmJ1ZnhrZ3ljcWNtZGVjbHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzOTE5NTMsImV4cCI6MjA4OTk2Nzk1M30.Rt6XfnsvWu1Efwb3-fVOyHCmz7aCJXHpIJxaxGzuThw";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const sb = supabase.createClient(U, K.trim()); // El trim() elimina espacios accidentales
+        // NAVEGACIÓN ENTRE VENTANAS
+        function showTab(id, el) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.btn-tab').forEach(b => {
+                b.classList.remove('active', 'text-yellow-500');
+                b.classList.add('text-slate-400');
+            });
+            
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active', 'text-yellow-500');
+            el.classList.remove('text-slate-400');
 
-        async function refrescar() {
-            try {
-                const { data, error } = await sb.from('estudio_algoritmo').select('*').order('id', { ascending: false }).limit(10);
-                if (error) throw error;
-
-                const pill = document.getElementById('status_pill');
-                pill.innerText = "● SISTEMA ONLINE";
-                pill.className = "px-3 py-1 rounded-full bg-green-900/30 border border-green-500 text-green-500 text-[10px] font-mono font-bold animate-none";
-
-                document.getElementById('cuerpoTabla').innerHTML = data.map(r => `
-                    <tr class="hover:bg-slate-700/20 transition-all">
-                        <td class="p-4 text-xs font-mono text-slate-400">${r.hora}</td>
-                        <td class="p-4 text-center text-amber-500 font-black text-xl">${r.numero}</td>
-                        <td class="p-4 text-xs font-bold uppercase tracking-widest">${r.animal}</td>
-                    </tr>`).join('');
-            } catch (e) {
-                console.error(e);
-                const pill = document.getElementById('status_pill');
-                pill.innerText = "● ERROR API";
-                pill.className = "px-3 py-1 rounded-full bg-red-900/30 border border-red-500 text-red-500 text-[10px] font-mono font-bold";
-            }
+            if(id === 'analisis75') cargarPrecursores();
+            if(id === 'stats') cargarStats();
         }
 
-        const obtenerAnimal = (num) => {
-            const n = num.toString().padStart(2, '0');
-            const animales = {"00":"BALLENA","01":"CARNERO","02":"TORO","03":"CIEMPIÉS","04":"ALACRÁN","05":"LEÓN","06":"RANA","07":"PERICO","08":"RATÓN","09":"ÁGUILA","10":"TIGRE","11":"GATO","12":"CABALLO","13":"MONO","14":"PALOMA","15":"ZORRO","16":"OSO","17":"PAVO","18":"BURRO","19":"CHIVO","20":"COCHINO","21":"GALLO","22":"CAMELLO","23":"CEBRA","24":"IGUANA","25":"GALLINA","26":"VACA","27":"PERRO","28":"ZAMURO","29":"ELEFANTE","30":"CAIMÁN","31":"LAPA","32":"ARDILLA","33":"PESCADO","34":"VENADO","35":"JIRAFA","36":"CULEBRA","75":"GUÁCHARO"};
-            return animales[n] || "ANIMAL " + n;
-        };
+        // AUTO-FECHA
+        document.getElementById('fecha').valueAsDate = new Date();
 
-        document.getElementById('formCaptura').addEventListener('submit', async (e) => {
+        // GUARDAR RESULTADO
+        document.getElementById('formRegistro').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnGuardar');
             btn.disabled = true;
-            btn.innerText = "REGISTRANDO...";
+            btn.innerText = "PROCESANDO...";
 
-            const num = document.getElementById('numero').value.padStart(2, '0');
-            const { error } = await sb.from('estudio_algoritmo').insert([{ 
-                fecha: document.getElementById('fecha').value, 
-                hora: document.getElementById('hora').value, 
-                numero: num,
-                animal: obtenerAnimal(num)
+            const { error } = await _supabase.from('resultados_guacharo').insert([{
+                numero: document.getElementById('num').value,
+                nombre: document.getElementById('nombre').value.toUpperCase(),
+                fecha: document.getElementById('fecha').value,
+                hora: document.getElementById('hora').value
             }]);
 
             if (error) {
-                alert("Error crítico de Supabase: " + error.message);
+                alert("Error al guardar: " + error.message);
             } else {
-                document.getElementById('numero').value = '';
-                await refrescar();
+                alert("✓ Resultado guardado con éxito.");
+                document.getElementById('num').value = "";
+                document.getElementById('nombre').value = "";
             }
             btn.disabled = false;
-            btn.innerText = "GUARDAR RESULTADO";
-        });
-
-        window.onload = () => {
-            document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
-            refrescar();
+            btn.innerText = "GUARDAR EN BASE DE DATOS";
         };
+
+        // CARGAR ANÁLISIS DE PRECURSORES
+        async function cargarPrecursores() {
+            const container = document.getElementById('listaPrecursores');
+            container.innerHTML = '<p class="text-center text-slate-500 py-10">Analizando patrones...</p>';
+            
+            const { data } = await _supabase.from('analisis_precursores_75').select('*');
+            
+            if(data && data.length > 0) {
+                container.innerHTML = data.map(item => `
+                    <div class="card border-l-4 ${item.numero_precursor == 75 ? 'border-yellow-500' : 'border-blue-500'} bg-slate-800/50">
+                        <div class="flex justify-between items-center">
+                            <span class="text-lg font-black text-white">#${item.numero_precursor}</span>
+                            <span class="text-xs font-bold text-blue-400 uppercase">${item.nombre_precursor}</span>
+                            <span class="text-[10px] bg-slate-900 px-2 py-1 rounded text-slate-400">${item.hora_precursor}</span>
+                        </div>
+                        <p class="text-[9px] text-slate-500 mt-2 italic font-medium">Salió previo al 75 del día ${item.fecha_guacharo}</p>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<p class="text-center text-slate-500 py-10">No hay registros suficientes para detectar patrones todavía.</p>';
+            }
+        }
+
+        // CARGAR DASHBOARD TIPO EXCEL
+        async function cargarStats() {
+            const tbody = document.getElementById('tablaStats');
+            const { data } = await _supabase.from('dashboard_estadistico').select('*');
+            
+            if(data) {
+                tbody.innerHTML = data.map(item => `
+                    <tr class="hover:bg-slate-800 transition-colors">
+                        <td class="p-3">
+                            <div class="font-black text-white">#${item.numero}</div>
+                            <div class="text-[9px] text-slate-500 uppercase">${item.nombre}</div>
+                        </td>
+                        <td class="p-3 text-center text-green-400 font-bold">${item.total_salidas}</td>
+                        <td class="p-3 text-center">
+                            <span class="px-2 py-1 rounded text-[10px] ${item.dias_en_retardo > 3 ? 'bg-red-900/30 text-red-400' : 'bg-slate-900 text-slate-400'}">
+                                ${item.dias_en_retardo} días
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
     </script>
 </body>
 </html>
