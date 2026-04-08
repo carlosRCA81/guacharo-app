@@ -18,7 +18,7 @@
 
     <header class="p-4 bg-slate-900 border-b border-slate-800 text-center sticky top-0 z-50">
         <h1 class="text-blue-500 font-black tracking-tighter text-xl">ANALIZADOR CRCA</h1>
-        <p class="text-[9px] text-slate-500 font-bold">ESTUDIO DE ALGORITMOS - GUÁCHARO ACTIVO</p>
+        <p class="text-[9px] text-slate-500 font-bold uppercase">Software de Estudio de Algoritmos - Guácharo Activo</p>
     </header>
 
     <main class="p-4 max-w-md mx-auto">
@@ -48,37 +48,29 @@
                     </select>
                 </div>
                 <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-800">
-                    <label class="text-[10px] font-bold text-slate-500 uppercase">Número</label>
-                    <input type="text" id="numero" placeholder="00-75" class="w-full p-3 rounded-lg mt-1 text-center font-black text-xl">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase">Número (00-75)</label>
+                    <input type="text" id="numero" placeholder="--" class="w-full p-3 rounded-lg mt-1 text-center font-black text-xl">
                 </div>
             </div>
 
-            <button onclick="guardarDato()" class="w-full bg-green-600 hover:bg-green-500 p-4 rounded-xl font-black text-white shadow-lg uppercase tracking-widest">Anotar Movimiento</button>
+            <button onclick="guardarDato()" class="w-full bg-green-700 hover:bg-green-600 p-4 rounded-xl font-black text-white shadow-lg uppercase tracking-widest">Anotar Jugada</button>
         </section>
 
         <section id="estudio" class="tab-content space-y-4">
-            <div class="bg-blue-950/20 border border-blue-900 p-4 rounded-xl">
-                <h3 class="text-blue-400 font-bold text-xs uppercase mb-2">Análisis de Salida</h3>
-                <div id="analisis-movimiento" class="text-[11px] space-y-1 text-slate-400">
-                    Cargando patrones detectados...
-                </div>
-            </div>
             <div class="bg-slate-900/50 rounded-xl border border-slate-800 overflow-hidden">
+                <h3 class="p-3 bg-slate-800 text-[10px] font-bold uppercase text-slate-400">Historial de Hoy</h3>
                 <table class="w-full text-left">
-                    <thead class="bg-slate-800 text-[10px] uppercase text-slate-400">
-                        <tr><th class="p-3">Hora</th><th class="p-3">N°</th><th class="p-3">Animal</th></tr>
-                    </thead>
                     <tbody id="lista-historial" class="text-sm"></tbody>
                 </table>
             </div>
         </section>
 
         <section id="radar" class="tab-content space-y-4">
-            <div class="p-6 border-2 border-dashed border-yellow-600/30 rounded-2xl text-center bg-yellow-900/10">
-                <h2 class="text-yellow-500 font-black text-2xl">OBJETIVO 75</h2>
-                <p class="text-[10px] text-yellow-600 uppercase font-bold tracking-widest">Estudio de Máxima Ganancia</p>
+            <div class="p-4 bg-yellow-900/20 border border-yellow-600/30 rounded-xl">
+                <h2 class="text-yellow-500 font-black text-lg uppercase">Objetivo Guácharo (75)</h2>
+                <p class="text-[10px] text-slate-400 uppercase">Análisis de Seguidillas y Patrones</p>
             </div>
-            <div id="estudio-75" class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-4">
+            <div id="estudio-75" class="space-y-3">
                 </div>
         </section>
 
@@ -89,13 +81,109 @@
             <i class="fas fa-edit text-lg mb-1"></i>Anotar
         </button>
         <button onclick="switchTab('estudio')" class="flex flex-col items-center p-2 tab-btn" id="btn-estudio">
-            <i class="fas fa-microscope text-lg mb-1"></i>Estudio
+            <i class="fas fa-chart-line text-lg mb-1"></i>Estudio
         </button>
         <button onclick="switchTab('radar')" class="flex flex-col items-center p-2 tab-btn" id="btn-radar">
-            <i class="fas fa-crosshairs text-lg mb-1"></i>Radar 75
+            <i class="fas fa-bullseye text-lg mb-1"></i>Radar 75
         </button>
     </nav>
 
-    <script src="app.js"></script>
+    <script>
+        const URL = 'https://z3ze6gkwckh91s9ybnacqa.supabase.co/rest/v1/resultados';
+        const KEY = 'sb_publishable_Z3ze6gKwcKh91S9YBnacqA_3so-cPOC';
+
+        // DICCIONARIO DEFINITIVO CORREGIDO SEGÚN TABLERO
+        const ANIMALES = {
+            "00": "Ballena", "0": "Delfín", "01": "Carnero", "02": "Toro", "03": "Ciempiés", "04": "Alacrán",
+            "05": "León", "06": "Rana", "07": "Perico", "08": "Ratón", "09": "Águila", "10": "Tigre",
+            "11": "Gato", "12": "Caballo", "13": "Mono", "14": "Paloma", "15": "Zorro", "16": "Oso",
+            "17": "Pavo", "18": "Burro", "19": "Chivo", "20": "Cochino", "21": "Gallo", "22": "Camello",
+            "23": "Cebra", "24": "Iguana", "25": "Gallina", "26": "Vaca", "27": "Perro", "28": "Zamuro",
+            "29": "Elefante", "30": "Caimán", "31": "Lapa", "32": "Ardilla", "33": "Pescado", "34": "Venado",
+            "35": "Jirafa", "36": "Culebra", "37": "Tortuga", "38": "Búfalo", "39": "Lechuza", "40": "Avispa",
+            "41": "Canguro", "42": "Tucán", "43": "Mariposa", "44": "Chigüire", "45": "Garza", "46": "Puma",
+            "47": "Pavo Real", "48": "Puercoespín", "49": "Pereza", "50": "Canario", "51": "Pelícano", "52": "Pulpo",
+            "53": "Caracol", "54": "Grillo", "55": "Oso Hormiguero", "56": "Tiburón", "57": "Pato", "58": "Hormiga",
+            "59": "Pantera", "60": "Camaleón", "61": "Panda", "62": "Cachicamo", "63": "Cangrejo", "64": "Gavilán",
+            "65": "Araña", "66": "Lobo", "67": "Avestruz", "68": "Jaguar", "69": "Conejo", "70": "Bisonte",
+            "71": "Guacamaya", "72": "Gorila", "73": "Hipopótamo", "74": "Turpial", "75": "Guácharo"
+        };
+
+        async function guardarDato() {
+            const fecha = document.getElementById('fecha_registro').value;
+            const hora = document.getElementById('hora').value;
+            const numRaw = document.getElementById('numero').value.trim();
+            
+            let num = (numRaw === "00" || numRaw === "0") ? numRaw : numRaw.padStart(2, '0');
+
+            if(!ANIMALES[num]) return alert("NÚMERO NO EXISTE EN EL TABLERO");
+
+            try {
+                const res = await fetch(URL, {
+                    method: 'POST',
+                    headers: { 'apikey': KEY, 'Authorization': `Bearer ${KEY}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fecha, hora, numero: num, animal: ANIMALES[num] })
+                });
+                if(res.ok) {
+                    alert(`REGISTRADO: ${num} - ${ANIMALES[num]}`);
+                    document.getElementById('numero').value = '';
+                    cargarDatos();
+                } else { alert("ERROR DE CONEXIÓN CON SUPABASE"); }
+            } catch(e) { alert("ERROR DE RED"); }
+        }
+
+        async function cargarDatos() {
+            try {
+                const res = await fetch(`${URL}?order=fecha.desc,hora.desc&limit=50`, {
+                    headers: { 'apikey': KEY, 'Authorization': `Bearer ${KEY}` }
+                });
+                const datos = await res.json();
+                
+                // Tabla Historial
+                document.getElementById('lista-historial').innerHTML = datos.map(d => `
+                    <tr class="border-b border-slate-800">
+                        <td class="p-3 text-slate-500 font-bold">${d.hora}</td>
+                        <td class="p-3 font-black text-white">${d.numero}</td>
+                        <td class="p-3 text-blue-400 italic">${d.animal}</td>
+                    </tr>
+                `).join('');
+
+                // Lógica Radar 75 (Seguidillas)
+                const radarDiv = document.getElementById('estudio-75');
+                const apariciones75 = datos.filter((d, i) => d.numero === "75");
+                
+                if(apariciones75.length === 0) {
+                    radarDiv.innerHTML = "<p class='text-xs text-slate-500'>Esperando que el 75 aparezca en el historial para analizar...</p>";
+                } else {
+                    radarDiv.innerHTML = datos.map((d, i) => {
+                        if(d.numero === "75") {
+                            const antes = datos[i + 1] ? `<span class="text-green-400">${datos[i+1].numero} (${datos[i+1].animal})</span>` : "---";
+                            const despues = datos[i - 1] ? `<span class="text-red-400">${datos[i-1].numero} (${datos[i-1].animal})</span>` : "---";
+                            return `
+                                <div class="p-3 bg-slate-900 border-l-4 border-yellow-600 rounded-r-xl">
+                                    <p class="text-[10px] text-slate-500 font-bold">${d.fecha} - ${d.hora}</p>
+                                    <div class="mt-2 text-xs space-y-1">
+                                        <p>Vino de: ${antes}</p>
+                                        <p>Soltó a: ${despues}</p>
+                                    </div>
+                                </div>`;
+                        }
+                        return '';
+                    }).join('');
+                }
+            } catch(e) { console.error("Fallo al cargar datos"); }
+        }
+
+        function switchTab(id) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active-tab'));
+            document.getElementById(id).classList.add('active');
+            document.getElementById('btn-'+id).classList.add('active-tab');
+            if(id !== 'anotar') cargarDatos();
+        }
+
+        document.getElementById('fecha_registro').valueAsDate = new Date();
+        cargarDatos();
+    </script>
 </body>
 </html>
