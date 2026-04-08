@@ -9,7 +9,6 @@
     <style>
         .bg-radar { background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; }
         .row-especial { background-color: rgba(245, 158, 11, 0.2); font-weight: bold; }
-        input:focus, select:focus { border-color: #f59e0b !important; ring: 2px #f59e0b; }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
@@ -17,12 +16,12 @@
     <header class="bg-slate-800 p-4 border-b border-amber-600 shadow-lg sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
             <div>
-                <h1 class="text-xl font-bold text-amber-500">ANALIZADOR CRCA</h1>
+                <h1 class="text-xl font-bold text-amber-500 uppercase">Analizador CRCA</h1>
                 <p class="text-[10px] text-slate-400">Algoritmo Guácharo Activo</p>
             </div>
             <div class="text-right text-[10px]">
                 <p class="uppercase font-bold">Admin: Carlos Carvallo</p>
-                <p id="status" class="text-green-400 font-mono">● SISTEMA ONLINE</p>
+                <p id="status_text" class="text-green-400 font-mono italic">● SISTEMA ONLINE</p>
             </div>
         </div>
     </header>
@@ -30,13 +29,13 @@
     <main class="container mx-auto p-4 space-y-6">
 
         <section class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-md">
-            <h2 class="text-amber-500 font-bold mb-4 flex items-center text-sm uppercase">
-                <span class="mr-2">📥</span> Registro de Sorteo
+            <h2 class="text-amber-500 font-bold mb-4 flex items-center text-sm uppercase italic">
+                📥 Registro de Sorteo
             </h2>
-            <form id="formCaptura" class="space-y-4 md:space-y-0 md:grid md:grid-cols-4 md:gap-4">
-                <input type="date" id="fecha" required class="w-full bg-slate-700 p-3 rounded border border-slate-600 outline-none text-white">
+            <form id="formCaptura" class="grid grid-cols-1 gap-4">
+                <input type="date" id="fecha" required class="w-full bg-slate-700 p-3 rounded border border-slate-600 outline-none text-white focus:border-amber-500">
                 
-                <select id="hora" required class="w-full bg-slate-700 p-3 rounded border border-slate-600 outline-none text-white">
+                <select id="hora" required class="w-full bg-slate-700 p-3 rounded border border-slate-600 outline-none text-white focus:border-amber-500">
                     <option value="08:00 AM">08:00 AM</option>
                     <option value="09:00 AM">09:00 AM</option>
                     <option value="10:00 AM">10:00 AM</option>
@@ -49,45 +48,44 @@
                     <option value="07:00 PM">07:00 PM</option>
                 </select>
 
-                <input type="number" id="numero" placeholder="Número" required min="0" max="99" class="w-full bg-slate-700 p-3 rounded border border-slate-600 outline-none text-white">
+                <input type="number" id="numero" placeholder="Escribe el Número" required min="0" max="99" class="w-full bg-slate-700 p-3 rounded border border-slate-600 outline-none text-white focus:border-amber-500 text-lg font-bold">
                 
-                <button type="submit" id="btnGuardar" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-black py-3 rounded transition uppercase shadow-lg shadow-amber-900/20">
-                    GUARDAR
+                <button type="submit" id="btnGuardar" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-black py-4 rounded transition uppercase shadow-lg shadow-amber-900/40 text-lg">
+                    GUARDAR RESULTADO
                 </button>
             </form>
         </section>
 
-        <section class="bg-radar p-6 rounded-xl shadow-inner">
-            <h2 class="text-amber-500 font-black text-center mb-4 italic tracking-widest">📡 RADAR GUÁCHARO (75)</h2>
+        <section class="bg-radar p-6 rounded-xl shadow-inner border border-amber-500/20">
+            <h2 class="text-amber-500 font-black text-center mb-4 italic tracking-widest text-sm">📡 RADAR GUÁCHARO (75)</h2>
             <div class="grid grid-cols-2 gap-4 text-center">
                 <div class="bg-slate-900 p-4 rounded border border-amber-500/30">
                     <h3 class="text-[10px] text-slate-400 uppercase mb-1">Atracción (Antes)</h3>
-                    <div id="antes75" class="text-2xl font-mono text-amber-400 font-bold">---</div>
+                    <div id="antes75" class="text-2xl font-mono text-amber-400 font-bold tracking-tighter">---</div>
                 </div>
                 <div class="bg-slate-900 p-4 rounded border border-amber-500/30">
                     <h3 class="text-[10px] text-slate-400 uppercase mb-1">Salida (Después)</h3>
-                    <div id="despues75" class="text-2xl font-mono text-amber-400 font-bold">---</div>
+                    <div id="despues75" class="text-2xl font-mono text-amber-400 font-bold tracking-tighter">---</div>
                 </div>
             </div>
         </section>
 
-        <section class="bg-slate-800 rounded-xl overflow-hidden border border-slate-700">
-            <h2 class="p-4 font-bold bg-slate-700/50 flex items-center text-sm">
-                <span class="mr-2">📊</span> ÚLTIMOS RESULTADOS
+        <section class="bg-slate-800 rounded-xl overflow-hidden border border-slate-700 shadow-xl">
+            <h2 class="p-4 font-bold bg-slate-700/50 flex items-center text-xs uppercase tracking-wider text-slate-300">
+                📊 Historial Reciente
             </h2>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
                     <thead class="bg-slate-900 text-slate-400 border-b border-slate-700">
                         <tr>
-                            <th class="p-4">FECHA</th>
-                            <th class="p-4">HORA</th>
-                            <th class="p-4">N°</th>
-                            <th class="p-4">ANIMAL</th>
+                            <th class="p-4 font-medium">FECHA/HORA</th>
+                            <th class="p-4 font-medium text-center">N°</th>
+                            <th class="p-4 font-medium">ANIMAL</th>
                         </tr>
                     </thead>
                     <tbody id="cuerpoTabla" class="divide-y divide-slate-700">
                         <tr>
-                            <td colspan="4" class="p-8 text-center text-slate-500 italic">Conectando con el algoritmo...</td>
+                            <td colspan="3" class="p-8 text-center text-slate-500 italic">Sincronizando con la base de datos...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -97,12 +95,14 @@
     </main>
 
     <script>
-        // 1. CONEXIÓN DIRECTA (Configurada con tus datos de CuratorOS)
+        // 1. CONEXIÓN CONFIGURADA PARA CARLOS
         const URL_SB = "https://iyvbufxkgycqcmdeclsf.supabase.co"; 
         const KEY_SB = "EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5dmJ1ZnhrZ3ljcWNtZGVjbHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzOTE5NTMsImV4cCI6MjA4OTk2Nzk1M30.Rt6XfnsvWu1Efwb3-fVOyHCmz7aCJXHpIJxaxGzuThw"; 
-        const supabaseClient = supabase.createClient(URL_SB, KEY_SB);
+        
+        // Inicialización corregida
+        const sb = supabase.createClient(URL_SB, KEY_SB);
 
-        // 2. DICCIONARIO DE ANIMALES
+        // 2. DICCIONARIO
         const obtenerAnimal = (num) => {
             const n = num.toString().padStart(2, '0');
             const animales = {
@@ -121,32 +121,33 @@
         // 3. FUNCIÓN REFRESCAR SISTEMA
         async function refrescarSistema() {
             try {
-                // Obtener historial
-                const { data: historial, error: errH } = await supabaseClient
+                // Consultar Historial
+                const { data: historial, error: errH } = await sb
                     .from('estudio_algoritmo')
                     .select('*')
                     .order('fecha', { ascending: false })
                     .order('hora', { ascending: false })
-                    .limit(15);
+                    .limit(10);
 
                 if (errH) throw errH;
 
                 const tbody = document.getElementById('cuerpoTabla');
                 if (historial && historial.length > 0) {
                     tbody.innerHTML = historial.map(r => `
-                        <tr class="${r.numero === '75' ? 'row-especial' : ''} hover:bg-slate-700/30 transition-colors">
-                            <td class="p-4 text-xs font-mono">${r.fecha}</td>
-                            <td class="p-4 text-xs font-mono">${r.hora}</td>
-                            <td class="p-4 font-bold text-amber-500 text-lg">${r.numero}</td>
-                            <td class="p-4 text-sm font-semibold">${r.animal}</td>
+                        <tr class="${r.numero === '75' ? 'row-especial' : ''}">
+                            <td class="p-4 text-[10px] leading-tight text-slate-400">
+                                ${r.fecha}<br><span class="text-white font-mono text-xs">${r.hora}</span>
+                            </td>
+                            <td class="p-4 font-bold text-amber-500 text-xl text-center">${r.numero}</td>
+                            <td class="p-4 text-xs font-bold uppercase tracking-wide">${r.animal}</td>
                         </tr>
                     `).join('');
                 } else {
-                    tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-500">No hay datos. Ingresa el primer sorteo.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-slate-500">Sin datos registrados aún.</td></tr>';
                 }
 
-                // Obtener Radar 75 (Desde la vista SQL)
-                const { data: radar, error: errR } = await supabaseClient
+                // Consultar Radar 75 (Desde la vista SQL)
+                const { data: radar, error: errR } = await sb
                     .from('analisis_secuencias')
                     .select('num_antes, num_despues')
                     .eq('numero', '75');
@@ -154,14 +155,18 @@
                 if (radar) {
                     const antes = [...new Set(radar.map(s => s.num_antes).filter(n => n))];
                     const despues = [...new Set(radar.map(s => s.num_despues).filter(n => n))];
-                    document.getElementById('antes75').innerText = antes.length > 0 ? antes.join(" - ") : "---";
-                    document.getElementById('despues75').innerText = despues.length > 0 ? despues.join(" - ") : "---";
+                    document.getElementById('antes75').innerText = antes.length > 0 ? antes.join(", ") : "---";
+                    document.getElementById('despues75').innerText = despues.length > 0 ? despues.join(", ") : "---";
                 }
 
+                // Si llegamos aquí, la conexión es exitosa
+                document.getElementById('status_text').innerText = "● SISTEMA ONLINE";
+                document.getElementById('status_text').classList.replace('text-red-400', 'text-green-400');
+
             } catch (error) {
-                console.error("Error cargando datos:", error.message);
-                document.getElementById('status').innerText = "● ERROR DE CONEXIÓN";
-                document.getElementById('status').classList.replace('text-green-400', 'text-red-400');
+                console.error("Error:", error.message);
+                document.getElementById('status_text').innerText = "● ERROR DE CONEXIÓN";
+                document.getElementById('status_text').classList.replace('text-green-400', 'text-red-400');
             }
         }
 
@@ -174,9 +179,9 @@
             const horaVal = document.getElementById('hora').value;
 
             btn.disabled = true;
-            btn.innerText = "PROCESANDO...";
+            btn.innerText = "REGISTRANDO...";
 
-            const { error } = await supabaseClient
+            const { error } = await sb
                 .from('estudio_algoritmo')
                 .insert([{ 
                     fecha: fechaVal, 
@@ -186,21 +191,21 @@
                 }]);
 
             if (error) {
-                alert("Error al guardar: " + error.message);
+                alert("Error de Supabase: " + error.message);
             } else {
-                console.log("Guardado correctamente");
                 document.getElementById('numero').value = '';
                 await refrescarSistema();
             }
             
             btn.disabled = false;
-            btn.innerText = "GUARDAR";
+            btn.innerText = "GUARDAR RESULTADO";
         });
 
-        // 5. INICIALIZACIÓN
+        // 5. INICIO
         window.onload = () => {
             // Fecha de hoy por defecto
-            document.getElementById('fecha').valueAsDate = new Date();
+            const hoy = new Date();
+            document.getElementById('fecha').value = hoy.toISOString().split('T')[0];
             refrescarSistema();
         };
     </script>
