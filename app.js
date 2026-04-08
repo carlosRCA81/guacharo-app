@@ -1,10 +1,11 @@
 // ==========================================
-// CONFIGURACIÓN HACIA TABLA: resultados_guacharo
+// CONFIGURACIÓN DE CONEXIÓN (TABLA: resultados_final)
 // ==========================================
-const URL = 'https://z3ze6gkwckh91s9ybnacqa.supabase.co/rest/v1/resultados_guacharo';
+const URL = 'https://z3ze6gkwckh91s9ybnacqa.supabase.co/rest/v1/resultados_final';
 const KEY = 'sb_publishable_Z3ze6gKwcKh91S9YBnacqA_3so-cPOC'; 
 
-// DICCIONARIO GRABADO (Sincronizado con tablero oficial)
+// DICCIONARIO OFICIAL GUÁCHARO ACTIVO (77 ANIMALES)
+// Corregido: 67 es Avestruz y 60 es Camaleón según tu tablero
 const ANIMALES = {
     "00": "Ballena", "0": "Delfín", "01": "Carnero", "02": "Toro", "03": "Ciempiés", "04": "Alacrán",
     "05": "León", "06": "Rana", "07": "Perico", "08": "Ratón", "09": "Águila", "10": "Tigre",
@@ -21,16 +22,22 @@ const ANIMALES = {
     "71": "Guacamaya", "72": "Gorila", "73": "Hipopótamo", "74": "Turpial", "75": "Guácharo"
 };
 
+// FUNCIÓN PARA GUARDAR EL RESULTADO
 async function guardarDato() {
     const fecha = document.getElementById('fecha_registro').value;
     const hora = document.getElementById('hora').value;
-    const nRaw = document.getElementById('numero').value.trim();
-    let n = (nRaw === "0" || nRaw === "00") ? nRaw : nRaw.padStart(2, '0');
+    const numInput = document.getElementById('numero').value.trim();
+    
+    // Normalizar números (Ej: "0" queda "0", "7" pasa a "07")
+    let num = (numInput === "0" || numInput === "00") ? numInput : numInput.padStart(2, '0');
 
-    if (!ANIMALES[n]) return alert("Número no existe");
+    if (!ANIMALES[num]) {
+        alert("El número ingresado no existe en el tablero.");
+        return;
+    }
 
     try {
-        const res = await fetch(URL, {
+        const respuesta = await fetch(URL, {
             method: 'POST',
             headers: { 
                 'apikey': KEY, 
@@ -41,19 +48,39 @@ async function guardarDato() {
             body: JSON.stringify({ 
                 fecha: fecha, 
                 hora: hora, 
-                numero: n, 
-                animal: ANIMALES[n] 
+                numero: num, 
+                animal: ANIMALES[num] 
             })
         });
 
-        if (res.ok) {
-            alert(`✅ REGISTRADO EN GUÁCHARO: ${n} (${ANIMALES[n]})`);
+        if (respuesta.ok) {
+            alert(`✅ REGISTRADO: ${num} - ${ANIMALES[num]}`);
             document.getElementById('numero').value = '';
-            cargarDatos();
+            // Si tienes una función para mostrar la tabla, llámala aquí
+            if (typeof cargarDatos === 'function') cargarDatos();
         } else {
-            alert("Error de Acceso: Revisa los nombres de las columnas en Supabase.");
+            const errorDetalle = await respuesta.json();
+            alert("Error en Supabase: " + errorDetalle.message);
         }
-    } catch (e) {
-        alert("ERROR DE RED: La dirección de la tabla ha fallado.");
+    } catch (error) {
+        alert("ERROR DE RED: No se pudo conectar con la base de datos.");
+    }
+}
+
+// FUNCIÓN PARA CARGAR EL HISTORIAL (OPCIONAL)
+async function cargarDatos() {
+    try {
+        const respuesta = await fetch(`${URL}?select=*&order=fecha.desc,hora.desc`, {
+            method: 'GET',
+            headers: { 
+                'apikey': KEY, 
+                'Authorization': `Bearer ${KEY}` 
+            }
+        });
+        const datos = await respuesta.json();
+        console.log("Datos cargados:", datos);
+        // Aquí puedes agregar la lógica para pintar los datos en tu tabla HTML
+    } catch (error) {
+        console.error("Error al cargar historial:", error);
     }
 }
