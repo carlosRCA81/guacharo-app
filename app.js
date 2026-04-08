@@ -1,6 +1,10 @@
-const URL = 'https://z3ze6gkwckh91s9ybnacqa.supabase.co/rest/v1/resultados';
+// ==========================================
+// CONFIGURACIÓN HACIA TABLA: resultados_guacharo
+// ==========================================
+const URL = 'https://z3ze6gkwckh91s9ybnacqa.supabase.co/rest/v1/resultados_guacharo';
 const KEY = 'sb_publishable_Z3ze6gKwcKh91S9YBnacqA_3so-cPOC'; 
 
+// DICCIONARIO GRABADO (Sincronizado con tablero oficial)
 const ANIMALES = {
     "00": "Ballena", "0": "Delfín", "01": "Carnero", "02": "Toro", "03": "Ciempiés", "04": "Alacrán",
     "05": "León", "06": "Rana", "07": "Perico", "08": "Ratón", "09": "Águila", "10": "Tigre",
@@ -18,15 +22,15 @@ const ANIMALES = {
 };
 
 async function guardarDato() {
-    const f = document.getElementById('fecha_registro').value;
-    const h = document.getElementById('hora').value;
+    const fecha = document.getElementById('fecha_registro').value;
+    const hora = document.getElementById('hora').value;
     const nRaw = document.getElementById('numero').value.trim();
     let n = (nRaw === "0" || nRaw === "00") ? nRaw : nRaw.padStart(2, '0');
 
-    if (!ANIMALES[n]) return alert("Número fuera de rango (00-75)");
+    if (!ANIMALES[n]) return alert("Número no existe");
 
     try {
-        const r = await fetch(URL, {
+        const res = await fetch(URL, {
             method: 'POST',
             headers: { 
                 'apikey': KEY, 
@@ -34,18 +38,22 @@ async function guardarDato() {
                 'Content-Type': 'application/json',
                 'Prefer': 'return=minimal' 
             },
-            body: JSON.stringify({ fecha: f, hora: h, numero: n, animal: ANIMALES[n] })
+            body: JSON.stringify({ 
+                fecha: fecha, 
+                hora: hora, 
+                numero: n, 
+                animal: ANIMALES[n] 
+            })
         });
 
-        if (r.ok) {
-            alert("✅ Guardado: " + n + " - " + ANIMALES[n]);
+        if (res.ok) {
+            alert(`✅ REGISTRADO EN GUÁCHARO: ${n} (${ANIMALES[n]})`);
             document.getElementById('numero').value = '';
             cargarDatos();
         } else {
-            const err = await r.json();
-            alert("Error Supabase: " + err.message);
+            alert("Error de Acceso: Revisa los nombres de las columnas en Supabase.");
         }
     } catch (e) {
-        alert("Falla de Red: Intenta refrescar la página.");
+        alert("ERROR DE RED: La dirección de la tabla ha fallado.");
     }
 }
