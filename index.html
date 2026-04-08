@@ -3,35 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador CRCA - Inteligencia Blindada</title>
+    <title>Analizador CRCA - Inteligencia Guácharo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { background-color: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #0a0f1d; color: #cbd5e1; font-family: sans-serif; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .active-tab { color: #3b82f6; border-top: 3px solid #3b82f6; }
+        .active-tab { color: #3b82f6; border-bottom: 2px solid #3b82f6; }
+        input, select { background: #161e31 !important; border: 1px solid #1e293b !important; color: white !important; }
     </style>
 </head>
 <body class="pb-20">
 
-    <header class="p-4 border-b border-slate-800 bg-slate-900 sticky top-0 z-50">
-        <h1 class="text-center text-xl font-black tracking-widest text-blue-500">ANALIZADOR CRCA</h1>
-        <p class="text-[10px] text-center text-slate-500 font-bold uppercase">Software de Estudio de Algoritmos - Guácharo Activo</p>
+    <header class="p-4 bg-slate-900 border-b border-slate-800 text-center sticky top-0 z-50">
+        <h1 class="text-blue-500 font-black tracking-tighter text-xl">ANALIZADOR CRCA</h1>
+        <p class="text-[9px] text-slate-500 font-bold">ESTUDIO DE ALGORITMOS - GUÁCHARO ACTIVO</p>
     </header>
 
-    <main class="p-4 max-w-lg mx-auto">
+    <main class="p-4 max-w-md mx-auto">
         
         <section id="anotar" class="tab-content active space-y-4">
-            <div class="bg-slate-900/50 border border-slate-800 p-4 rounded-xl">
-                <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase">Fecha de los Datos (Estudio Histórico)</label>
-                <input type="date" id="fecha_registro" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-lg text-yellow-500 font-bold text-center focus:outline-none focus:border-blue-500">
+            <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-800">
+                <label class="text-[10px] font-bold text-slate-500 uppercase">Fecha de Estudio</label>
+                <input type="date" id="fecha_registro" class="w-full p-3 rounded-lg mt-1 font-bold text-yellow-500">
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-slate-900/50 border border-slate-800 p-4 rounded-xl">
-                    <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase">Sorteo</label>
-                    <select id="hora" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-lg text-sm appearance-none text-center">
+            <div class="grid grid-cols-2 gap-3">
+                <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-800">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase">Sorteo</label>
+                    <select id="hora" class="w-full p-3 rounded-lg mt-1 font-bold">
                         <option value="08:00">08:00 AM</option>
                         <option value="09:00">09:00 AM</option>
                         <option value="10:00">10:00 AM</option>
@@ -46,52 +47,52 @@
                         <option value="19:00">07:00 PM</option>
                     </select>
                 </div>
-                <div class="bg-slate-900/50 border border-slate-800 p-4 rounded-xl">
-                    <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase">Número (00-75)</label>
-                    <input type="text" id="numero" placeholder="--" maxlength="2" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-lg text-xl font-black text-center text-white focus:outline-none focus:border-green-500">
+                <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-800">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase">Número</label>
+                    <input type="text" id="numero" placeholder="00-75" class="w-full p-3 rounded-lg mt-1 text-center font-black text-xl">
                 </div>
             </div>
 
-            <button onclick="guardarResultado()" class="w-full bg-green-700 hover:bg-green-600 p-4 rounded-xl font-black text-white transition shadow-lg shadow-green-900/20 uppercase tracking-widest">Anotar Jugada</button>
-            <button onclick="limpiarCampos()" class="w-full bg-red-900/30 border border-red-800/50 text-red-500 p-3 rounded-xl font-bold text-xs uppercase">Borrar Entrada</button>
-        </section>
-
-        <section id="radar" class="tab-content space-y-4">
-            <div class="bg-yellow-900/20 border border-yellow-700/50 p-4 rounded-xl text-center">
-                <h2 class="text-yellow-500 font-black uppercase text-sm mb-2">Monitor Guácharo (75)</h2>
-                <div id="status-75" class="text-xs text-slate-300">Esperando sincronización de base de datos...</div>
-            </div>
-            <div id="historial-75" class="space-y-2">
-                </div>
+            <button onclick="guardarDato()" class="w-full bg-green-600 hover:bg-green-500 p-4 rounded-xl font-black text-white shadow-lg uppercase tracking-widest">Anotar Movimiento</button>
         </section>
 
         <section id="estudio" class="tab-content space-y-4">
-            <div class="bg-blue-900/20 border border-blue-700/50 p-4 rounded-xl">
-                <h2 class="text-blue-400 font-black uppercase text-xs mb-3">Top Números Calientes</h2>
-                <div id="lista-calientes" class="grid grid-cols-4 gap-2"></div>
+            <div class="bg-blue-950/20 border border-blue-900 p-4 rounded-xl">
+                <h3 class="text-blue-400 font-bold text-xs uppercase mb-2">Análisis de Salida</h3>
+                <div id="analisis-movimiento" class="text-[11px] space-y-1 text-slate-400">
+                    Cargando patrones detectados...
+                </div>
             </div>
-            <div class="bg-slate-900/50 border border-slate-800 p-4 rounded-xl">
-                <h2 class="text-slate-400 font-black uppercase text-xs mb-3 text-center">Historial de Hoy</h2>
-                <table class="w-full text-sm">
-                    <thead><tr class="text-[10px] text-slate-500 uppercase border-b border-slate-800">
-                        <th class="p-2 text-left">Hora</th><th class="p-2 text-center">N°</th><th class="p-2 text-right">Animal</th>
-                    </tr></thead>
-                    <tbody id="tabla-hoy"></tbody>
+            <div class="bg-slate-900/50 rounded-xl border border-slate-800 overflow-hidden">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-800 text-[10px] uppercase text-slate-400">
+                        <tr><th class="p-3">Hora</th><th class="p-3">N°</th><th class="p-3">Animal</th></tr>
+                    </thead>
+                    <tbody id="lista-historial" class="text-sm"></tbody>
                 </table>
             </div>
         </section>
 
+        <section id="radar" class="tab-content space-y-4">
+            <div class="p-6 border-2 border-dashed border-yellow-600/30 rounded-2xl text-center bg-yellow-900/10">
+                <h2 class="text-yellow-500 font-black text-2xl">OBJETIVO 75</h2>
+                <p class="text-[10px] text-yellow-600 uppercase font-bold tracking-widest">Estudio de Máxima Ganancia</p>
+            </div>
+            <div id="estudio-75" class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-4">
+                </div>
+        </section>
+
     </main>
 
-    <nav class="fixed bottom-0 left-0 right-0 bg-slate-950 border-t border-slate-800 flex justify-around p-2 text-[10px] uppercase font-bold">
-        <button onclick="switchTab('anotar')" class="flex flex-col items-center p-2 tab-btn active-tab" id="btn-anotar">
+    <nav class="fixed bottom-0 w-full bg-slate-900 border-t border-slate-800 flex justify-around p-2 text-[10px] font-bold uppercase">
+        <button onclick="switchTab('anotar')" class="flex flex-col items-center p-2 active-tab tab-btn" id="btn-anotar">
             <i class="fas fa-edit text-lg mb-1"></i>Anotar
         </button>
         <button onclick="switchTab('estudio')" class="flex flex-col items-center p-2 tab-btn" id="btn-estudio">
-            <i class="fas fa-chart-line text-lg mb-1"></i>Estudio
+            <i class="fas fa-microscope text-lg mb-1"></i>Estudio
         </button>
         <button onclick="switchTab('radar')" class="flex flex-col items-center p-2 tab-btn" id="btn-radar">
-            <i class="fas fa-bullseye text-lg mb-1"></i>Radar 75
+            <i class="fas fa-crosshairs text-lg mb-1"></i>Radar 75
         </button>
     </nav>
 
