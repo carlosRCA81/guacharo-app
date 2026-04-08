@@ -1,12 +1,13 @@
 // ==========================================
-// CONFIGURACIÓN DE BASE DE DATOS (LLAVE CORREGIDA)
+// CONFIGURACIÓN DE CONEXIÓN
 // ==========================================
 const URL = 'https://z3ze6gkwckh91s9ybnacqa.supabase.co/rest/v1/resultados';
-const KEY = 'Sb_publishable_Z3ze6gKwcKh91S9YBnacqA_3so-cPOC'; // Llave actualizada
+// Asegúrate de que esta llave no tenga espacios al principio o al final
+const KEY = 'sb_publishable_Z3ze6gKwcKh91S9YBnacqA_3so-cPOC'; 
 
 // ==========================================
-// DICCIONARIO OFICIAL GUÁCHARO ACTIVO (77 ANIMALES)
-// Verificado según tablero oficial
+// DICCIONARIO OFICIAL (77 ANIMALES)
+// Sincronizado con tablero Guácharo Activo
 // ==========================================
 const ANIMALES = {
     "00": "Ballena", "0": "Delfín", "01": "Carnero", "02": "Toro", "03": "Ciempiés", "04": "Alacrán",
@@ -25,20 +26,25 @@ const ANIMALES = {
 };
 
 // ==========================================
-// MOTOR DE GUARDADO Y SINCRONIZACIÓN
+// FUNCIÓN PARA GUARDAR (CORREGIDA)
 // ==========================================
 async function guardarDato() {
     const fecha = document.getElementById('fecha_registro').value;
     const hora = document.getElementById('hora').value;
     const numRaw = document.getElementById('numero').value.trim();
     
-    // Normalización de número
+    // Normalizar: 0 -> 0, 00 -> 00, 1 -> 01
     let num = (numRaw === "0" || numRaw === "00") ? numRaw : numRaw.padStart(2, '0');
 
     if (!ANIMALES[num]) {
-        alert("¡Error! El número " + num + " no existe en Guácharo Activo.");
+        alert("Número no válido para el tablero actual.");
         return;
     }
+
+    // Cambiamos el botón a estado "Cargando" para evitar doble click
+    const btn = document.querySelector('button[onclick="guardarDato()"]');
+    btn.disabled = true;
+    btn.innerText = "ENVIANDO...";
 
     try {
         const res = await fetch(URL, {
@@ -58,16 +64,20 @@ async function guardarDato() {
         });
 
         if (res.ok) {
-            alert(`✅ REGISTRADO: ${num} (${ANIMALES[num]})`);
+            alert(`✅ REGISTRADO: ${num} - ${ANIMALES[num]}`);
             document.getElementById('numero').value = '';
-            cargarDatos(); // Refrescar historial y radar
+            cargarDatos();
         } else {
-            const errorData = await res.json();
-            alert("Fallo de API: " + (errorData.message || "Llave inválida"));
+            const errorMsg = await res.text();
+            console.error("Detalle del error:", errorMsg);
+            alert("Error del Sistema: Llave denegada o tabla protegida.");
         }
     } catch (e) {
-        alert("ERROR DE RED: Verifica tu conexión a internet.");
+        alert("FALLA DE CONEXIÓN: Revisa tu señal o el link de Supabase.");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "ANOTAR JUGADA";
     }
 }
 
-// ... (Resto de funciones: cargarDatos, analizarRadar75, switchTab)
+// ... Resto de funciones (cargarDatos, switchTab, etc.)
