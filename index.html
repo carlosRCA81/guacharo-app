@@ -8,115 +8,77 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen">
-
-    <header class="bg-slate-800 p-4 border-b border-amber-600 shadow-lg">
-        <div class="container mx-auto flex justify-between items-center">
-            <div>
-                <h1 class="text-xl font-bold text-amber-500 uppercase">Analizador CRCA</h1>
-            </div>
-            <div class="text-right">
-                <p id="status_text" class="text-slate-400 font-mono text-[10px]">● CARGANDO...</p>
-            </div>
-        </div>
+    <header class="bg-slate-800 p-4 border-b border-amber-600 shadow-lg flex justify-between">
+        <h1 class="text-xl font-bold text-amber-500 uppercase">Analizador CRCA</h1>
+        <p id="status_text" class="text-red-400 font-mono text-[10px]">● DESCONECTADO</p>
     </header>
 
-    <main class="container mx-auto p-4 space-y-6">
+    <main class="container mx-auto p-4 space-y-4">
         <section class="bg-slate-800 p-6 rounded-xl border border-slate-700">
-            <form id="formCaptura" class="grid grid-cols-1 gap-4">
-                <input type="date" id="fecha" required class="w-full bg-slate-700 p-3 rounded text-white border border-slate-600">
-                <select id="hora" required class="w-full bg-slate-700 p-3 rounded text-white border border-slate-600">
-                    <option value="08:00 AM">08:00 AM</option>
-                    <option value="09:00 AM">09:00 AM</option>
-                    <option value="10:00 AM">10:00 AM</option>
-                    <option value="11:00 AM">11:00 AM</option>
-                    <option value="12:00 PM">12:00 PM</option>
-                    <option value="01:00 PM">01:00 PM</option>
-                    <option value="04:00 PM">04:00 PM</option>
-                    <option value="05:00 PM">05:00 PM</option>
-                    <option value="06:00 PM">06:00 PM</option>
-                    <option value="07:00 PM">07:00 PM</option>
+            <form id="formCaptura" class="grid gap-4">
+                <input type="date" id="fecha" required class="bg-slate-700 p-3 rounded text-white border border-slate-600">
+                <select id="hora" required class="bg-slate-700 p-3 rounded text-white border border-slate-600">
+                    <option value="08:00 AM">08:00 AM</option><option value="09:00 AM">09:00 AM</option>
+                    <option value="10:00 AM">10:00 AM</option><option value="11:00 AM">11:00 AM</option>
+                    <option value="12:00 PM">12:00 PM</option><option value="01:00 PM">01:00 PM</option>
+                    <option value="04:00 PM">04:00 PM</option><option value="05:00 PM">05:00 PM</option>
+                    <option value="06:00 PM">06:00 PM</option><option value="07:00 PM">07:00 PM</option>
                 </select>
-                <input type="number" id="numero" placeholder="Número" required class="w-full bg-slate-700 p-3 rounded text-white text-lg font-bold">
-                <button type="submit" id="btnGuardar" class="w-full bg-amber-600 text-white font-black py-4 rounded uppercase">GUARDAR</button>
+                <input type="number" id="numero" placeholder="Número" required class="bg-slate-700 p-3 rounded text-white text-lg font-bold">
+                <button type="submit" id="btnGuardar" class="bg-amber-600 text-white font-black py-4 rounded uppercase">GUARDAR</button>
             </form>
-        </section>
-
-        <section class="bg-slate-800/50 p-6 rounded-xl border border-amber-500/20 text-center">
-            <h2 class="text-amber-500 font-bold mb-4 text-xs">📡 RADAR GUÁCHARO (75)</h2>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-slate-900 p-4 rounded"><p class="text-[10px] text-slate-500">ANTES</p><div id="antes75" class="text-xl font-bold text-amber-400">---</div></div>
-                <div class="bg-slate-900 p-4 rounded"><p class="text-[10px] text-slate-500">DESPUÉS</p><div id="despues75" class="text-xl font-bold text-amber-400">---</div></div>
-            </div>
         </section>
 
         <section class="bg-slate-800 rounded-xl overflow-hidden border border-slate-700">
             <table class="w-full text-left text-sm">
                 <thead class="bg-slate-900 text-slate-400">
-                    <tr><th class="p-4">FECHA/HORA</th><th class="p-4 text-center">N°</th><th class="p-4">ANIMAL</th></tr>
+                    <tr><th class="p-4">HORA</th><th class="p-4 text-center">N°</th><th class="p-4">ANIMAL</th></tr>
                 </thead>
-                <tbody id="cuerpoTabla" class="divide-y divide-slate-700">
-                    <tr><td colspan="3" class="p-8 text-center text-slate-500 italic">Esperando conexión...</td></tr>
-                </tbody>
+                <tbody id="cuerpoTabla" class="divide-y divide-slate-700"></tbody>
             </table>
         </section>
     </main>
 
     <script>
+        // DATOS REALES EXTRAÍDOS DE TUS CAPTURAS
         const URL_SB = "https://iyvbufxkgycqcmdeclsf.supabase.co"; 
-        const KEY_SB = "EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5dmJ1ZnhrZ3ljcWNtZGVjbHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzOTE5NTMsImV4cCI6MjA4OTk2Nzk1M30.Rt6XfnsvWu1Efwb3-fVOyHCmz7aCJXHpIJxaxGzuThw"; 
-        
-        // Inicialización segura
-        const { createClient } = supabase;
-        const sb = createClient(URL_SB, KEY_SB);
+        const KEY_SB = "EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5dmJ1ZnhrZ3ljcWNtZGVjbHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzOTE5NTMsImV4cCI6MjA4OTk2Nzk1M30.Rt6XfnsvWu1Efwb3-fVOyHCmz7aCJXHpIJxaxGzuThw";
 
-        const obtenerAnimal = (num) => {
-            const n = num.toString().padStart(2, '0');
-            const animales = {"00":"BALLENA","01":"CARNERO","02":"TORO","03":"CIEMPIÉS","04":"ALACRÁN","05":"LEÓN","06":"RANA","07":"PERICO","08":"RATÓN","09":"ÁGUILA","10":"TIGRE","11":"GATO","12":"CABALLO","13":"MONO","14":"PALOMA","15":"ZORRO","16":"OSO","17":"PAVO","18":"BURRO","19":"CHIVO","20":"COCHINO","21":"GALLO","22":"CAMELLO","23":"CEBRA","24":"IGUANA","25":"GALLINA","26":"VACA","27":"PERRO","28":"ZAMURO","29":"ELEFANTE","30":"CAIMÁN","31":"LAPA","32":"ARDILLA","33":"PESCADO","34":"VENADO","35":"JIRAFA","36":"CULEBRA","75":"GUÁCHARO"};
-            return animales[n] || "ANIMAL " + n;
-        };
+        const sb = supabase.createClient(URL_SB, KEY_SB);
 
-        async function refrescarSistema() {
-            try {
-                const { data: historial, error: errH } = await sb.from('estudio_algoritmo').select('*').order('fecha', { ascending: false }).order('hora', { ascending: false }).limit(10);
-                if (errH) throw errH;
-
-                const tbody = document.getElementById('cuerpoTabla');
-                tbody.innerHTML = historial && historial.length > 0 
-                    ? historial.map(r => `<tr class="border-b border-slate-700"><td class="p-4 text-[10px] text-slate-400">${r.fecha}<br><span class="text-white font-mono">${r.hora}</span></td><td class="p-4 font-bold text-amber-500 text-xl text-center">${r.numero}</td><td class="p-4 text-xs font-bold uppercase">${r.animal}</td></tr>`).join('')
-                    : '<tr><td colspan="3" class="p-8 text-center text-slate-500">Sin registros</td></tr>';
-
-                document.getElementById('status_text').innerText = "● SISTEMA ONLINE";
-                document.getElementById('status_text').className = "text-green-400 font-mono text-[10px]";
-            } catch (error) {
-                console.error(error);
-                document.getElementById('status_text').innerText = "● ERROR DE CONEXIÓN";
+        async function cargar() {
+            const { data, error } = await sb.from('estudio_algoritmo').select('*').order('created_at', { ascending: false }).limit(10);
+            if (error) {
+                document.getElementById('status_text').innerText = "● ERROR API";
                 document.getElementById('status_text').className = "text-red-400 font-mono text-[10px]";
+            } else {
+                document.getElementById('status_text').innerText = "● ONLINE";
+                document.getElementById('status_text').className = "text-green-400 font-mono text-[10px]";
+                document.getElementById('cuerpoTabla').innerHTML = data.map(r => `<tr><td class="p-4">${r.hora}</td><td class="p-4 text-center text-amber-500 font-bold">${r.numero}</td><td class="p-4 font-bold">${r.animal}</td></tr>`).join('');
             }
         }
 
         document.getElementById('formCaptura').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnGuardar');
-            const num = document.getElementById('numero').value;
             btn.disabled = true;
-            btn.innerText = "REGISTRANDO...";
-
+            
+            const num = document.getElementById('numero').value.padStart(2, '0');
             const { error } = await sb.from('estudio_algoritmo').insert([{ 
                 fecha: document.getElementById('fecha').value, 
                 hora: document.getElementById('hora').value, 
-                numero: num.toString().padStart(2, '0'), 
-                animal: obtenerAnimal(num) 
+                numero: num,
+                animal: "ANIMAL " + num // Simplificado para probar conexión
             }]);
 
             if (error) alert("Error: " + error.message);
-            else { document.getElementById('numero').value = ''; await refrescarSistema(); }
+            else { document.getElementById('numero').value = ''; await cargar(); }
             btn.disabled = false;
-            btn.innerText = "GUARDAR";
         });
 
         window.onload = () => {
             document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
-            refrescarSistema();
+            cargar();
         };
     </script>
 </body>
