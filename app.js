@@ -1,86 +1,106 @@
-// ==========================================
-// CONFIGURACIÓN DE CONEXIÓN (TABLA: resultados_final)
-// ==========================================
-const URL = 'https://z3ze6gkwckh91s9ybnacqa.supabase.co/rest/v1/resultados_final';
-const KEY = 'sb_publishable_Z3ze6gKwcKh91S9YBnacqA_3so-cPOC'; 
+<script>
+    // 1. CONEXIÓN CON TU CEREBRO DE DATOS (SUPABASE)
+    // Reemplaza esto con tus credenciales reales de Supabase
+    const URL_SB = "TU_SUPABASE_URL"; 
+    const KEY_SB = "TU_SUPABASE_ANON_KEY"; 
+    const supabase = supabase.createClient(URL_SB, KEY_SB);
 
-// DICCIONARIO OFICIAL GUÁCHARO ACTIVO (77 ANIMALES)
-// Corregido: 67 es Avestruz y 60 es Camaleón según tu tablero
-const ANIMALES = {
-    "00": "Ballena", "0": "Delfín", "01": "Carnero", "02": "Toro", "03": "Ciempiés", "04": "Alacrán",
-    "05": "León", "06": "Rana", "07": "Perico", "08": "Ratón", "09": "Águila", "10": "Tigre",
-    "11": "Gato", "12": "Caballo", "13": "Mono", "14": "Paloma", "15": "Zorro", "16": "Oso",
-    "17": "Pavo", "18": "Burro", "19": "Chivo", "20": "Cochino", "21": "Gallo", "22": "Camello",
-    "23": "Cebra", "24": "Iguana", "25": "Gallina", "26": "Vaca", "27": "Perro", "28": "Zamuro",
-    "29": "Elefante", "30": "Caimán", "31": "Lapa", "32": "Ardilla", "33": "Pescado", "34": "Venado",
-    "35": "Jirafa", "36": "Culebra", "37": "Tortuga", "38": "Búfalo", "39": "Lechuza", "40": "Avispa",
-    "41": "Canguro", "42": "Tucán", "43": "Mariposa", "44": "Chigüire", "45": "Garza", "46": "Puma",
-    "47": "Pavo Real", "48": "Puercoespín", "49": "Pereza", "50": "Canario", "51": "Pelícano", "52": "Pulpo",
-    "53": "Caracol", "54": "Grillo", "55": "Oso Hormiguero", "56": "Tiburón", "57": "Pato", "58": "Hormiga",
-    "59": "Pantera", "60": "Camaleón", "61": "Panda", "62": "Cachicamo", "63": "Cangrejo", "64": "Gavilán",
-    "65": "Araña", "66": "Lobo", "67": "Avestruz", "68": "Jaguar", "69": "Conejo", "70": "Bisonte",
-    "71": "Guacamaya", "72": "Gorila", "73": "Hipopótamo", "74": "Turpial", "75": "Guácharo"
-};
+    // 2. DICCIONARIO TALL (Traductor de Números a Animales)
+    const obtenerAnimal = (num) => {
+        const n = num.toString().padStart(2, '0');
+        const animales = {
+            "00": "BALLENA", "01": "CARNERO", "02": "TORO", "03": "CIEMPIÉS", "04": "ALACRÁN",
+            "05": "LEÓN", "06": "RANA", "07": "PERICO", "08": "RATÓN", "09": "ÁGUILA",
+            "10": "TIGRE", "11": "GATO", "12": "CABALLO", "13": "MONO", "14": "PALOMA",
+            "15": "ZORRO", "16": "OSO", "17": "PAVO", "18": "BURRO", "19": "CHIVO",
+            "20": "COCHINO", "21": "GALLO", "22": "CAMELLO", "23": "CEBRA", "24": "IGUANA",
+            "25": "GALLINA", "26": "VACA", "27": "PERRO", "28": "ZAMURO", "29": "ELEFANTE",
+            "30": "CAIMÁN", "31": "LAPA", "32": "ARDILLA", "33": "PESCADO", "34": "VENADO",
+            "35": "JIRAFA", "36": "CULEBRA", "75": "GUÁCHARO" 
+            // Carlos, puedes seguir completando hasta el 99 aquí
+        };
+        return animales[n] || "ANIMAL " + n;
+    };
 
-// FUNCIÓN PARA GUARDAR EL RESULTADO
-async function guardarDato() {
-    const fecha = document.getElementById('fecha_registro').value;
-    const hora = document.getElementById('hora').value;
-    const numInput = document.getElementById('numero').value.trim();
-    
-    // Normalizar números (Ej: "0" queda "0", "7" pasa a "07")
-    let num = (numInput === "0" || numInput === "00") ? numInput : numInput.padStart(2, '0');
+    // 3. FUNCIÓN DE CARGA DE DATOS (HISTORIAL Y RADAR)
+    async function refrescarSistema() {
+        console.log("Actualizando datos...");
+        
+        // Cargar los últimos 15 registros para la tabla
+        const { data: historial, error: errH } = await supabase
+            .from('estudio_algoritmo')
+            .select('*')
+            .order('fecha', { ascending: false })
+            .order('hora', { ascending: false })
+            .limit(15);
 
-    if (!ANIMALES[num]) {
-        alert("El número ingresado no existe en el tablero.");
-        return;
-    }
-
-    try {
-        const respuesta = await fetch(URL, {
-            method: 'POST',
-            headers: { 
-                'apikey': KEY, 
-                'Authorization': `Bearer ${KEY}`, 
-                'Content-Type': 'application/json',
-                'Prefer': 'return=minimal' 
-            },
-            body: JSON.stringify({ 
-                fecha: fecha, 
-                hora: hora, 
-                numero: num, 
-                animal: ANIMALES[num] 
-            })
-        });
-
-        if (respuesta.ok) {
-            alert(`✅ REGISTRADO: ${num} - ${ANIMALES[num]}`);
-            document.getElementById('numero').value = '';
-            // Si tienes una función para mostrar la tabla, llámala aquí
-            if (typeof cargarDatos === 'function') cargarDatos();
-        } else {
-            const errorDetalle = await respuesta.json();
-            alert("Error en Supabase: " + errorDetalle.message);
+        if (historial) {
+            const tabla = document.getElementById('cuerpoTabla');
+            tabla.innerHTML = historial.map(r => `
+                <tr class="${r.numero === '75' ? 'bg-amber-900/30' : 'border-b border-slate-700'}">
+                    <td class="p-3 text-xs">${r.fecha}</td>
+                    <td class="p-3 text-xs">${r.hora}</td>
+                    <td class="p-3 font-mono font-bold text-amber-500">${r.numero}</td>
+                    <td class="p-3 text-sm">${r.animal}</td>
+                </tr>
+            `).join('');
         }
-    } catch (error) {
-        alert("ERROR DE RED: No se pudo conectar con la base de datos.");
-    }
-}
 
-// FUNCIÓN PARA CARGAR EL HISTORIAL (OPCIONAL)
-async function cargarDatos() {
-    try {
-        const respuesta = await fetch(`${URL}?select=*&order=fecha.desc,hora.desc`, {
-            method: 'GET',
-            headers: { 
-                'apikey': KEY, 
-                'Authorization': `Bearer ${KEY}` 
-            }
-        });
-        const datos = await respuesta.json();
-        console.log("Datos cargados:", datos);
-        // Aquí puedes agregar la lógica para pintar los datos en tu tabla HTML
-    } catch (error) {
-        console.error("Error al cargar historial:", error);
+        // Cargar el Radar 75 desde la Vista SQL que creamos
+        const { data: radar, error: errR } = await supabase
+            .from('analisis_secuencias')
+            .select('num_antes, num_despues')
+            .eq('numero', '75');
+
+        if (radar) {
+            // Limpiamos duplicados y valores nulos
+            const antes = [...new Set(radar.map(s => s.num_antes).filter(n => n))];
+            const despues = [...new Set(radar.map(s => s.num_despues).filter(n => n))];
+            
+            document.getElementById('antes75').innerText = antes.length > 0 ? antes.join(" - ") : "---";
+            document.getElementById('despues75').innerText = despues.length > 0 ? despues.join(" - ") : "---";
+        }
     }
-}
+
+    // 4. MANEJO DEL FORMULARIO (GUARDAR)
+    document.getElementById('formCaptura').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const btn = e.target.querySelector('button');
+        const numInput = document.getElementById('numero').value.padStart(2, '0');
+        const fechaInput = document.getElementById('fecha').value;
+        const horaInput = document.getElementById('hora').value;
+
+        btn.disabled = true;
+        btn.innerText = "PROCESANDO...";
+
+        const { error } = await supabase
+            .from('estudio_algoritmo')
+            .insert([{ 
+                fecha: fechaInput, 
+                hora: horaInput, 
+                numero: numInput, 
+                animal: obtenerAnimal(numInput) 
+            }]);
+
+        if (error) {
+            alert("Error al guardar: " + error.message);
+        } else {
+            console.log("¡Registrado!");
+            e.target.reset();
+            // Ponemos la fecha de hoy por defecto otra vez
+            document.getElementById('fecha').valueAsDate = new Date();
+            await refrescarSistema();
+        }
+        
+        btn.disabled = false;
+        btn.innerText = "GUARDAR";
+    });
+
+    // 5. INICIO AUTOMÁTICO AL CARGAR LA WEB
+    window.onload = () => {
+        // Establecer fecha actual en el input
+        document.getElementById('fecha').valueAsDate = new Date();
+        refrescarSistema();
+    };
+</script>
