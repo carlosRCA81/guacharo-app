@@ -3,187 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador CRCA - Inteligencia Guácharo</title>
+    <title>Analizador CRCA - V-Gate Nexus</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background-color: #0a0f1d; color: #cbd5e1; font-family: sans-serif; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .active-tab { color: #3b82f6; border-bottom: 2px solid #3b82f6; }
-        input, select { background: #161e31 !important; border: 1px solid #1e293b !important; color: white !important; }
+        .bg-radar { background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; }
+        .row-especial { background-color: rgba(245, 158, 11, 0.2); font-weight: bold; }
     </style>
 </head>
-<body class="pb-20">
+<body class="bg-slate-900 text-slate-100 min-h-screen">
 
-    <header class="p-4 bg-slate-900 border-b border-slate-800 text-center sticky top-0 z-50">
-        <h1 class="text-blue-500 font-black tracking-tighter text-xl">ANALIZADOR CRCA</h1>
-        <p class="text-[9px] text-slate-500 font-bold uppercase">Software de Estudio de Algoritmos - Guácharo Activo</p>
+    <header class="bg-slate-800 p-4 border-b border-amber-600 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold text-amber-500">ANALIZADOR CRCA <span class="text-xs text-white block">Algoritmo Guácharo Activo</span></h1>
+            <div class="text-right text-[10px]">
+                <p>ADMIN: CARLOS CARVALLO</p>
+                <p id="status" class="text-green-400">● SISTEMA ONLINE</p>
+            </div>
+        </div>
     </header>
 
-    <main class="p-4 max-w-md mx-auto">
-        
-        <section id="anotar" class="tab-content active space-y-4">
-            <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-800">
-                <label class="text-[10px] font-bold text-slate-500 uppercase">Fecha de Estudio</label>
-                <input type="date" id="fecha_registro" class="w-full p-3 rounded-lg mt-1 font-bold text-yellow-500">
-            </div>
+    <main class="container mx-auto p-4 space-y-6">
 
-            <div class="grid grid-cols-2 gap-3">
-                <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-800">
-                    <label class="text-[10px] font-bold text-slate-500 uppercase">Sorteo</label>
-                    <select id="hora" class="w-full p-3 rounded-lg mt-1 font-bold">
-                        <option value="08:00">08:00 AM</option>
-                        <option value="09:00">09:00 AM</option>
-                        <option value="10:00">10:00 AM</option>
-                        <option value="11:00">11:00 AM</option>
-                        <option value="12:00">12:00 PM</option>
-                        <option value="13:00">01:00 PM</option>
-                        <option value="14:00">02:00 PM</option>
-                        <option value="15:00">03:00 PM</option>
-                        <option value="16:00">04:00 PM</option>
-                        <option value="17:00">05:00 PM</option>
-                        <option value="18:00">06:00 PM</option>
-                        <option value="19:00">07:00 PM</option>
-                    </select>
-                </div>
-                <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-800">
-                    <label class="text-[10px] font-bold text-slate-500 uppercase">Número (00-75)</label>
-                    <input type="text" id="numero" placeholder="--" class="w-full p-3 rounded-lg mt-1 text-center font-black text-xl">
-                </div>
-            </div>
-
-            <button onclick="guardarDato()" class="w-full bg-green-700 hover:bg-green-600 p-4 rounded-xl font-black text-white shadow-lg uppercase tracking-widest">Anotar Jugada</button>
+        <section class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-md">
+            <h2 class="text-amber-500 font-bold mb-4">📥 REGISTRO DE SORTEO</h2>
+            <form id="formCaptura" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <input type="date" id="fecha" required class="bg-slate-700 p-2 rounded border border-slate-600 outline-none">
+                <select id="hora" required class="bg-slate-700 p-2 rounded border border-slate-600 outline-none">
+                    <option value="08:00 AM">08:00 AM</option>
+                    <option value="09:00 AM">09:00 AM</option>
+                    <option value="10:00 AM">10:00 AM</option>
+                    <option value="11:00 AM">11:00 AM</option>
+                    <option value="12:00 PM">12:00 PM</option>
+                    <option value="01:00 PM">01:00 PM</option>
+                    <option value="04:00 PM">04:00 PM</option>
+                    <option value="05:00 PM">05:00 PM</option>
+                    <option value="06:00 PM">06:00 PM</option>
+                    <option value="07:00 PM">07:00 PM</option>
+                </select>
+                <input type="number" id="numero" placeholder="Número" required class="bg-slate-700 p-2 rounded border border-slate-600 outline-none">
+                <button type="submit" class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 px-4 rounded transition">GUARDAR</button>
+            </form>
         </section>
 
-        <section id="estudio" class="tab-content space-y-4">
-            <div class="bg-slate-900/50 rounded-xl border border-slate-800 overflow-hidden">
-                <h3 class="p-3 bg-slate-800 text-[10px] font-bold uppercase text-slate-400">Historial de Hoy</h3>
-                <table class="w-full text-left">
-                    <tbody id="lista-historial" class="text-sm"></tbody>
+        <section class="bg-radar p-6 rounded-xl shadow-inner">
+            <h2 class="text-amber-500 font-black text-center mb-4 italic">📡 RADAR GUÁCHARO (75)</h2>
+            <div class="grid grid-cols-2 gap-4 text-center">
+                <div class="bg-slate-900 p-4 rounded border border-amber-500/30">
+                    <h3 class="text-xs text-slate-400 uppercase">Atracción (Antes)</h3>
+                    <div id="antes75" class="text-xl font-mono text-amber-400">-</div>
+                </div>
+                <div class="bg-slate-900 p-4 rounded border border-amber-500/30">
+                    <h3 class="text-xs text-slate-400 uppercase">Salida (Después)</h3>
+                    <div id="despues75" class="text-xl font-mono text-amber-400">-</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-slate-800 rounded-xl overflow-hidden border border-slate-700">
+            <h2 class="p-4 font-bold bg-slate-700/50">📊 ÚLTIMOS RESULTADOS</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-900 text-slate-400">
+                        <tr>
+                            <th class="p-3">FECHA</th>
+                            <th class="p-3">HORA</th>
+                            <th class="p-3">N°</th>
+                            <th class="p-3">ANIMAL</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoTabla" class="divide-y divide-slate-700">
+                        </tbody>
                 </table>
             </div>
         </section>
-
-        <section id="radar" class="tab-content space-y-4">
-            <div class="p-4 bg-yellow-900/20 border border-yellow-600/30 rounded-xl">
-                <h2 class="text-yellow-500 font-black text-lg uppercase">Objetivo Guácharo (75)</h2>
-                <p class="text-[10px] text-slate-400 uppercase">Análisis de Seguidillas y Patrones</p>
-            </div>
-            <div id="estudio-75" class="space-y-3">
-                </div>
-        </section>
-
     </main>
 
-    <nav class="fixed bottom-0 w-full bg-slate-900 border-t border-slate-800 flex justify-around p-2 text-[10px] font-bold uppercase">
-        <button onclick="switchTab('anotar')" class="flex flex-col items-center p-2 active-tab tab-btn" id="btn-anotar">
-            <i class="fas fa-edit text-lg mb-1"></i>Anotar
-        </button>
-        <button onclick="switchTab('estudio')" class="flex flex-col items-center p-2 tab-btn" id="btn-estudio">
-            <i class="fas fa-chart-line text-lg mb-1"></i>Estudio
-        </button>
-        <button onclick="switchTab('radar')" class="flex flex-col items-center p-2 tab-btn" id="btn-radar">
-            <i class="fas fa-bullseye text-lg mb-1"></i>Radar 75
-        </button>
-    </nav>
-
     <script>
-        const URL = 'https://z3ze6gkwckh91s9ybnacqa.supabase.co/rest/v1/resultados';
-        const KEY = 'sb_publishable_Z3ze6gKwcKh91S9YBnacqA_3so-cPOC';
+        // 1. CONFIGURACIÓN (Pon tus datos aquí)
+        const URL_SB = "TU_SUPABASE_URL"; 
+        const KEY_SB = "TU_SUPABASE_ANON_KEY"; 
+        const supabase = supabase.createClient(URL_SB, KEY_SB);
 
-        // DICCIONARIO DEFINITIVO CORREGIDO SEGÚN TABLERO
-        const ANIMALES = {
-            "00": "Ballena", "0": "Delfín", "01": "Carnero", "02": "Toro", "03": "Ciempiés", "04": "Alacrán",
-            "05": "León", "06": "Rana", "07": "Perico", "08": "Ratón", "09": "Águila", "10": "Tigre",
-            "11": "Gato", "12": "Caballo", "13": "Mono", "14": "Paloma", "15": "Zorro", "16": "Oso",
-            "17": "Pavo", "18": "Burro", "19": "Chivo", "20": "Cochino", "21": "Gallo", "22": "Camello",
-            "23": "Cebra", "24": "Iguana", "25": "Gallina", "26": "Vaca", "27": "Perro", "28": "Zamuro",
-            "29": "Elefante", "30": "Caimán", "31": "Lapa", "32": "Ardilla", "33": "Pescado", "34": "Venado",
-            "35": "Jirafa", "36": "Culebra", "37": "Tortuga", "38": "Búfalo", "39": "Lechuza", "40": "Avispa",
-            "41": "Canguro", "42": "Tucán", "43": "Mariposa", "44": "Chigüire", "45": "Garza", "46": "Puma",
-            "47": "Pavo Real", "48": "Puercoespín", "49": "Pereza", "50": "Canario", "51": "Pelícano", "52": "Pulpo",
-            "53": "Caracol", "54": "Grillo", "55": "Oso Hormiguero", "56": "Tiburón", "57": "Pato", "58": "Hormiga",
-            "59": "Pantera", "60": "Camaleón", "61": "Panda", "62": "Cachicamo", "63": "Cangrejo", "64": "Gavilán",
-            "65": "Araña", "66": "Lobo", "67": "Avestruz", "68": "Jaguar", "69": "Conejo", "70": "Bisonte",
-            "71": "Guacamaya", "72": "Gorila", "73": "Hipopótamo", "74": "Turpial", "75": "Guácharo"
+        // 2. DICCIONARIO DE ANIMALES
+        const obtenerAnimal = (num) => {
+            const n = num.toString().padStart(2, '0');
+            const animales = {
+                "00": "BALLENA", "01": "CARNERO", "02": "TORO", "03": "CIEMPIÉS", "04": "ALACRÁN",
+                "05": "LEÓN", "06": "RANA", "07": "PERICO", "08": "RATÓN", "09": "ÁGUILA",
+                "10": "TIGRE", "11": "GATO", "12": "CABALLO", "13": "MONO", "14": "PALOMA",
+                "15": "ZORRO", "16": "OSO", "17": "PAVO", "18": "BURRO", "19": "CHIVO",
+                "20": "COCHINO", "21": "GALLO", "22": "CAMELLO", "23": "CEBRA", "24": "IGUANA",
+                "25": "GALLINA", "26": "VACA", "27": "PERRO", "28": "ZAMURO", "29": "ELEFANTE",
+                "30": "CAIMÁN", "31": "LAPA", "32": "ARDILLA", "33": "PESCADO", "34": "VENADO",
+                "35": "JIRAFA", "36": "CULEBRA", "75": "GUÁCHARO" 
+                // Carlos, agrega aquí los demás según tu manual
+            };
+            return animales[n] || "ANIMAL " + n;
         };
 
-        async function guardarDato() {
-            const fecha = document.getElementById('fecha_registro').value;
-            const hora = document.getElementById('hora').value;
-            const numRaw = document.getElementById('numero').value.trim();
-            
-            let num = (numRaw === "00" || numRaw === "0") ? numRaw : numRaw.padStart(2, '0');
-
-            if(!ANIMALES[num]) return alert("NÚMERO NO EXISTE EN EL TABLERO");
-
-            try {
-                const res = await fetch(URL, {
-                    method: 'POST',
-                    headers: { 'apikey': KEY, 'Authorization': `Bearer ${KEY}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fecha, hora, numero: num, animal: ANIMALES[num] })
-                });
-                if(res.ok) {
-                    alert(`REGISTRADO: ${num} - ${ANIMALES[num]}`);
-                    document.getElementById('numero').value = '';
-                    cargarDatos();
-                } else { alert("ERROR DE CONEXIÓN CON SUPABASE"); }
-            } catch(e) { alert("ERROR DE RED"); }
-        }
-
+        // 3. FUNCIONES DE BASE DE DATOS
         async function cargarDatos() {
-            try {
-                const res = await fetch(`${URL}?order=fecha.desc,hora.desc&limit=50`, {
-                    headers: { 'apikey': KEY, 'Authorization': `Bearer ${KEY}` }
-                });
-                const datos = await res.json();
-                
-                // Tabla Historial
-                document.getElementById('lista-historial').innerHTML = datos.map(d => `
-                    <tr class="border-b border-slate-800">
-                        <td class="p-3 text-slate-500 font-bold">${d.hora}</td>
-                        <td class="p-3 font-black text-white">${d.numero}</td>
-                        <td class="p-3 text-blue-400 italic">${d.animal}</td>
+            // Cargar Historial
+            const { data: historial, error } = await supabase
+                .from('estudio_algoritmo')
+                .select('*')
+                .order('fecha', { ascending: false })
+                .order('hora', { ascending: false })
+                .limit(20);
+
+            if (historial) {
+                const tbody = document.getElementById('cuerpoTabla');
+                tbody.innerHTML = historial.map(r => `
+                    <tr class="${r.numero === '75' ? 'row-especial' : ''}">
+                        <td class="p-3">${r.fecha}</td>
+                        <td class="p-3">${r.hora}</td>
+                        <td class="p-3">${r.numero}</td>
+                        <td class="p-3 font-bold text-amber-400">${r.animal}</td>
                     </tr>
                 `).join('');
+            }
 
-                // Lógica Radar 75 (Seguidillas)
-                const radarDiv = document.getElementById('estudio-75');
-                const apariciones75 = datos.filter((d, i) => d.numero === "75");
+            // Cargar Radar 75 desde la Vista
+            const { data: secuencias } = await supabase.from('analisis_secuencias').select('*');
+            if (secuencias) {
+                const antes = [...new Set(secuencias.filter(s => s.numero === "75").map(s => s.num_antes).filter(n => n))];
+                const despues = [...new Set(secuencias.filter(s => s.numero === "75").map(s => s.num_despues).filter(n => n))];
                 
-                if(apariciones75.length === 0) {
-                    radarDiv.innerHTML = "<p class='text-xs text-slate-500'>Esperando que el 75 aparezca en el historial para analizar...</p>";
-                } else {
-                    radarDiv.innerHTML = datos.map((d, i) => {
-                        if(d.numero === "75") {
-                            const antes = datos[i + 1] ? `<span class="text-green-400">${datos[i+1].numero} (${datos[i+1].animal})</span>` : "---";
-                            const despues = datos[i - 1] ? `<span class="text-red-400">${datos[i-1].numero} (${datos[i-1].animal})</span>` : "---";
-                            return `
-                                <div class="p-3 bg-slate-900 border-l-4 border-yellow-600 rounded-r-xl">
-                                    <p class="text-[10px] text-slate-500 font-bold">${d.fecha} - ${d.hora}</p>
-                                    <div class="mt-2 text-xs space-y-1">
-                                        <p>Vino de: ${antes}</p>
-                                        <p>Soltó a: ${despues}</p>
-                                    </div>
-                                </div>`;
-                        }
-                        return '';
-                    }).join('');
-                }
-            } catch(e) { console.error("Fallo al cargar datos"); }
+                document.getElementById('antes75').innerText = antes.length > 0 ? antes.join(", ") : "-";
+                document.getElementById('despues75').innerText = despues.length > 0 ? despues.join(", ") : "-";
+            }
         }
 
-        function switchTab(id) {
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active-tab'));
-            document.getElementById(id).classList.add('active');
-            document.getElementById('btn-'+id).classList.add('active-tab');
-            if(id !== 'anotar') cargarDatos();
-        }
+        // 4. EVENTO DE GUARDADO
+        document.getElementById('formCaptura').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            btn.disabled = true;
+            btn.innerText = "GUARDANDO...";
 
-        document.getElementById('fecha_registro').valueAsDate = new Date();
-        cargarDatos();
+            const numero = document.getElementById('numero').value.padStart(2, '0');
+            const fecha = document.getElementById('fecha').value;
+            const hora = document.getElementById('hora').value;
+
+            const { error } = await supabase
+                .from('estudio_algoritmo')
+                .insert([{ 
+                    fecha, 
+                    hora, 
+                    numero, 
+                    animal: obtenerAnimal(numero) 
+                }]);
+
+            if (error) {
+                alert("Error: " + error.message);
+            } else {
+                e.target.reset();
+                await cargarDatos();
+            }
+            btn.disabled = false;
+            btn.innerText = "GUARDAR";
+        });
+
+        // Inicializar al cargar
+        window.onload = () => {
+            document.getElementById('fecha').valueAsDate = new Date();
+            cargarDatos();
+        };
     </script>
 </body>
 </html>
