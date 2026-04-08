@@ -1,14 +1,6 @@
-// ==========================================
-// CONFIGURACIÓN DE CONEXIÓN
-// ==========================================
 const URL = 'https://z3ze6gkwckh91s9ybnacqa.supabase.co/rest/v1/resultados';
-// Asegúrate de que esta llave no tenga espacios al principio o al final
 const KEY = 'sb_publishable_Z3ze6gKwcKh91S9YBnacqA_3so-cPOC'; 
 
-// ==========================================
-// DICCIONARIO OFICIAL (77 ANIMALES)
-// Sincronizado con tablero Guácharo Activo
-// ==========================================
 const ANIMALES = {
     "00": "Ballena", "0": "Delfín", "01": "Carnero", "02": "Toro", "03": "Ciempiés", "04": "Alacrán",
     "05": "León", "06": "Rana", "07": "Perico", "08": "Ratón", "09": "Águila", "10": "Tigre",
@@ -25,29 +17,16 @@ const ANIMALES = {
     "71": "Guacamaya", "72": "Gorila", "73": "Hipopótamo", "74": "Turpial", "75": "Guácharo"
 };
 
-// ==========================================
-// FUNCIÓN PARA GUARDAR (CORREGIDA)
-// ==========================================
 async function guardarDato() {
-    const fecha = document.getElementById('fecha_registro').value;
-    const hora = document.getElementById('hora').value;
-    const numRaw = document.getElementById('numero').value.trim();
-    
-    // Normalizar: 0 -> 0, 00 -> 00, 1 -> 01
-    let num = (numRaw === "0" || numRaw === "00") ? numRaw : numRaw.padStart(2, '0');
+    const f = document.getElementById('fecha_registro').value;
+    const h = document.getElementById('hora').value;
+    const nRaw = document.getElementById('numero').value.trim();
+    let n = (nRaw === "0" || nRaw === "00") ? nRaw : nRaw.padStart(2, '0');
 
-    if (!ANIMALES[num]) {
-        alert("Número no válido para el tablero actual.");
-        return;
-    }
-
-    // Cambiamos el botón a estado "Cargando" para evitar doble click
-    const btn = document.querySelector('button[onclick="guardarDato()"]');
-    btn.disabled = true;
-    btn.innerText = "ENVIANDO...";
+    if (!ANIMALES[n]) return alert("Número fuera de rango (00-75)");
 
     try {
-        const res = await fetch(URL, {
+        const r = await fetch(URL, {
             method: 'POST',
             headers: { 
                 'apikey': KEY, 
@@ -55,29 +34,18 @@ async function guardarDato() {
                 'Content-Type': 'application/json',
                 'Prefer': 'return=minimal' 
             },
-            body: JSON.stringify({ 
-                fecha: fecha, 
-                hora: hora, 
-                numero: num, 
-                animal: ANIMALES[num] 
-            })
+            body: JSON.stringify({ fecha: f, hora: h, numero: n, animal: ANIMALES[n] })
         });
 
-        if (res.ok) {
-            alert(`✅ REGISTRADO: ${num} - ${ANIMALES[num]}`);
+        if (r.ok) {
+            alert("✅ Guardado: " + n + " - " + ANIMALES[n]);
             document.getElementById('numero').value = '';
             cargarDatos();
         } else {
-            const errorMsg = await res.text();
-            console.error("Detalle del error:", errorMsg);
-            alert("Error del Sistema: Llave denegada o tabla protegida.");
+            const err = await r.json();
+            alert("Error Supabase: " + err.message);
         }
     } catch (e) {
-        alert("FALLA DE CONEXIÓN: Revisa tu señal o el link de Supabase.");
-    } finally {
-        btn.disabled = false;
-        btn.innerText = "ANOTAR JUGADA";
+        alert("Falla de Red: Intenta refrescar la página.");
     }
 }
-
-// ... Resto de funciones (cargarDatos, switchTab, etc.)
