@@ -3,39 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador CRCA - V-Gate Nexus</title>
+    <title>Analizador CRCA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        .bg-radar { background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; }
-        .row-especial { background-color: rgba(245, 158, 11, 0.2); font-weight: bold; }
-    </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
+<body class="bg-slate-900 text-slate-100 min-h-screen">
 
-    <header class="bg-slate-800 p-4 border-b border-amber-600 shadow-lg sticky top-0 z-50">
+    <header class="bg-slate-800 p-4 border-b border-amber-600 shadow-lg">
         <div class="container mx-auto flex justify-between items-center">
             <div>
                 <h1 class="text-xl font-bold text-amber-500 uppercase">Analizador CRCA</h1>
-                <p class="text-[10px] text-slate-400">Algoritmo Guácharo Activo</p>
             </div>
-            <div class="text-right text-[10px]">
-                <p class="uppercase font-bold">Admin: Carlos Carvallo</p>
-                <p id="status_text" class="text-green-400 font-mono italic">● SISTEMA ONLINE</p>
+            <div class="text-right">
+                <p id="status_text" class="text-slate-400 font-mono text-[10px]">● CARGANDO...</p>
             </div>
         </div>
     </header>
 
     <main class="container mx-auto p-4 space-y-6">
-
-        <section class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-md">
-            <h2 class="text-amber-500 font-bold mb-4 flex items-center text-sm uppercase italic">
-                📥 Registro de Sorteo
-            </h2>
+        <section class="bg-slate-800 p-6 rounded-xl border border-slate-700">
             <form id="formCaptura" class="grid grid-cols-1 gap-4">
-                <input type="date" id="fecha" required class="w-full bg-slate-700 p-3 rounded border border-slate-600 outline-none text-white focus:border-amber-500">
-                
-                <select id="hora" required class="w-full bg-slate-700 p-3 rounded border border-slate-600 outline-none text-white focus:border-amber-500">
+                <input type="date" id="fecha" required class="w-full bg-slate-700 p-3 rounded text-white border border-slate-600">
+                <select id="hora" required class="w-full bg-slate-700 p-3 rounded text-white border border-slate-600">
                     <option value="08:00 AM">08:00 AM</option>
                     <option value="09:00 AM">09:00 AM</option>
                     <option value="10:00 AM">10:00 AM</option>
@@ -47,165 +36,86 @@
                     <option value="06:00 PM">06:00 PM</option>
                     <option value="07:00 PM">07:00 PM</option>
                 </select>
-
-                <input type="number" id="numero" placeholder="Escribe el Número" required min="0" max="99" class="w-full bg-slate-700 p-3 rounded border border-slate-600 outline-none text-white focus:border-amber-500 text-lg font-bold">
-                
-                <button type="submit" id="btnGuardar" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-black py-4 rounded transition uppercase shadow-lg shadow-amber-900/40 text-lg">
-                    GUARDAR RESULTADO
-                </button>
+                <input type="number" id="numero" placeholder="Número" required class="w-full bg-slate-700 p-3 rounded text-white text-lg font-bold">
+                <button type="submit" id="btnGuardar" class="w-full bg-amber-600 text-white font-black py-4 rounded uppercase">GUARDAR</button>
             </form>
         </section>
 
-        <section class="bg-radar p-6 rounded-xl shadow-inner border border-amber-500/20">
-            <h2 class="text-amber-500 font-black text-center mb-4 italic tracking-widest text-sm">📡 RADAR GUÁCHARO (75)</h2>
-            <div class="grid grid-cols-2 gap-4 text-center">
-                <div class="bg-slate-900 p-4 rounded border border-amber-500/30">
-                    <h3 class="text-[10px] text-slate-400 uppercase mb-1">Atracción (Antes)</h3>
-                    <div id="antes75" class="text-2xl font-mono text-amber-400 font-bold tracking-tighter">---</div>
-                </div>
-                <div class="bg-slate-900 p-4 rounded border border-amber-500/30">
-                    <h3 class="text-[10px] text-slate-400 uppercase mb-1">Salida (Después)</h3>
-                    <div id="despues75" class="text-2xl font-mono text-amber-400 font-bold tracking-tighter">---</div>
-                </div>
+        <section class="bg-slate-800/50 p-6 rounded-xl border border-amber-500/20 text-center">
+            <h2 class="text-amber-500 font-bold mb-4 text-xs">📡 RADAR GUÁCHARO (75)</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-slate-900 p-4 rounded"><p class="text-[10px] text-slate-500">ANTES</p><div id="antes75" class="text-xl font-bold text-amber-400">---</div></div>
+                <div class="bg-slate-900 p-4 rounded"><p class="text-[10px] text-slate-500">DESPUÉS</p><div id="despues75" class="text-xl font-bold text-amber-400">---</div></div>
             </div>
         </section>
 
-        <section class="bg-slate-800 rounded-xl overflow-hidden border border-slate-700 shadow-xl">
-            <h2 class="p-4 font-bold bg-slate-700/50 flex items-center text-xs uppercase tracking-wider text-slate-300">
-                📊 Historial Reciente
-            </h2>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-slate-900 text-slate-400 border-b border-slate-700">
-                        <tr>
-                            <th class="p-4 font-medium">FECHA/HORA</th>
-                            <th class="p-4 font-medium text-center">N°</th>
-                            <th class="p-4 font-medium">ANIMAL</th>
-                        </tr>
-                    </thead>
-                    <tbody id="cuerpoTabla" class="divide-y divide-slate-700">
-                        <tr>
-                            <td colspan="3" class="p-8 text-center text-slate-500 italic">Sincronizando con la base de datos...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+        <section class="bg-slate-800 rounded-xl overflow-hidden border border-slate-700">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-slate-900 text-slate-400">
+                    <tr><th class="p-4">FECHA/HORA</th><th class="p-4 text-center">N°</th><th class="p-4">ANIMAL</th></tr>
+                </thead>
+                <tbody id="cuerpoTabla" class="divide-y divide-slate-700">
+                    <tr><td colspan="3" class="p-8 text-center text-slate-500 italic">Esperando conexión...</td></tr>
+                </tbody>
+            </table>
         </section>
-
     </main>
 
     <script>
-        // 1. CONEXIÓN CONFIGURADA PARA CARLOS
         const URL_SB = "https://iyvbufxkgycqcmdeclsf.supabase.co"; 
         const KEY_SB = "EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5dmJ1ZnhrZ3ljcWNtZGVjbHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzOTE5NTMsImV4cCI6MjA4OTk2Nzk1M30.Rt6XfnsvWu1Efwb3-fVOyHCmz7aCJXHpIJxaxGzuThw"; 
         
-        // Inicialización corregida
-        const sb = supabase.createClient(URL_SB, KEY_SB);
+        // Inicialización segura
+        const { createClient } = supabase;
+        const sb = createClient(URL_SB, KEY_SB);
 
-        // 2. DICCIONARIO
         const obtenerAnimal = (num) => {
             const n = num.toString().padStart(2, '0');
-            const animales = {
-                "00": "BALLENA", "01": "CARNERO", "02": "TORO", "03": "CIEMPIÉS", "04": "ALACRÁN",
-                "05": "LEÓN", "06": "RANA", "07": "PERICO", "08": "RATÓN", "09": "ÁGUILA",
-                "10": "TIGRE", "11": "GATO", "12": "CABALLO", "13": "MONO", "14": "PALOMA",
-                "15": "ZORRO", "16": "OSO", "17": "PAVO", "18": "BURRO", "19": "CHIVO",
-                "20": "COCHINO", "21": "GALLO", "22": "CAMELLO", "23": "CEBRA", "24": "IGUANA",
-                "25": "GALLINA", "26": "VACA", "27": "PERRO", "28": "ZAMURO", "29": "ELEFANTE",
-                "30": "CAIMÁN", "31": "LAPA", "32": "ARDILLA", "33": "PESCADO", "34": "VENADO",
-                "35": "JIRAFA", "36": "CULEBRA", "75": "GUÁCHARO"
-            };
+            const animales = {"00":"BALLENA","01":"CARNERO","02":"TORO","03":"CIEMPIÉS","04":"ALACRÁN","05":"LEÓN","06":"RANA","07":"PERICO","08":"RATÓN","09":"ÁGUILA","10":"TIGRE","11":"GATO","12":"CABALLO","13":"MONO","14":"PALOMA","15":"ZORRO","16":"OSO","17":"PAVO","18":"BURRO","19":"CHIVO","20":"COCHINO","21":"GALLO","22":"CAMELLO","23":"CEBRA","24":"IGUANA","25":"GALLINA","26":"VACA","27":"PERRO","28":"ZAMURO","29":"ELEFANTE","30":"CAIMÁN","31":"LAPA","32":"ARDILLA","33":"PESCADO","34":"VENADO","35":"JIRAFA","36":"CULEBRA","75":"GUÁCHARO"};
             return animales[n] || "ANIMAL " + n;
         };
 
-        // 3. FUNCIÓN REFRESCAR SISTEMA
         async function refrescarSistema() {
             try {
-                // Consultar Historial
-                const { data: historial, error: errH } = await sb
-                    .from('estudio_algoritmo')
-                    .select('*')
-                    .order('fecha', { ascending: false })
-                    .order('hora', { ascending: false })
-                    .limit(10);
-
+                const { data: historial, error: errH } = await sb.from('estudio_algoritmo').select('*').order('fecha', { ascending: false }).order('hora', { ascending: false }).limit(10);
                 if (errH) throw errH;
 
                 const tbody = document.getElementById('cuerpoTabla');
-                if (historial && historial.length > 0) {
-                    tbody.innerHTML = historial.map(r => `
-                        <tr class="${r.numero === '75' ? 'row-especial' : ''}">
-                            <td class="p-4 text-[10px] leading-tight text-slate-400">
-                                ${r.fecha}<br><span class="text-white font-mono text-xs">${r.hora}</span>
-                            </td>
-                            <td class="p-4 font-bold text-amber-500 text-xl text-center">${r.numero}</td>
-                            <td class="p-4 text-xs font-bold uppercase tracking-wide">${r.animal}</td>
-                        </tr>
-                    `).join('');
-                } else {
-                    tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-slate-500">Sin datos registrados aún.</td></tr>';
-                }
+                tbody.innerHTML = historial && historial.length > 0 
+                    ? historial.map(r => `<tr class="border-b border-slate-700"><td class="p-4 text-[10px] text-slate-400">${r.fecha}<br><span class="text-white font-mono">${r.hora}</span></td><td class="p-4 font-bold text-amber-500 text-xl text-center">${r.numero}</td><td class="p-4 text-xs font-bold uppercase">${r.animal}</td></tr>`).join('')
+                    : '<tr><td colspan="3" class="p-8 text-center text-slate-500">Sin registros</td></tr>';
 
-                // Consultar Radar 75 (Desde la vista SQL)
-                const { data: radar, error: errR } = await sb
-                    .from('analisis_secuencias')
-                    .select('num_antes, num_despues')
-                    .eq('numero', '75');
-
-                if (radar) {
-                    const antes = [...new Set(radar.map(s => s.num_antes).filter(n => n))];
-                    const despues = [...new Set(radar.map(s => s.num_despues).filter(n => n))];
-                    document.getElementById('antes75').innerText = antes.length > 0 ? antes.join(", ") : "---";
-                    document.getElementById('despues75').innerText = despues.length > 0 ? despues.join(", ") : "---";
-                }
-
-                // Si llegamos aquí, la conexión es exitosa
                 document.getElementById('status_text').innerText = "● SISTEMA ONLINE";
-                document.getElementById('status_text').classList.replace('text-red-400', 'text-green-400');
-
+                document.getElementById('status_text').className = "text-green-400 font-mono text-[10px]";
             } catch (error) {
-                console.error("Error:", error.message);
+                console.error(error);
                 document.getElementById('status_text').innerText = "● ERROR DE CONEXIÓN";
-                document.getElementById('status_text').classList.replace('text-green-400', 'text-red-400');
+                document.getElementById('status_text').className = "text-red-400 font-mono text-[10px]";
             }
         }
 
-        // 4. GUARDAR REGISTRO
         document.getElementById('formCaptura').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnGuardar');
-            const numVal = document.getElementById('numero').value;
-            const fechaVal = document.getElementById('fecha').value;
-            const horaVal = document.getElementById('hora').value;
-
+            const num = document.getElementById('numero').value;
             btn.disabled = true;
             btn.innerText = "REGISTRANDO...";
 
-            const { error } = await sb
-                .from('estudio_algoritmo')
-                .insert([{ 
-                    fecha: fechaVal, 
-                    hora: horaVal, 
-                    numero: numVal.toString().padStart(2, '0'), 
-                    animal: obtenerAnimal(numVal) 
-                }]);
+            const { error } = await sb.from('estudio_algoritmo').insert([{ 
+                fecha: document.getElementById('fecha').value, 
+                hora: document.getElementById('hora').value, 
+                numero: num.toString().padStart(2, '0'), 
+                animal: obtenerAnimal(num) 
+            }]);
 
-            if (error) {
-                alert("Error de Supabase: " + error.message);
-            } else {
-                document.getElementById('numero').value = '';
-                await refrescarSistema();
-            }
-            
+            if (error) alert("Error: " + error.message);
+            else { document.getElementById('numero').value = ''; await refrescarSistema(); }
             btn.disabled = false;
-            btn.innerText = "GUARDAR RESULTADO";
+            btn.innerText = "GUARDAR";
         });
 
-        // 5. INICIO
         window.onload = () => {
-            // Fecha de hoy por defecto
-            const hoy = new Date();
-            document.getElementById('fecha').value = hoy.toISOString().split('T')[0];
+            document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
             refrescarSistema();
         };
     </script>
