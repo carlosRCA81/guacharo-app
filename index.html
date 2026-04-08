@@ -3,132 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GUÁCHARO NEXUS 2026</title>
+    <title>NEXUS 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        .bg-card { background-color: #1e293b; border: 1px solid #334155; }
-        .input-vgate { background-color: #0f172a; border: 1px solid #475569; color: white; padding: 1rem; border-radius: 0.75rem; width: 100%; outline: none; }
-        .input-vgate:focus { border-color: #f59e0b; }
-    </style>
 </head>
 <body class="bg-[#0f172a] text-slate-200 min-h-screen">
 
-    <header class="p-4 border-b border-amber-600/30 flex justify-between items-center bg-[#1e293b] sticky top-0 z-50">
-        <div>
-            <h1 class="text-amber-500 font-black italic tracking-tighter text-xl">GUÁCHARO NEXUS 2026</h1>
-            <p class="text-[9px] text-slate-400 uppercase">Algoritmo Activo</p>
-        </div>
-        <div id="status_pill" class="text-[10px] font-mono px-3 py-1 rounded-full border border-red-500 text-red-500 bg-red-500/10 shadow-[0_0_10px_rgba(239,68,68,0.2)]">
-            ● ERROR DE CONEXIÓN
-        </div>
+    <header class="p-4 border-b border-amber-600/30 flex justify-between items-center bg-[#1e293b]">
+        <h1 class="text-amber-500 font-black italic">GUÁCHARO NEXUS 2026</h1>
+        <div id="st" class="text-[10px] font-mono px-2 py-1 rounded border border-red-500 text-red-500 bg-red-500/10">● OFF</div>
     </header>
 
-    <main class="p-4 max-w-md mx-auto space-y-6">
-        
-        <div class="bg-card p-6 rounded-2xl shadow-2xl">
-            <h2 class="text-[10px] font-bold text-slate-400 uppercase mb-4 tracking-[0.2em] flex items-center">
-                <span class="mr-2">📝</span> NUEVA JUGADA DEL DÍA
-            </h2>
-            <form id="vgate_nexus_form" class="space-y-4">
-                <input type="date" id="fecha" required class="input-vgate">
-                <select id="hora" required class="input-vgate">
+    <main class="p-4 max-w-md mx-auto space-y-4">
+        <div class="bg-[#1e293b] p-6 rounded-2xl border border-slate-700 shadow-2xl">
+            <form id="f_nexus" class="space-y-4">
+                <input type="date" id="fecha" required class="w-full bg-slate-800 p-4 rounded-xl border border-slate-600 outline-none focus:border-amber-500">
+                <select id="hora" required class="w-full bg-slate-800 p-4 rounded-xl border border-slate-600">
                     <option value="08:00 AM">08:00 AM</option><option value="09:00 AM">09:00 AM</option>
                     <option value="10:00 AM">10:00 AM</option><option value="11:00 AM">11:00 AM</option>
                     <option value="12:00 PM">12:00 PM</option><option value="01:00 PM">01:00 PM</option>
                     <option value="04:00 PM">04:00 PM</option><option value="05:00 PM">05:00 PM</option>
                     <option value="06:00 PM">06:00 PM</option><option value="07:00 PM">07:00 PM</option>
                 </select>
-                <div class="relative">
-                    <input type="number" id="numero" placeholder="Número" required class="input-vgate text-4xl font-black text-amber-500 text-center py-6">
-                </div>
-                <button type="submit" id="btn_save" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-black py-4 rounded-xl transition-all shadow-lg shadow-amber-900/40 active:scale-95 uppercase tracking-widest">
-                    GUARDAR EN NEXUS
-                </button>
+                <input type="number" id="num" placeholder="Número" required class="w-full bg-slate-800 p-4 rounded-xl border border-slate-600 text-3xl font-black text-amber-500 text-center">
+                <button type="submit" id="btn" class="w-full bg-amber-600 text-white font-black py-4 rounded-xl">GUARDAR RESULTADO</button>
             </form>
         </div>
 
-        <div class="bg-card p-5 rounded-2xl border border-amber-500/20">
-            <h2 class="text-center text-amber-500 font-bold mb-4 text-[10px] tracking-widest uppercase">📡 RADAR GUÁCHARO (75)</h2>
-            <div class="grid grid-cols-2 gap-3">
-                <div class="bg-[#0f172a] p-4 rounded-xl text-center border border-slate-700">
-                    <p class="text-[8px] text-slate-500 uppercase font-bold mb-1">Atracción</p>
-                    <div id="radar_antes" class="text-xl font-black text-amber-400">--</div>
-                </div>
-                <div class="bg-[#0f172a] p-4 rounded-xl text-center border border-slate-700">
-                    <p class="text-[8px] text-slate-500 uppercase font-bold mb-1">Salida</p>
-                    <div id="radar_despues" class="text-xl font-black text-amber-400">--</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-card rounded-2xl border border-slate-700 overflow-hidden shadow-xl">
-            <div class="p-4 bg-slate-800/50 flex justify-between items-center">
-                <span class="text-[10px] font-bold text-slate-300 uppercase tracking-widest">📊 ÚLTIMOS RESULTADOS</span>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-[#0f172a] text-slate-500 text-[9px] uppercase font-bold">
-                        <tr><th class="p-4">SORTEO</th><th class="p-4 text-center">N°</th><th class="p-4">ANIMAL</th></tr>
-                    </thead>
-                    <tbody id="tabla_body" class="divide-y divide-slate-800">
-                        <tr><td colspan="3" class="p-8 text-center text-slate-500 italic text-xs">Cargando base de datos...</td></tr>
-                    </tbody>
-                </table>
-            </div>
+        <div class="bg-[#1e293b] rounded-2xl border border-slate-700 overflow-hidden">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-slate-800 text-slate-500 text-[10px]">
+                    <tr><th class="p-4">SORTEO</th><th class="p-4 text-center">N°</th><th class="p-4">ANIMAL</th></tr>
+                </thead>
+                <tbody id="lista" class="divide-y divide-slate-700"></tbody>
+            </table>
         </div>
     </main>
 
     <script>
-        // Credenciales CuratorOS
-        const URL_SB = "https://iyvbufxkgycqcmdeclsf.supabase.co";
-        const KEY_SB = "EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5dmJ1ZnhrZ3ljcWNtZGVjbHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzOTE5NTMsImV4cCI6MjA4OTk2Nzk1M30.Rt6XfnsvWu1Efwb3-fVOyHCmz7aCJXHpIJxaxGzuThw";
+        const U = "https://iyvbufxkgycqcmdeclsf.supabase.co";
+        const K = "EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5dmJ1ZnhrZ3ljcWNtZGVjbHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzOTE5NTMsImV4cCI6MjA4OTk2Nzk1M30.Rt6XfnsvWu1Efwb3-fVOyHCmz7aCJXHpIJxaxGzuThw";
+        const sb = supabase.createClient(U, K);
 
-        const sb = supabase.createClient(URL_SB, KEY_SB);
+        const ans = {"00":"BALLENA","01":"CARNERO","02":"TORO","03":"CIEMPIÉS","04":"ALACRÁN","05":"LEÓN","06":"RANA","07":"PERICO","08":"RATÓN","09":"ÁGUILA","10":"TIGRE","11":"GATO","12":"CABALLO","13":"MONO","14":"PALOMA","15":"ZORRO","16":"OSO","17":"PAVO","18":"BURRO","19":"CHIVO","20":"COCHINO","21":"GALLO","22":"CAMELLO","23":"CEBRA","24":"IGUANA","25":"GALLINA","26":"VACA","27":"PERRO","28":"ZAMURO","29":"ELEFANTE","30":"CAIMÁN","31":"LAPA","32":"ARDILLA","33":"PESCADO","34":"VENADO","35":"JIRAFA","36":"CULEBRA","75":"GUÁCHARO"};
 
-        const listaAnimales = {"00":"BALLENA","01":"CARNERO","02":"TORO","03":"CIEMPIÉS","04":"ALACRÁN","05":"LEÓN","06":"RANA","07":"PERICO","08":"RATÓN","09":"ÁGUILA","10":"TIGRE","11":"GATO","12":"CABALLO","13":"MONO","14":"PALOMA","15":"ZORRO","16":"OSO","17":"PAVO","18":"BURRO","19":"CHIVO","20":"COCHINO","21":"GALLO","22":"CAMELLO","23":"CEBRA","24":"IGUANA","25":"GALLINA","26":"VACA","27":"PERRO","28":"ZAMURO","29":"ELEFANTE","30":"CAIMÁN","31":"LAPA","32":"ARDILLA","33":"PESCADO","34":"VENADO","35":"JIRAFA","36":"CULEBRA","75":"GUÁCHARO"};
-
-        async function cargarDatos() {
-            try {
-                const { data, error } = await sb.from('estudio_algoritmo').select('*').order('id', { ascending: false }).limit(10);
-                if (error) throw error;
-                
-                const pill = document.getElementById('status_pill');
-                pill.innerText = "● SISTEMA ONLINE";
-                pill.className = "text-[10px] font-mono px-3 py-1 rounded-full border border-green-500 text-green-500 bg-green-500/10 shadow-[0_0_10px_rgba(34,197,94,0.2)]";
-                
-                document.getElementById('tabla_body').innerHTML = data.map(r => `
-                    <tr class="hover:bg-slate-700/10 transition-colors">
-                        <td class="p-4 text-[10px] text-slate-400 font-mono">${r.fecha}<br><span class="text-white font-bold">${r.hora}</span></td>
-                        <td class="p-4 text-center font-black text-amber-500 text-2xl">${r.numero}</td>
-                        <td class="p-4 text-xs font-black uppercase italic tracking-tighter">${r.animal}</td>
-                    </tr>`).join('');
-            } catch (e) {
-                console.error(e);
+        async function l() {
+            const { data, error } = await sb.from('estudio_algoritmo').select('*').order('created_at', { ascending: false }).limit(8);
+            if (!error) {
+                document.getElementById('st').innerText = "● ONLINE";
+                document.getElementById('st').className = "text-[10px] font-mono px-2 py-1 rounded border border-green-500 text-green-500 bg-green-500/10";
+                document.getElementById('lista').innerHTML = data.map(r => `<tr><td class="p-4 text-[10px] text-slate-400">${r.fecha}<br><b>${r.hora}</b></td><td class="p-4 text-center font-black text-amber-500 text-xl">${r.numero}</td><td class="p-4 text-xs font-bold uppercase">${r.animal}</td></tr>`).join('');
             }
         }
 
-        document.getElementById('vgate_nexus_form').addEventListener('submit', async (e) => {
+        document.getElementById('f_nexus').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('btn_save');
-            btn.disabled = true; btn.innerText = "PROCESANDO...";
-
-            const n = document.getElementById('numero').value.padStart(2, '0');
+            const b = document.getElementById('btn'); b.disabled = true; b.innerText = "...";
+            const n = document.getElementById('num').value.padStart(2, '0');
             const { error } = await sb.from('estudio_algoritmo').insert([{
                 fecha: document.getElementById('fecha').value,
                 hora: document.getElementById('hora').value,
                 numero: n,
-                animal: listaAnimales[n] || "ANIMAL " + n
+                animal: ans[n] || "ANIMAL " + n
             }]);
-
-            if (error) alert("Error al guardar: " + error.message);
-            else { document.getElementById('numero').value = ''; await cargarDatos(); }
-            btn.disabled = false; btn.innerText = "GUARDAR EN NEXUS";
+            if (error) alert(error.message);
+            else { document.getElementById('num').value = ''; await l(); }
+            b.disabled = false; b.innerText = "GUARDAR RESULTADO";
         });
 
         window.onload = () => {
             document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
-            cargarDatos();
+            l();
         };
     </script>
 </body>
