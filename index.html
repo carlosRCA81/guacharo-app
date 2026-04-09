@@ -2,74 +2,51 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRCA Intelligence v3.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CRCA Elite Hub</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body onload="verificarAcceso()">
-    <header class="main-header">
-        <div class="logo">🛰️ ANALIZADOR CRCA Hub</div>
-        <div id="reloj" class="reloj">00:00:00</div>
+    <header class="top-nav">
+        <div class="status-dot"></div>
+        <span class="brand">CRCA ELITE</span>
+        <div id="reloj" class="clock">00:00</div>
     </header>
 
-    <main class="dashboard">
-        <section class="glass-panel">
-            <h3>📥 Registro de Movimientos</h3>
-            <div class="input-grid">
+    <div class="main-wrapper">
+        <div class="hero-stats">
+            <div class="stat-card gold">
+                <span class="label">OBJETIVO 75</span>
+                <div id="count-75" class="value">0</div>
+            </div>
+            <div class="stat-card blue">
+                <span class="label">PREDICCIÓN 70%</span>
+                <div id="prediccion" class="value-sub">---</div>
+                <div id="animal-sugerido" class="detail">ESPERANDO DATOS</div>
+            </div>
+        </div>
+
+        <section class="action-panel">
+            <h3>REGISTRO DE PODER</h3>
+            <div class="input-row">
                 <input type="date" id="fecha" value="2026-04-09">
                 <select id="hora">
                     <option value="08:00 AM">08:00 AM</option>
-                    <option value="09:00 AM">09:00 AM</option>
-                    <option value="10:00 AM">10:00 AM</option>
-                    <option value="11:00 AM">11:00 AM</option>
                     <option value="12:00 PM">12:00 PM</option>
-                    <option value="01:00 PM">01:00 PM</option>
-                    <option value="02:00 PM">02:00 PM</option>
-                    <option value="03:00 PM">03:00 PM</option>
-                    <option value="04:00 PM">04:00 PM</option>
-                    <option value="05:00 PM">05:00 PM</option>
-                    <option value="06:00 PM">06:00 PM</option>
                     <option value="07:00 PM">07:00 PM</option>
                 </select>
-                <input type="text" id="num" placeholder="Nº (00-75)" maxlength="2">
-                <button class="btn-glow" onclick="guardarDato()">INCRUSTAR DATO</button>
             </div>
-            <div id="msg-api"></div>
+            <input type="number" id="num" placeholder="Nº GANADOR (00-75)" pattern="\d*">
+            <button class="btn-main" onclick="guardarDato()">INCRUSTAR EN CEREBRO</button>
         </section>
 
-        <section class="glass-panel stats-center">
-            <div class="target-card">
-                <h4>🎯 OBJETIVO 75</h4>
-                <div id="count-75" class="stat-main">0</div>
-                <p>Veces en el historial</p>
-            </div>
-            <div class="predict-card">
-                <h4>🔥 PREDICCIÓN (70%)</h4>
-                <div id="prediccion" class="stat-sub">ANALIZANDO...</div>
-                <small id="animal-sugerido"></small>
-            </div>
+        <section class="history-panel">
+            <h3>HISTORIAL RECIENTE</h3>
+            <div id="lista-movil" class="mobile-list">
+                </div>
         </section>
-
-        <section class="glass-panel wide">
-            <h3>📜 Historial Detallado (Matriz de Datos)</h3>
-            <div class="scroll-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Hora</th>
-                            <th>Nº</th>
-                            <th>Animal</th>
-                            <th>Grupo</th>
-                            <th>Control</th>
-                        </tr>
-                    </thead>
-                    <tbody id="cuerpo-datos"></tbody>
-                </table>
-            </div>
-        </section>
-    </main>
+    </div>
     <script src="app.js"></script>
 </body>
 </html>
