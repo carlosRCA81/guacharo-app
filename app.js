@@ -1,11 +1,10 @@
-// CONFIGURACIÓN DE CONEXIÓN PURA
+// 1. CONFIGURACIÓN DE CONEXIÓN (CON TU LLAVE LEGACY COMPLETA)
 const URL_S = 'https://jvbsalpnycnokynpsexw.supabase.co';
-const KEY_S = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2YnNhbHBueWNub2t5bnBzZXh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTI2NzE5OTMsImV4cCI6MjAyODI0Nzk5M30.4TzbkkVeUnL_H8_S_Y8H-vM-S9_vW_D_Tz-V_S';
+const KEY_S = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2YnNhbHBueWNub2t5bnBzZXh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTI2NzE5OTMsImV4cCI6MjAyODI0Nzk5M30.5G-r3TlqL2E55yft5tni2GBP9yOeist6ifq3bBonLTE'; 
 
-// Inicialización ultra-segura
-const _supabase = supabase.createClient(URL_S.trim(), KEY_S.trim());
+const _supabase = supabase.createClient(URL_S, KEY_S);
 
-// DICCIONARIO
+// 2. DICCIONARIO DE DATOS GUACHARO
 const DATA_GUACHARO = {
     "00":{n:"Ballena",g:"Agua"}, "0":{n:"Delfín",g:"Agua"}, "1":{n:"Carnero",g:"Tierra"}, "2":{n:"Toro",g:"Tierra"},
     "3":{n:"Ciempiés",g:"Tierra"}, "4":{n:"Alacrán",g:"Tierra"}, "5":{n:"León",g:"Tierra"}, "6":{n:"Rana",g:"Agua"},
@@ -29,46 +28,69 @@ const DATA_GUACHARO = {
     "75":{n:"GUÁCHARO",g:"Especial"}
 };
 
-// GUARDAR
+// 3. FUNCIÓN PARA GUARDAR (INCRUSTAR)
 async function guardarDato() {
     const f = document.getElementById('fecha').value;
     const h = document.getElementById('hora').value;
     const n = document.getElementById('num').value;
-    if (!DATA_GUACHARO[n]) return alert("Número no válido");
+
+    if (!DATA_GUACHARO[n]) return alert("Número Inválido (Usa 00 al 75)");
 
     const { error } = await _supabase.from('historial_resultados').insert([
-        { fecha: f, hora: h, numero: n, nombre_animal: DATA_GUACHARO[n].n, grupo: DATA_GUACHARO[n].g }
+        { 
+            fecha: f, 
+            hora: h, 
+            numero: n, 
+            nombre_animal: DATA_GUACHARO[n].n, 
+            grupo: DATA_GUACHARO[n].g 
+        }
     ]);
 
-    if (error) alert("Error: " + error.message);
-    else { alert("¡Incrustado!"); cargarDatos(); }
+    if (error) {
+        alert("Error de conexión: " + error.message);
+    } else {
+        alert("¡Éxito! Dato incrustado en el cerebro.");
+        document.getElementById('num').value = "";
+        cargarDatos(); 
+    }
 }
 
-// CARGAR
+// 4. FUNCIÓN PARA CARGAR EL HISTORIAL
 async function cargarDatos() {
-    const { data, error } = await _supabase.from('historial_resultados').select('*').order('created_at', { ascending: false });
-    if (error) {
-        console.log("Error de llave detectado:", error.message);
-        return;
-    }
-    const list = document.getElementById('lista-movil');
-    if (list && data) {
-        list.innerHTML = data.map(i => `
-            <div style="padding:10px; border-bottom:1px solid #333; color:white;">
-                <b>${i.numero} - ${i.nombre_animal}</b> <br>
-                <small>${i.hora} | ${i.fecha}</small>
+    const { data, error } = await _supabase
+        .from('historial_resultados')
+        .select('*')
+        .order('created_at', { ascending: false });
+    
+    if (error) return console.error("Error al cargar datos:", error);
+
+    const container = document.getElementById('lista-movil');
+    if (container && data) {
+        container.innerHTML = data.slice(0, 10).map(i => `
+            <div style="border-bottom:1px solid #333; padding:10px; display:flex; align-items:center; gap:15px;">
+                <div style="background:#00d2ff; color:#000; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold;">
+                    ${i.numero}
+                </div>
+                <div>
+                    <div style="font-weight:bold; color:#fff;">${i.nombre_animal}</div>
+                    <div style="font-size:12px; color:#aaa;">${i.hora} | ${i.fecha}</div>
+                </div>
+                <div style="margin-left:auto; font-size:12px; color:#00d2ff;">${i.grupo}</div>
             </div>
         `).join('');
     }
 }
 
-// RELOJ
-function reloj() {
+// 5. LÓGICA DEL RELOJ
+function actualizarReloj() {
+    const ahora = new Date();
     const r = document.getElementById('reloj');
-    if (r) r.innerText = new Date().toLocaleTimeString();
+    if (r) r.textContent = ahora.toLocaleTimeString();
 }
 
+// 6. INICIO AL CARGAR LA PÁGINA
 document.addEventListener('DOMContentLoaded', () => {
-    setInterval(reloj, 1000);
+    actualizarReloj();
+    setInterval(actualizarReloj, 1000);
     cargarDatos();
 });
