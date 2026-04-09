@@ -3,78 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXUS 2026</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Analizador CRCA - Guácharo Activo</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-[#0f172a] text-slate-200 min-h-screen">
+<body onload="verificarAcceso()">
+    <div id="app-container">
+        <header>
+            <h1>🛰️ ANALIZADOR CRCA</h1>
+            <p>Sistema de Inteligencia de Datos - Guácharo Activo</p>
+        </header>
 
-    <header class="p-4 border-b border-amber-600/30 flex justify-between items-center bg-[#1e293b]">
-        <h1 class="text-amber-500 font-black italic">GUÁCHARO NEXUS 2026</h1>
-        <div id="st" class="text-[10px] font-mono px-2 py-1 rounded border border-red-500 text-red-500 bg-red-500/10">● OFF</div>
-    </header>
+        <div class="main-grid">
+            <section class="panel registration">
+                <h2>📥 Registro de Datos</h2>
+                <div class="form-group">
+                    <label>Fecha:</label>
+                    <input type="date" id="fecha" value="2026-04-09">
+                </div>
+                <div class="form-group">
+                    <label>Horario (Sorteo):</label>
+                    <select id="hora">
+                        <option value="08:00">08:00 AM</option>
+                        <option value="09:00">09:00 AM</option>
+                        <option value="10:00">10:00 AM</option>
+                        <option value="11:00">11:00 AM</option>
+                        <option value="12:00">12:00 PM</option>
+                        <option value="13:00">01:00 PM</option>
+                        <option value="14:00">02:00 PM</option>
+                        <option value="15:00">03:00 PM</option>
+                        <option value="16:00">04:00 PM</option>
+                        <option value="17:00">05:00 PM</option>
+                        <option value="18:00">06:00 PM</option>
+                        <option value="19:00">07:00 PM</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Número Ganador (00-75):</label>
+                    <input type="text" id="num" maxlength="2" placeholder="Ej: 75">
+                </div>
+                <button class="btn-save" onclick="guardarDato()">GUARDAR EN CEREBRO</button>
+                <div id="status-msg"></div>
+            </section>
 
-    <main class="p-4 max-w-md mx-auto space-y-4">
-        <div class="bg-[#1e293b] p-6 rounded-2xl border border-slate-700 shadow-2xl">
-            <form id="f_nexus" class="space-y-4">
-                <input type="date" id="fecha" required class="w-full bg-slate-800 p-4 rounded-xl border border-slate-600 outline-none focus:border-amber-500">
-                <select id="hora" required class="w-full bg-slate-800 p-4 rounded-xl border border-slate-600">
-                    <option value="08:00 AM">08:00 AM</option><option value="09:00 AM">09:00 AM</option>
-                    <option value="10:00 AM">10:00 AM</option><option value="11:00 AM">11:00 AM</option>
-                    <option value="12:00 PM">12:00 PM</option><option value="01:00 PM">01:00 PM</option>
-                    <option value="04:00 PM">04:00 PM</option><option value="05:00 PM">05:00 PM</option>
-                    <option value="06:00 PM">06:00 PM</option><option value="07:00 PM">07:00 PM</option>
-                </select>
-                <input type="number" id="num" placeholder="Número" required class="w-full bg-slate-800 p-4 rounded-xl border border-slate-600 text-3xl font-black text-amber-500 text-center">
-                <button type="submit" id="btn" class="w-full bg-amber-600 text-white font-black py-4 rounded-xl">GUARDAR RESULTADO</button>
-            </form>
+            <section class="panel analysis">
+                <h2>📊 Algoritmo Predictivo</h2>
+                <div class="stats-container">
+                    <div class="stat-card" id="alert-75">
+                        <h3>🎯 Frecuencia del 75</h3>
+                        <div id="count-75">--</div>
+                        <small>Animal: Guácharo</small>
+                    </div>
+                    <div class="stat-card">
+                        <h3>🔥 Más Probables (Próximos)</h3>
+                        <div id="top-probables">Esperando datos...</div>
+                    </div>
+                </div>
+                <div class="history-table">
+                    <h3>📜 Últimos Movimientos</h3>
+                    <div id="lista-historial"></div>
+                </div>
+            </section>
         </div>
-
-        <div class="bg-[#1e293b] rounded-2xl border border-slate-700 overflow-hidden">
-            <table class="w-full text-left text-sm">
-                <thead class="bg-slate-800 text-slate-500 text-[10px]">
-                    <tr><th class="p-4">SORTEO</th><th class="p-4 text-center">N°</th><th class="p-4">ANIMAL</th></tr>
-                </thead>
-                <tbody id="lista" class="divide-y divide-slate-700"></tbody>
-            </table>
-        </div>
-    </main>
-
-    <script>
-        const U = "https://iyvbufxkgycqcmdeclsf.supabase.co";
-        const K = "EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5dmJ1ZnhrZ3ljcWNtZGVjbHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzOTE5NTMsImV4cCI6MjA4OTk2Nzk1M30.Rt6XfnsvWu1Efwb3-fVOyHCmz7aCJXHpIJxaxGzuThw";
-        const sb = supabase.createClient(U, K);
-
-        const ans = {"00":"BALLENA","01":"CARNERO","02":"TORO","03":"CIEMPIÉS","04":"ALACRÁN","05":"LEÓN","06":"RANA","07":"PERICO","08":"RATÓN","09":"ÁGUILA","10":"TIGRE","11":"GATO","12":"CABALLO","13":"MONO","14":"PALOMA","15":"ZORRO","16":"OSO","17":"PAVO","18":"BURRO","19":"CHIVO","20":"COCHINO","21":"GALLO","22":"CAMELLO","23":"CEBRA","24":"IGUANA","25":"GALLINA","26":"VACA","27":"PERRO","28":"ZAMURO","29":"ELEFANTE","30":"CAIMÁN","31":"LAPA","32":"ARDILLA","33":"PESCADO","34":"VENADO","35":"JIRAFA","36":"CULEBRA","75":"GUÁCHARO"};
-
-        async function l() {
-            const { data, error } = await sb.from('estudio_algoritmo').select('*').order('created_at', { ascending: false }).limit(8);
-            if (!error) {
-                document.getElementById('st').innerText = "● ONLINE";
-                document.getElementById('st').className = "text-[10px] font-mono px-2 py-1 rounded border border-green-500 text-green-500 bg-green-500/10";
-                document.getElementById('lista').innerHTML = data.map(r => `<tr><td class="p-4 text-[10px] text-slate-400">${r.fecha}<br><b>${r.hora}</b></td><td class="p-4 text-center font-black text-amber-500 text-xl">${r.numero}</td><td class="p-4 text-xs font-bold uppercase">${r.animal}</td></tr>`).join('');
-            }
-        }
-
-        document.getElementById('f_nexus').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const b = document.getElementById('btn'); b.disabled = true; b.innerText = "...";
-            const n = document.getElementById('num').value.padStart(2, '0');
-            const { error } = await sb.from('estudio_algoritmo').insert([{
-                fecha: document.getElementById('fecha').value,
-                hora: document.getElementById('hora').value,
-                numero: n,
-                animal: ans[n] || "ANIMAL " + n
-            }]);
-            if (error) alert(error.message);
-            else { document.getElementById('num').value = ''; await l(); }
-            b.disabled = false; b.innerText = "GUARDAR RESULTADO";
-        });
-
-        window.onload = () => {
-            document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
-            l();
-        };
-    </script>
+    </div>
+    <script src="app.js"></script>
 </body>
 </html>
