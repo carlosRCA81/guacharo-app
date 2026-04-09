@@ -2,49 +2,48 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CRCA Elite Hub</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>CRCA ELITE v3</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body onload="verificarAcceso()">
-    <header class="top-nav">
-        <div class="status-dot"></div>
-        <span class="brand">CRCA ELITE</span>
-        <div id="reloj" class="clock">00:00</div>
-    </header>
+    <div class="app-container">
+        <header class="header-elite">
+            <span class="logo">🛰️ CRCA ELITE</span>
+            <span id="reloj" class="clock">00:00</span>
+        </header>
 
-    <div class="main-wrapper">
-        <div class="hero-stats">
-            <div class="stat-card gold">
-                <span class="label">OBJETIVO 75</span>
-                <div id="count-75" class="value">0</div>
+        <div class="stats-grid">
+            <div class="card-stat gold">
+                <small>OBJETIVO</small>
+                <div class="num-highlight">75</div>
+                <div id="count-75" class="total">0</div>
             </div>
-            <div class="stat-card blue">
-                <span class="label">PREDICCIÓN 70%</span>
-                <div id="prediccion" class="value-sub">---</div>
-                <div id="animal-sugerido" class="detail">ESPERANDO DATOS</div>
+            <div class="card-stat blue">
+                <small>PREDICCIÓN</small>
+                <div id="prediccion" class="pred-val">---</div>
+                <div id="animal-sugerido" class="pred-name">ESPERANDO...</div>
             </div>
         </div>
 
-        <section class="action-panel">
-            <h3>REGISTRO DE PODER</h3>
-            <div class="input-row">
+        <section class="panel-input">
+            <h2>REGISTRO DE PODER</h2>
+            <div class="input-group">
                 <input type="date" id="fecha" value="2026-04-09">
                 <select id="hora">
                     <option value="08:00 AM">08:00 AM</option>
                     <option value="12:00 PM">12:00 PM</option>
                     <option value="07:00 PM">07:00 PM</option>
                 </select>
+                <input type="number" id="num" placeholder="Nº GANADOR" pattern="\d*">
             </div>
-            <input type="number" id="num" placeholder="Nº GANADOR (00-75)" pattern="\d*">
-            <button class="btn-main" onclick="guardarDato()">INCRUSTAR EN CEREBRO</button>
+            <button class="btn-incrustar" onclick="guardarDato()">INCRUSTAR EN CEREBRO</button>
         </section>
 
-        <section class="history-panel">
-            <h3>HISTORIAL RECIENTE</h3>
-            <div id="lista-movil" class="mobile-list">
-                </div>
+        <section class="panel-history">
+            <h2>HISTORIAL RECIENTE</h2>
+            <div id="lista-movil" class="data-list"></div>
         </section>
     </div>
     <script src="app.js"></script>
