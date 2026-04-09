@@ -1,10 +1,10 @@
-// 1. CONFIGURACIÓN ÚNICA DE CONEXIÓN
-// Estas credenciales permiten que tu web hable con el proyecto 'jvbsalpnycnokynpsexw'
-const supabaseUrl = 'https://jvbsalpnycnokynpsexw.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2YnNhbHBueWNub2t5bnBzZXh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTI2NzE5OTMsImV4cCI6MjAyODI0Nzk5M30.4TzbkkVeUnL_H8_S_Y8H-vM-S9_vW_D_Tz-V_S'; 
+// Limpiamos las credenciales de cualquier espacio accidental al copiar
+const supabaseUrl = 'https://jvbsalpnycnokynpsexw.supabase.co'.trim();
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2YnNhbHBueWNub2t5bnBzZXh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTI2NzE5OTMsImV4cCI6MjAyODI0Nzk5M30.4TzbkkVeUnL_H8_S_Y8H-vM-S9_vW_D_Tz-V_S'.trim(); 
+
+// Inicializamos el cliente
 const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-// 2. DICCIONARIO DE DATOS GUACHARO (00 al 75)
 const DATA_GUACHARO = {
     "00":{n:"Ballena",g:"Agua"}, "0":{n:"Delfín",g:"Agua"}, "1":{n:"Carnero",g:"Tierra"}, "2":{n:"Toro",g:"Tierra"},
     "3":{n:"Ciempiés",g:"Tierra"}, "4":{n:"Alacrán",g:"Tierra"}, "5":{n:"León",g:"Tierra"}, "6":{n:"Rana",g:"Agua"},
@@ -28,73 +28,48 @@ const DATA_GUACHARO = {
     "75":{n:"GUÁCHARO",g:"Especial"}
 };
 
-// 3. FUNCIÓN PARA GUARDAR (INCRUSTAR EN CEREBRO)
 async function guardarDato() {
     const f = document.getElementById('fecha').value;
     const h = document.getElementById('hora').value;
     const n = document.getElementById('num').value;
 
-    if (!DATA_GUACHARO[n]) return alert("Número Inválido (Usa 00-75)");
+    if (!DATA_GUACHARO[n]) return alert("Número Inválido");
 
-    // Intentamos insertar en la tabla que creaste mediante SQL
     const { error } = await _supabase.from('historial_resultados').insert([
-        { 
-            fecha: f, 
-            hora: h, 
-            numero: n, 
-            nombre_animal: DATA_GUACHARO[n].n, 
-            grupo: DATA_GUACHARO[n].g 
-        }
+        { fecha: f, hora: h, numero: n, nombre_animal: DATA_GUACHARO[n].n, grupo: DATA_GUACHARO[n].g }
     ]);
 
     if (error) {
-        alert("Error de conexión: " + error.message);
+        alert("Error: " + error.message);
     } else {
-        alert("¡Dato incrustado con éxito!");
+        alert("¡Éxito!");
         document.getElementById('num').value = "";
-        cargarDatos(); 
+        cargarDatos();
     }
 }
 
-// 4. FUNCIÓN PARA CARGAR EL HISTORIAL RECIENTE
 async function cargarDatos() {
-    const { data, error } = await _supabase
-        .from('historial_resultados')
-        .select('*')
-        .order('created_at', { ascending: false });
-    
-    if (error) return console.error("Error al cargar datos:", error);
+    const { data, error } = await _supabase.from('historial_resultados').select('*').order('created_at', { ascending: false });
+    if (error) return console.error(error);
 
     const container = document.getElementById('lista-movil');
     if (container && data) {
         container.innerHTML = data.slice(0, 10).map(i => `
             <div style="border-bottom:1px solid #333; padding:10px; display:flex; align-items:center; gap:15px;">
-                <div style="background:#00d2ff; color:#000; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold;">
-                    ${i.numero}
-                </div>
-                <div>
-                    <div style="font-weight:bold; color:#fff;">${i.nombre_animal}</div>
-                    <div style="font-size:12px; color:#aaa;">${i.hora} | ${i.fecha}</div>
-                </div>
+                <div style="background:#00d2ff; color:#000; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold;">${i.numero}</div>
+                <div><div style="font-weight:bold; color:#fff;">${i.nombre_animal}</div><div style="font-size:12px; color:#aaa;">${i.hora} | ${i.fecha}</div></div>
                 <div style="margin-left:auto; font-size:12px; color:#00d2ff;">${i.grupo}</div>
             </div>
         `).join('');
     }
 }
 
-// 5. LÓGICA DEL RELOJ (ACTUALIZACIÓN CADA SEGUNDO)
 function actualizarReloj() {
     const ahora = new Date();
-    const h = String(ahora.getHours()).padStart(2, '0');
-    const m = String(ahora.getMinutes()).padStart(2, '0');
-    const s = String(ahora.getSeconds()).padStart(2, '0');
-    const relojElemento = document.getElementById('reloj');
-    if (relojElemento) {
-        relojElemento.textContent = `${h}:${m}:${s}`;
-    }
+    const reloj = document.getElementById('reloj');
+    if (reloj) reloj.textContent = ahora.toLocaleTimeString();
 }
 
-// 6. INICIO AL CARGAR LA PÁGINA
 document.addEventListener('DOMContentLoaded', () => {
     actualizarReloj();
     setInterval(actualizarReloj, 1000);
