@@ -1,11 +1,9 @@
+// 1. CONFIGURACIÓN DE CONEXIÓN (CORREGIDA)
 const supabaseUrl = 'https://jvbsalpnycnokynpsexw.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2YnNhbHBueWNub2t5bnBzZXh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTI2NzE5OTMsImV4cCI6MjAyODI0Nzk5M30.4TzbkkVeUnL_H8_S_Y8H-vM-S9_vW_D_Tz-V_S'; 
 const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-const supabaseKey = 'sb_publisible_hurtMxONK9ce5XNemgTYFg_4TzbkkVe';
-const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-// Diccionario completo basado en tu imagen
+// 2. DICCIONARIO DE DATOS GUACHARO
 const DATA_GUACHARO = {
     "00":{n:"Ballena",g:"Agua"}, "0":{n:"Delfín",g:"Agua"}, "1":{n:"Carnero",g:"Tierra"}, "2":{n:"Toro",g:"Tierra"},
     "3":{n:"Ciempiés",g:"Tierra"}, "4":{n:"Alacrán",g:"Tierra"}, "5":{n:"León",g:"Tierra"}, "6":{n:"Rana",g:"Agua"},
@@ -29,8 +27,7 @@ const DATA_GUACHARO = {
     "75":{n:"GUÁCHARO",g:"Especial"}
 };
 
-// ... Resto de tus funciones (guardarDato, cargarDatos) usando 'historial_resultados'
-// 1. FUNCIÓN PARA GUARDAR (Incrustar en Cerebro)
+// 3. FUNCIÓN PARA GUARDAR (INCRUSTAR)
 async function guardarDato() {
     const f = document.getElementById('fecha').value;
     const h = document.getElementById('hora').value;
@@ -49,22 +46,22 @@ async function guardarDato() {
     ]);
 
     if (error) {
-        alert("Error de conexión: " + error.message);
+        alert("Error: " + error.message);
     } else {
         alert("¡Dato incrustado con éxito!");
         document.getElementById('num').value = "";
-        cargarDatos(); // Para que se vea en la lista de abajo de una vez
+        cargarDatos();
     }
 }
 
-// 2. FUNCIÓN PARA CARGAR (Leer lo que hay en Supabase)
+// 4. FUNCIÓN PARA CARGAR EL HISTORIAL
 async function cargarDatos() {
     const { data, error } = await _supabase
         .from('historial_resultados')
         .select('*')
         .order('created_at', { ascending: false });
     
-    if (error) return console.error("Error cargando:", error);
+    if (error) return console.error("Error al cargar:", error);
 
     const container = document.getElementById('lista-movil');
     if (container && data) {
@@ -83,11 +80,7 @@ async function cargarDatos() {
     }
 }
 
-// 3. INICIO AUTOMÁTICO
-// Esto carga los datos apenas abras la página
-document.addEventListener('DOMContentLoaded', () => {
-    cargarDatos();
-});
+// 5. LÓGICA DEL RELOJ
 function actualizarReloj() {
     const ahora = new Date();
     const h = String(ahora.getHours()).padStart(2, '0');
@@ -99,8 +92,9 @@ function actualizarReloj() {
     }
 }
 
-// Iniciar el reloj cada segundo
-setInterval(actualizarReloj, 1000);
-actualizarReloj();
-
-
+// 6. ARRANQUE AUTOMÁTICO
+document.addEventListener('DOMContentLoaded', () => {
+    actualizarReloj();
+    setInterval(actualizarReloj, 1000);
+    cargarDatos();
+});
