@@ -88,4 +88,19 @@ async function cargarDatos() {
 document.addEventListener('DOMContentLoaded', () => {
     cargarDatos();
 });
+function actualizarReloj() {
+    const ahora = new Date();
+    const h = String(ahora.getHours()).padStart(2, '0');
+    const m = String(ahora.getMinutes()).padStart(2, '0');
+    const s = String(ahora.getSeconds()).padStart(2, '0');
+    const relojElemento = document.getElementById('reloj');
+    if (relojElemento) {
+        relojElemento.textContent = `${h}:${m}:${s}`;
+    }
+}
+
+// Iniciar el reloj cada segundo
+setInterval(actualizarReloj, 1000);
+actualizarReloj();
+
 
