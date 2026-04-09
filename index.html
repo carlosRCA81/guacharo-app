@@ -3,42 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador CRCA - Pro</title>
+    <title>Analizador CRCA - Guácharo Activo</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body onload="verificarAcceso()">
-    <div class="top-bar">🛰️ SISTEMA DE INTELIGENCIA CRCA v2.0</div>
+    <div class="top-bar">🛰️ SISTEMA DE INTELIGENCIA CRCA - PROTECCIÓN ACTIVA</div>
     
     <div class="container">
-        <div class="panel-registro">
-            <h2>📥 Cargar Sorteo</h2>
-            <input type="date" id="fecha" value="2026-04-09">
-            <select id="hora">
-                <option value="08:00">08:00 AM</option>
-                <option value="12:00">12:00 PM</option>
-                <option value="19:00">07:00 PM</option>
-            </select>
-            <input type="text" id="num" placeholder="Número (00-75)">
-            <button class="btn-main" onclick="guardarDato()">INCROSTAR EN CEREBRO</button>
+        <div class="panel registration">
+            <h2>📥 Registro de Datos</h2>
+            <div class="input-group">
+                <label>Fecha:</label>
+                <input type="date" id="fecha" value="2026-04-09">
+            </div>
+            <div class="input-group">
+                <label>Horario del Sorteo:</label>
+                <select id="hora">
+                    <option value="08:00">08:00 AM</option>
+                    <option value="09:00">09:00 AM</option>
+                    <option value="10:00">10:00 AM</option>
+                    <option value="11:00">11:00 AM</option>
+                    <option value="12:00">12:00 PM</option>
+                    <option value="13:00">01:00 PM</option>
+                    <option value="14:00">02:00 PM</option>
+                    <option value="15:00">03:00 PM</option>
+                    <option value="16:00">04:00 PM</option>
+                    <option value="17:00">05:00 PM</option>
+                    <option value="18:00">06:00 PM</option>
+                    <option value="19:00">07:00 PM</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Número Ganador (00-75):</label>
+                <input type="text" id="num" maxlength="2" placeholder="Ej: 75">
+            </div>
+            <button class="btn-save" onclick="guardarDato()">INCROSTAR EN CEREBRO</button>
+            <div id="status"></div>
         </div>
 
-        <div class="panel-stats">
-            <div class="card alert-75">
+        <div class="panel algorithm">
+            <div class="stat-card alert-75">
                 <h3>🎯 Alerta Guácharo (75)</h3>
-                <div id="count-75" class="big-num">0</div>
-                <p>Veces detectado</p>
+                <div id="count-75" class="big-number">0</div>
+                <p>Apariciones detectadas</p>
             </div>
             
-            <div class="card">
-                <h3>🔥 Probabilidades del 70%</h3>
-                <div id="top-probables">Analizando patrones...</div>
+            <div class="stat-card">
+                <h3>🔥 Probabilidad del 70%</h3>
+                <div id="prediccion">Analizando patrones...</div>
             </div>
         </div>
 
-        <div class="panel-historial">
+        <div class="panel history">
             <h3>📜 Últimos Movimientos</h3>
             <div id="lista-historial"></div>
+            <button onclick="borrarUltimo()" class="btn-delete">BORRAR ÚLTIMO REGISTRO</button>
         </div>
     </div>
     <script src="app.js"></script>
