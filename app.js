@@ -1,4 +1,7 @@
 const supabaseUrl = 'https://jvbsalpnycnokynpsexw.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2YnNhbHBueWNub2t5bnBzZXh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTI2NzE5OTMsImV4cCI6MjAyODI0Nzk5M30.4TzbkkVeUnL_H8_S_Y8H-vM-S9_vW_D_Tz-V_S'; 
+const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
 const supabaseKey = 'sb_publisible_hurtMxONK9ce5XNemgTYFg_4TzbkkVe';
 const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
