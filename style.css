@@ -1,71 +1,95 @@
 :root {
-    --bg-color: #0b0e14;
-    --panel-color: #161b22;
-    --accent-color: #58a6ff;
-    --text-color: #c9d1d9;
-    --danger: #f85149;
-    --success: #2ea043;
+    --bg: #0d1117;
+    --card: #161b22;
+    --accent: #58a6ff;
+    --text: #c9d1d9;
     --gold: #f1e05a;
+    --success: #238636;
 }
 
 body {
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', sans-serif;
     margin: 0;
+    padding: 0;
+}
+
+.top-bar {
+    background: linear-gradient(90deg, #1f6feb, #58a6ff);
+    color: white;
+    text-align: center;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+.container {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 20px;
+    padding: 20px;
+    max-width: 1200px;
+    margin: auto;
+}
+
+.panel {
+    background: var(--card);
+    border: 1px solid #30363d;
+    border-radius: 12px;
     padding: 20px;
 }
 
-#app-container { max-width: 1200px; margin: auto; }
-
-header { text-align: center; border-bottom: 1px solid #30363d; padding-bottom: 20px; margin-bottom: 30px; }
-
-.main-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
-
-.panel {
-    background: var(--panel-color);
-    border: 1px solid #30363d;
-    border-radius: 12px;
-    padding: 25px;
-}
-
-.form-group { margin-bottom: 15px; }
-
-label { display: block; margin-bottom: 5px; color: #8b949e; }
+.history { grid-column: span 2; }
 
 input, select {
     width: 100%;
-    background: #0d1117;
+    background: #010409;
     border: 1px solid #30363d;
     color: white;
-    padding: 10px;
+    padding: 12px;
+    margin: 10px 0;
     border-radius: 6px;
+    box-sizing: border-box;
 }
 
 .btn-save {
-    background-color: var(--success);
+    background: var(--success);
     color: white;
     border: none;
     width: 100%;
-    padding: 12px;
-    border-radius: 6px;
+    padding: 15px;
     font-weight: bold;
+    border-radius: 6px;
     cursor: pointer;
 }
 
-.stat-card {
-    background: #21262d;
-    padding: 15px;
-    border-radius: 8px;
-    text-align: center;
-    border: 1px solid #30363d;
+.btn-delete {
+    background: transparent;
+    border: 1px solid #f85149;
+    color: #f85149;
+    padding: 8px;
+    margin-top: 15px;
+    cursor: pointer;
+    border-radius: 6px;
 }
 
-#alert-75 { border: 2px solid var(--gold); }
+.big-number {
+    font-size: 60px;
+    color: var(--gold);
+    font-weight: bold;
+    text-align: center;
+    text-shadow: 0 0 10px rgba(241, 224, 90, 0.3);
+}
+
+.alert-75 {
+    border: 2px solid var(--gold);
+}
 
 .history-item {
     display: flex;
     justify-content: space-between;
-    padding: 10px;
+    padding: 12px;
     border-bottom: 1px solid #30363d;
 }
