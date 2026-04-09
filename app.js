@@ -2,7 +2,8 @@ const supabaseUrl = 'https://jvbsalpnycnokynpsexw.supabase.co';
 const supabaseKey = 'sb_publisible_hurtMxONK9ce5XNemgTYFg_4TzbkkVe';
 const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-const ANIMALES = {
+// Diccionario de Guácharo Activo (Números y Elementos)
+const DATA_GUACHARO = {
     "00":{n:"Ballena",g:"Agua"}, "0":{n:"Delfín",g:"Agua"}, "1":{n:"Carnero",g:"Tierra"}, "2":{n:"Toro",g:"Tierra"},
     "3":{n:"Ciempiés",g:"Tierra"}, "4":{n:"Alacrán",g:"Tierra"}, "5":{n:"León",g:"Tierra"}, "6":{n:"Rana",g:"Agua"},
     "7":{n:"Perico",g:"Aire"}, "8":{n:"Ratón",g:"Tierra"}, "9":{n:"Águila",g:"Aire"}, "10":{n:"Tigre",g:"Tierra"},
@@ -26,18 +27,15 @@ const ANIMALES = {
 };
 
 function verificarAcceso() {
-    const pass = prompt("CRCA ELITE ACCESS:");
-    if (pass !== "continuemos") { 
-        document.body.innerHTML = "<div style='padding:50px; text-align:center;'>ACCESS DENIED</div>"; 
-    } else { 
+    const p = prompt("CRCA ELITE LOGIN:");
+    if (p !== "continuemos") { document.body.innerHTML = "BLOQUEADO"; }
+    else { 
         cargarDatos(); 
-        setInterval(updateReloj, 1000);
+        setInterval(() => {
+            const n = new Date();
+            document.getElementById('reloj').innerText = n.getHours() + ":" + (n.getMinutes()<10?'0':'') + n.getMinutes();
+        }, 1000);
     }
-}
-
-function updateReloj() {
-    const now = new Date();
-    document.getElementById('reloj').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 }
 
 async function guardarDato() {
@@ -45,14 +43,16 @@ async function guardarDato() {
     const h = document.getElementById('hora').value;
     const n = document.getElementById('num').value;
 
-    if (!ANIMALES[n]) return alert("Nº No Válido");
+    if (!DATA_GUACHARO[n]) return alert("Número Inválido");
 
     const { error } = await _supabase.from('resultados_guacharo').insert([
-        { fecha: f, hora: h, numero: n, nombre_animal: ANIMALES[n].n, grupo: ANIMALES[n].g }
+        { fecha: f, hora: h, numero: n, nombre_animal: DATA_GUACHARO[n].n, grupo: DATA_GUACHARO[n].g }
     ]);
 
-    if (error) alert("Error de Conexión. Verifica Supabase.");
-    else {
+    if (error) {
+        console.error(error);
+        alert("Error de conexión: Revisa el nombre de la tabla en Supabase.");
+    } else {
         document.getElementById('num').value = "";
         cargarDatos();
     }
@@ -64,22 +64,21 @@ async function cargarDatos() {
     if (data) {
         document.getElementById('count-75').innerText = data.filter(i => i.numero === "75").length;
         
-        const listContainer = document.getElementById('lista-movil');
-        listContainer.innerHTML = data.slice(0, 15).map(i => `
-            <div class="list-item">
-                <div class="n-circle">${i.numero}</div>
-                <div class="info">
+        const container = document.getElementById('lista-movil');
+        container.innerHTML = data.slice(0, 10).map(i => `
+            <div class="item-row">
+                <div class="circle-n">${i.numero}</div>
+                <div class="item-info">
                     <div style="font-weight:bold">${i.nombre_animal}</div>
-                    <div style="font-size:10px; opacity:0.5">${i.hora} | ${i.fecha}</div>
+                    <div style="font-size:10px; color:#666">${i.hora} | ${i.fecha}</div>
                 </div>
                 <button onclick="borrar('${i.id}')" style="background:none; border:none; color:#f85149;">✕</button>
             </div>
         `).join('');
 
         if (data.length > 0) {
-            const pred = data[0].grupo;
             document.getElementById('prediccion').innerText = "TENDENCIA";
-            document.getElementById('animal-sugerido').innerText = `PRÓXIMO: ${pred.toUpperCase()}`;
+            document.getElementById('animal-sugerido').innerText = data[0].grupo.toUpperCase();
         }
     }
 }
