@@ -1,11 +1,10 @@
-// 1. CONFIGURACIÓN DEL PROYECTO "ANALIZADO"
+// 1. CONFIGURACIÓN DE CONEXIÓN - PROYECTO ANALIZADO
 const URL_S = 'https://ggpxzqfobvkdjpobbmtb.supabase.co';
-// Usa la llave que empieza por "eyJ..." de la sección 'Legacy' de este nuevo proyecto
-const KEY_S = 'TU_NUEVA_LLAVE_LEGACY_AQUÍ'; 
+const KEY_S = 'EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdncHh6cWZvYnZrZGpwb2JibXRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3NTg4MTMsImV4cCI6MjA5MTMzNDgxM30.S_f1dpnjt0D9HEFy7XzCOTocoScFUWERp2nNybWDaRg'; 
 
 const _supabase = supabase.createClient(URL_S, KEY_S);
 
-// 2. DICCIONARIO DE DATOS
+// 2. DICCIONARIO DE DATOS GUACHARO
 const DATA_GUACHARO = {
     "00":{n:"Ballena",g:"Agua"}, "0":{n:"Delfín",g:"Agua"}, "1":{n:"Carnero",g:"Tierra"}, "2":{n:"Toro",g:"Tierra"},
     "3":{n:"Ciempiés",g:"Tierra"}, "4":{n:"Alacrán",g:"Tierra"}, "5":{n:"León",g:"Tierra"}, "6":{n:"Rana",g:"Agua"},
@@ -29,33 +28,61 @@ const DATA_GUACHARO = {
     "75":{n:"GUÁCHARO",g:"Especial"}
 };
 
-// 3. FUNCIONES
+// 3. FUNCIÓN PARA GUARDAR (INCRUSTAR)
 async function guardarDato() {
     const f = document.getElementById('fecha').value;
     const h = document.getElementById('hora').value;
     const n = document.getElementById('num').value;
-    if (!DATA_GUACHARO[n]) return alert("Número no válido");
 
+    if (!DATA_GUACHARO[n]) return alert("Número Inválido");
+
+    // Enviamos a la tabla que creaste por SQL
     const { error } = await _supabase.from('historial_resultados').insert([
-        { fecha: f, hora: h, numero: n, nombre_animal: DATA_GUACHARO[n].n, grupo: DATA_GUACHARO[n].g }
+        { 
+            fecha: f, 
+            hora: h, 
+            numero: n, 
+            nombre_animal: DATA_GUACHARO[n].n, 
+            grupo: DATA_GUACHARO[n].g 
+        }
     ]);
 
-    if (error) alert("Error: " + error.message);
-    else { alert("¡Dato guardado!"); cargarDatos(); }
+    if (error) {
+        alert("Error: " + error.message);
+    } else {
+        alert("¡Éxito! Guardado en Analizado.");
+        document.getElementById('num').value = "";
+        cargarDatos(); 
+    }
 }
 
+// 4. FUNCIÓN PARA CARGAR EL HISTORIAL
 async function cargarDatos() {
-    const { data, error } = await _supabase.from('historial_resultados').select('*').order('created_at', { ascending: false });
-    if (error) return;
-    const list = document.getElementById('lista-movil');
-    if (list && data) {
-        list.innerHTML = data.slice(0, 10).map(i => `
-            <div style="padding:10px; border-bottom:1px solid #333; color:white;">
-                <b>${i.numero} - ${i.nombre_animal}</b> <br>
-                <small>${i.hora} | ${i.fecha}</small>
+    const { data, error } = await _supabase
+        .from('historial_resultados')
+        .select('*')
+        .order('created_at', { ascending: false });
+    
+    if (error) return console.error("Error al cargar:", error);
+
+    const container = document.getElementById('lista-movil');
+    if (container && data) {
+        container.innerHTML = data.slice(0, 10).map(i => `
+            <div style="border-bottom:1px solid #333; padding:10px; display:flex; align-items:center; gap:15px; color:white;">
+                <div style="background:#00d2ff; color:#000; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold;">
+                    ${i.numero}
+                </div>
+                <div>
+                    <div style="font-weight:bold;">${i.nombre_animal}</div>
+                    <div style="font-size:12px; color:#aaa;">${i.hora} | ${i.fecha}</div>
+                </div>
+                <div style="margin-left:auto; font-size:12px; color:#00d2ff;">${i.grupo}</div>
             </div>
         `).join('');
     }
 }
 
-document.addEventListener('DOMContentLoaded', cargarDatos);
+// 5. INICIO
+document.addEventListener('DOMContentLoaded', () => {
+    cargarDatos();
+});
