@@ -1,10 +1,11 @@
-// Limpiamos las credenciales de cualquier espacio accidental al copiar
-const supabaseUrl = 'https://jvbsalpnycnokynpsexw.supabase.co'.trim();
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2YnNhbHBueWNub2t5bnBzZXh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTI2NzE5OTMsImV4cCI6MjAyODI0Nzk5M30.4TzbkkVeUnL_H8_S_Y8H-vM-S9_vW_D_Tz-V_S'.trim(); 
+// CONFIGURACIÓN DE CONEXIÓN PURA
+const URL_S = 'https://jvbsalpnycnokynpsexw.supabase.co';
+const KEY_S = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2YnNhbHBueWNub2t5bnBzZXh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTI2NzE5OTMsImV4cCI6MjAyODI0Nzk5M30.4TzbkkVeUnL_H8_S_Y8H-vM-S9_vW_D_Tz-V_S';
 
-// Inicializamos el cliente
-const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+// Inicialización ultra-segura
+const _supabase = supabase.createClient(URL_S.trim(), KEY_S.trim());
 
+// DICCIONARIO
 const DATA_GUACHARO = {
     "00":{n:"Ballena",g:"Agua"}, "0":{n:"Delfín",g:"Agua"}, "1":{n:"Carnero",g:"Tierra"}, "2":{n:"Toro",g:"Tierra"},
     "3":{n:"Ciempiés",g:"Tierra"}, "4":{n:"Alacrán",g:"Tierra"}, "5":{n:"León",g:"Tierra"}, "6":{n:"Rana",g:"Agua"},
@@ -28,50 +29,46 @@ const DATA_GUACHARO = {
     "75":{n:"GUÁCHARO",g:"Especial"}
 };
 
+// GUARDAR
 async function guardarDato() {
     const f = document.getElementById('fecha').value;
     const h = document.getElementById('hora').value;
     const n = document.getElementById('num').value;
-
-    if (!DATA_GUACHARO[n]) return alert("Número Inválido");
+    if (!DATA_GUACHARO[n]) return alert("Número no válido");
 
     const { error } = await _supabase.from('historial_resultados').insert([
         { fecha: f, hora: h, numero: n, nombre_animal: DATA_GUACHARO[n].n, grupo: DATA_GUACHARO[n].g }
     ]);
 
-    if (error) {
-        alert("Error: " + error.message);
-    } else {
-        alert("¡Éxito!");
-        document.getElementById('num').value = "";
-        cargarDatos();
-    }
+    if (error) alert("Error: " + error.message);
+    else { alert("¡Incrustado!"); cargarDatos(); }
 }
 
+// CARGAR
 async function cargarDatos() {
     const { data, error } = await _supabase.from('historial_resultados').select('*').order('created_at', { ascending: false });
-    if (error) return console.error(error);
-
-    const container = document.getElementById('lista-movil');
-    if (container && data) {
-        container.innerHTML = data.slice(0, 10).map(i => `
-            <div style="border-bottom:1px solid #333; padding:10px; display:flex; align-items:center; gap:15px;">
-                <div style="background:#00d2ff; color:#000; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold;">${i.numero}</div>
-                <div><div style="font-weight:bold; color:#fff;">${i.nombre_animal}</div><div style="font-size:12px; color:#aaa;">${i.hora} | ${i.fecha}</div></div>
-                <div style="margin-left:auto; font-size:12px; color:#00d2ff;">${i.grupo}</div>
+    if (error) {
+        console.log("Error de llave detectado:", error.message);
+        return;
+    }
+    const list = document.getElementById('lista-movil');
+    if (list && data) {
+        list.innerHTML = data.map(i => `
+            <div style="padding:10px; border-bottom:1px solid #333; color:white;">
+                <b>${i.numero} - ${i.nombre_animal}</b> <br>
+                <small>${i.hora} | ${i.fecha}</small>
             </div>
         `).join('');
     }
 }
 
-function actualizarReloj() {
-    const ahora = new Date();
-    const reloj = document.getElementById('reloj');
-    if (reloj) reloj.textContent = ahora.toLocaleTimeString();
+// RELOJ
+function reloj() {
+    const r = document.getElementById('reloj');
+    if (r) r.innerText = new Date().toLocaleTimeString();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    actualizarReloj();
-    setInterval(actualizarReloj, 1000);
+    setInterval(reloj, 1000);
     cargarDatos();
 });
