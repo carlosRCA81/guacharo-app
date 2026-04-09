@@ -3,67 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador CRCA - Guácharo Activo</title>
+    <title>Analizador CRCA - Pro</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body onload="verificarAcceso()">
-    <div id="app-container">
-        <header>
-            <h1>🛰️ ANALIZADOR CRCA</h1>
-            <p>Sistema de Inteligencia de Datos - Guácharo Activo</p>
-        </header>
+    <div class="top-bar">🛰️ SISTEMA DE INTELIGENCIA CRCA v2.0</div>
+    
+    <div class="container">
+        <div class="panel-registro">
+            <h2>📥 Cargar Sorteo</h2>
+            <input type="date" id="fecha" value="2026-04-09">
+            <select id="hora">
+                <option value="08:00">08:00 AM</option>
+                <option value="12:00">12:00 PM</option>
+                <option value="19:00">07:00 PM</option>
+            </select>
+            <input type="text" id="num" placeholder="Número (00-75)">
+            <button class="btn-main" onclick="guardarDato()">INCROSTAR EN CEREBRO</button>
+        </div>
 
-        <div class="main-grid">
-            <section class="panel registration">
-                <h2>📥 Registro de Datos</h2>
-                <div class="form-group">
-                    <label>Fecha:</label>
-                    <input type="date" id="fecha" value="2026-04-09">
-                </div>
-                <div class="form-group">
-                    <label>Horario (Sorteo):</label>
-                    <select id="hora">
-                        <option value="08:00">08:00 AM</option>
-                        <option value="09:00">09:00 AM</option>
-                        <option value="10:00">10:00 AM</option>
-                        <option value="11:00">11:00 AM</option>
-                        <option value="12:00">12:00 PM</option>
-                        <option value="13:00">01:00 PM</option>
-                        <option value="14:00">02:00 PM</option>
-                        <option value="15:00">03:00 PM</option>
-                        <option value="16:00">04:00 PM</option>
-                        <option value="17:00">05:00 PM</option>
-                        <option value="18:00">06:00 PM</option>
-                        <option value="19:00">07:00 PM</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Número Ganador (00-75):</label>
-                    <input type="text" id="num" maxlength="2" placeholder="Ej: 75">
-                </div>
-                <button class="btn-save" onclick="guardarDato()">GUARDAR EN CEREBRO</button>
-                <div id="status-msg"></div>
-            </section>
+        <div class="panel-stats">
+            <div class="card alert-75">
+                <h3>🎯 Alerta Guácharo (75)</h3>
+                <div id="count-75" class="big-num">0</div>
+                <p>Veces detectado</p>
+            </div>
+            
+            <div class="card">
+                <h3>🔥 Probabilidades del 70%</h3>
+                <div id="top-probables">Analizando patrones...</div>
+            </div>
+        </div>
 
-            <section class="panel analysis">
-                <h2>📊 Algoritmo Predictivo</h2>
-                <div class="stats-container">
-                    <div class="stat-card" id="alert-75">
-                        <h3>🎯 Frecuencia del 75</h3>
-                        <div id="count-75">--</div>
-                        <small>Animal: Guácharo</small>
-                    </div>
-                    <div class="stat-card">
-                        <h3>🔥 Más Probables (Próximos)</h3>
-                        <div id="top-probables">Esperando datos...</div>
-                    </div>
-                </div>
-                <div class="history-table">
-                    <h3>📜 Últimos Movimientos</h3>
-                    <div id="lista-historial"></div>
-                </div>
-            </section>
+        <div class="panel-historial">
+            <h3>📜 Últimos Movimientos</h3>
+            <div id="lista-historial"></div>
         </div>
     </div>
     <script src="app.js"></script>
