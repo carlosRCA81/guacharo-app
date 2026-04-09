@@ -2,7 +2,7 @@ const supabaseUrl = 'https://jvbsalpnycnokynpsexw.supabase.co';
 const supabaseKey = 'sb_publisible_hurtMxONK9ce5XNemgTYFg_4TzbkkVe';
 const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-const ANIMALES_GUACHARO = {
+const ANIMALES = {
     "00":{n:"Ballena",g:"Agua"}, "0":{n:"Delfín",g:"Agua"}, "1":{n:"Carnero",g:"Tierra"}, "2":{n:"Toro",g:"Tierra"},
     "3":{n:"Ciempiés",g:"Tierra"}, "4":{n:"Alacrán",g:"Tierra"}, "5":{n:"León",g:"Tierra"}, "6":{n:"Rana",g:"Agua"},
     "7":{n:"Perico",g:"Aire"}, "8":{n:"Ratón",g:"Tierra"}, "9":{n:"Águila",g:"Aire"}, "10":{n:"Tigre",g:"Tierra"},
@@ -26,9 +26,18 @@ const ANIMALES_GUACHARO = {
 };
 
 function verificarAcceso() {
-    const p = prompt("CRCA BORDER CONTROL. CLAVE:");
-    if (p !== "7575") { document.body.innerHTML = "<h1>SISTEMA BLOQUEADO</h1>"; }
-    else { cargarDatos(); }
+    const pass = prompt("CRCA ELITE ACCESS:");
+    if (pass !== "continuemos") { 
+        document.body.innerHTML = "<div style='padding:50px; text-align:center;'>ACCESS DENIED</div>"; 
+    } else { 
+        cargarDatos(); 
+        setInterval(updateReloj, 1000);
+    }
+}
+
+function updateReloj() {
+    const now = new Date();
+    document.getElementById('reloj').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 }
 
 async function guardarDato() {
@@ -36,44 +45,48 @@ async function guardarDato() {
     const h = document.getElementById('hora').value;
     const n = document.getElementById('num').value;
 
-    if (!ANIMALES_GUACHARO[n]) return alert("Nº Inválido");
+    if (!ANIMALES[n]) return alert("Nº No Válido");
 
     const { error } = await _supabase.from('resultados_guacharo').insert([
-        { fecha: f, hora: h, numero: n, nombre_animal: ANIMALES_GUACHARO[n].n, grupo: ANIMALES_GUACHARO[n].g }
+        { fecha: f, hora: h, numero: n, nombre_animal: ANIMALES[n].n, grupo: ANIMALES[n].g }
     ]);
 
-    if (error) alert("Error de conexión: Revisa la tabla en Supabase.");
-    else cargarDatos();
+    if (error) alert("Error de Conexión. Verifica Supabase.");
+    else {
+        document.getElementById('num').value = "";
+        cargarDatos();
+    }
 }
 
 async function cargarDatos() {
     const { data } = await _supabase.from('resultados_guacharo').select('*').order('created_at', { ascending: false });
+    
     if (data) {
         document.getElementById('count-75').innerText = data.filter(i => i.numero === "75").length;
         
-        document.getElementById('cuerpo-datos').innerHTML = data.map(i => `
-            <tr>
-                <td>${i.fecha}</td><td>${i.hora}</td>
-                <td style="color:#fee440; font-weight:bold">${i.numero}</td>
-                <td>${i.nombre_animal}</td><td>${i.grupo}</td>
-                <td><button onclick="borrarDato('${i.id}')">❌</button></td>
-            </tr>
+        const listContainer = document.getElementById('lista-movil');
+        listContainer.innerHTML = data.slice(0, 15).map(i => `
+            <div class="list-item">
+                <div class="n-circle">${i.numero}</div>
+                <div class="info">
+                    <div style="font-weight:bold">${i.nombre_animal}</div>
+                    <div style="font-size:10px; opacity:0.5">${i.hora} | ${i.fecha}</div>
+                </div>
+                <button onclick="borrar('${i.id}')" style="background:none; border:none; color:#f85149;">✕</button>
+            </div>
         `).join('');
-        
-        ejecutarAlgoritmo(data);
+
+        if (data.length > 0) {
+            const pred = data[0].grupo;
+            document.getElementById('prediccion').innerText = "TENDENCIA";
+            document.getElementById('animal-sugerido').innerText = `PRÓXIMO: ${pred.toUpperCase()}`;
+        }
     }
 }
 
-function ejecutarAlgoritmo(data) {
-    // Lógica simple para el 70%: Buscar qué animal salió antes del último 75
-    const idx75 = data.findIndex(i => i.numero === "75");
-    if (idx75 !== -1 && data[idx75+1]) {
-        document.getElementById('prediccion').innerText = `REPETICIÓN PROBABLE: ${data[idx75+1].numero}`;
-        document.getElementById('animal-sugerido').innerText = `Sugerencia: ${data[idx75+1].nombre_animal}`;
+async function borrar(id) {
+    if(confirm("¿Eliminar?")) {
+        await _supabase.from('resultados_guacharo').delete().eq('id', id);
+        cargarDatos();
     }
-}
-
-async function borrarDato(id) {
-    await _supabase.from('resultados_guacharo').delete().eq('id', id);
-    cargarDatos();
 }
