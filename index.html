@@ -3,17 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador CRCA - Inteligencia Guácharo</title>
+    <title>CRCA Intelligence v3.0</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body onload="verificarAcceso()">
-    <div class="header-crca">🛰️ ANALIZADOR CRCA: ALGORITMO DE PREDICCIÓN 🛰️</div>
-    
-    <div class="main-container">
-        <section class="card">
-            <h2>📥 Cargar Datos Históricos</h2>
-            <div class="form">
+    <header class="main-header">
+        <div class="logo">🛰️ ANALIZADOR CRCA Hub</div>
+        <div id="reloj" class="reloj">00:00:00</div>
+    </header>
+
+    <main class="dashboard">
+        <section class="glass-panel">
+            <h3>📥 Registro de Movimientos</h3>
+            <div class="input-grid">
                 <input type="date" id="fecha" value="2026-04-09">
                 <select id="hora">
                     <option value="08:00 AM">08:00 AM</option>
@@ -29,46 +32,44 @@
                     <option value="06:00 PM">06:00 PM</option>
                     <option value="07:00 PM">07:00 PM</option>
                 </select>
-                <input type="text" id="num" placeholder="Número (00-75)" maxlength="2">
-                <button class="btn-primary" onclick="guardarDato()">INCROSTAR EN CEREBRO</button>
-                <p id="msg-status"></p>
+                <input type="text" id="num" placeholder="Nº (00-75)" maxlength="2">
+                <button class="btn-glow" onclick="guardarDato()">INCRUSTAR DATO</button>
+            </div>
+            <div id="msg-api"></div>
+        </section>
+
+        <section class="glass-panel stats-center">
+            <div class="target-card">
+                <h4>🎯 OBJETIVO 75</h4>
+                <div id="count-75" class="stat-main">0</div>
+                <p>Veces en el historial</p>
+            </div>
+            <div class="predict-card">
+                <h4>🔥 PREDICCIÓN (70%)</h4>
+                <div id="prediccion" class="stat-sub">ANALIZANDO...</div>
+                <small id="animal-sugerido"></small>
             </div>
         </section>
 
-        <section class="card stats">
-            <h2>📊 Estudio del Algoritmo</h2>
-            <div class="grid-stats">
-                <div class="stat-box special-75">
-                    <h3>🎯 Objetivo 75</h3>
-                    <div id="count-75" class="big-text">0</div>
-                    <small>Frecuencia de Salida</small>
-                </div>
-                <div class="stat-box">
-                    <h3>🔥 Predicción (70% Acierte)</h3>
-                    <div id="prediccion" class="pred-text">Cargando...</div>
-                </div>
-            </div>
-        </section>
-
-        <section class="card full-width">
-            <h2>📜 Últimos Movimientos (Excel CRCA)</h2>
-            <div class="table-container">
-                <table id="tabla-excel">
+        <section class="glass-panel wide">
+            <h3>📜 Historial Detallado (Matriz de Datos)</h3>
+            <div class="scroll-table">
+                <table>
                     <thead>
                         <tr>
                             <th>Fecha</th>
                             <th>Hora</th>
                             <th>Nº</th>
                             <th>Animal</th>
-                            <th>Elemento</th>
-                            <th>Acción</th>
+                            <th>Grupo</th>
+                            <th>Control</th>
                         </tr>
                     </thead>
-                    <tbody id="cuerpo-tabla"></tbody>
+                    <tbody id="cuerpo-datos"></tbody>
                 </table>
             </div>
         </section>
-    </div>
+    </main>
     <script src="app.js"></script>
 </body>
 </html>
