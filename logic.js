@@ -1,5 +1,4 @@
-/* LÓGICA INTEGRAL ANALIZADOR CRCA - VERSIÓN FINAL NUBE */
-
+/* ANALIZADOR CRCA - PROTOCOLO DE DATOS SEGUROS */
 const listaAnimales = [
     {n:'0', a:'DELFIN', t:'AGUA'}, {n:'00', a:'BALLENA', t:'AGUA'}, {n:'1', a:'CARNERO', t:'TIERRA'},
     {n:'2', a:'TORO', t:'TIERRA'}, {n:'3', a:'CIEMPIES', t:'TIERRA'}, {n:'4', a:'ALACRAN', t:'TIERRA'},
@@ -29,68 +28,56 @@ const listaAnimales = [
     {n:'74', a:'TURPIAL', t:'AIRE'}, {n:'75', a:'GUACHARO', t:'AIRE'}
 ];
 
-const API_URL = 'https://analizador-crca-cloud-main-pzhkdp.free.laravel.cloud/api';
+const API_LINK = 'https://analizador-crca-cloud-main-pzhkdp.free.laravel.cloud/api';
 let historial = [];
 let horaSeleccionadaActiva = null;
 
 function inicializarSistema() {
+    document.getElementById('fecha-analisis').value = new Date().toISOString().split('T')[0];
     generarPanelDiario();
     generarGridBotones();
-    const fechaInput = document.getElementById('fecha-analisis');
-    fechaInput.value = new Date().toISOString().split('T')[0];
-    fechaInput.addEventListener('change', generarPanelDiario);
+    cargarHistorialRemoto();
 }
 
-async function registrarSorteo(num, animal, tipo, hora) {
+async function registrarSorteo(num, animal, tipo) {
+    if (!horaSeleccionadaActiva) return alert("Primero selecciona una HORA arriba.");
     const fecha = document.getElementById('fecha-analisis').value;
-    const registro = { fecha, hora, num, animal, tipo };
+    const registro = { fecha, hora: horaSeleccionadaActiva, num, animal, tipo };
 
-    // Actualizar pantalla rápido
-    const idx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
-    if (idx !== -1) historial.splice(idx, 1);
-    historial.push(registro);
-    actualizarInterfaz();
-
-    // ENVÍO A LA NUBE
     try {
-        await fetch(`${API_URL}/guardar`, {
+        const res = await fetch(`${API_LINK}/guardar`, {
             method: 'POST',
-            mode: 'cors',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(registro)
         });
-    } catch (e) { console.error("Error al guardar"); }
+        if(res.ok) cargarHistorialRemoto(); // Recarga automático
+    } catch (e) { alert("Error al conectar con la base de datos."); }
 }
 
 async function cargarHistorialRemoto() {
     try {
-        const res = await fetch(`${API_URL}/historial`, { mode: 'cors' });
+        const res = await fetch(`${API_LINK}/historial`);
         const datos = await res.json();
-        if (datos) {
-            historial = datos;
-            actualizarInterfaz();
-        }
-    } catch (e) { console.log("Servidor cargando..."); }
+        historial = datos;
+        actualizarTablas();
+    } catch (e) { console.error("Servidor despertando..."); }
 }
 
 function generarPanelDiario() {
     const panel = document.getElementById('panel-diario-sorteos');
     panel.innerHTML = '';
-    const fecha = document.getElementById('fecha-analisis').value;
     const horas = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
-
+    
     horas.forEach(h => {
-        const box = document.createElement('div');
-        box.className = 'hora-box';
-        const r = historial.find(x => x.fecha === fecha && x.hora === h);
-        box.innerText = r ? `${h}\n(${r.num})` : h;
-        if(r) box.classList.add('jugado');
-        box.onclick = () => {
+        const div = document.createElement('div');
+        div.className = 'hora-box';
+        div.innerText = h;
+        div.onclick = () => {
             horaSeleccionadaActiva = h;
             document.querySelectorAll('.hora-box').forEach(b => b.style.border = '1px solid #475569');
-            box.style.border = '2px solid #38bdf8';
+            div.style.border = '2px solid #38bdf8';
         };
-        panel.appendChild(box);
+        panel.appendChild(div);
     });
 }
 
@@ -98,22 +85,20 @@ function generarGridBotones() {
     const container = document.getElementById('grid-container');
     container.innerHTML = '';
     listaAnimales.forEach(a => {
-        const btn = document.createElement('div');
-        btn.style = "background:#334155; padding:8px; border-radius:4px; text-align:center; cursor:pointer;";
-        btn.innerHTML = `<strong>${a.n}</strong><br><small>${a.a}</small>`;
-        btn.onclick = () => {
-            if(!horaSeleccionadaActiva) return alert("Selecciona una hora");
-            registrarSorteo(a.n, a.a, a.t, horaSeleccionadaActiva);
-        };
-        container.appendChild(btn);
+        const div = document.createElement('div');
+        div.className = 'animal-item';
+        div.style = "background:#334155; padding:8px; border-radius:4px; text-align:center; cursor:pointer;";
+        div.innerHTML = `<strong>${a.n}</strong><br>${a.a}`;
+        div.onclick = () => registrarSorteo(a.n, a.a, a.t);
+        container.appendChild(div);
     });
 }
 
-function actualizarInterfaz() {
+function actualizarTablas() {
     const cuerpo = document.getElementById('lista-historial');
+    if (!cuerpo) return;
     cuerpo.innerHTML = '';
-    historial.slice().reverse().forEach(r => {
+    historial.forEach(r => {
         cuerpo.innerHTML += `<tr><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
     });
-    generarPanelDiario();
 }
