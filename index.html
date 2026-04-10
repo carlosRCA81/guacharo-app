@@ -14,7 +14,6 @@
         .entrada-rapida-container h4 { margin: 0; color: #38bdf8; font-size: 0.8rem; flex-shrink: 0;}
         #num-rapido { background: #1e293b; color: #fbbf24; border: none; padding: 8px; border-radius: 4px; font-size: 1rem; font-weight: bold; width: 60px; text-align: center;}
 
-        /* Estilo para la nueva ventana de estadísticas */
         .search-box { margin-bottom: 15px; display: flex; gap: 10px; }
         .stat-card-mini { background: #1e293b; padding: 10px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #38bdf8; }
         .stat-card-mini h4 { color: #fbbf24; margin: 0 0 5px 0; font-size: 0.9rem; }
@@ -63,16 +62,13 @@
             <h3>ANÁLISIS DEL GUACHARO</h3>
             <div class="card-stats">
                 <p>Días sin 75: <span id="dias-sin-75">0</span></p>
-                <p>Elemento llamador: <span id="elemento-llamador">--</span></p>
-                <p>Número avisador: <span id="num-avisador">--</span></p>
             </div>
         </section>
 
         <section id="stats-gen" class="tab-content">
             <h3>PATRONES POR ANIMAL</h3>
             <div class="search-box">
-                <select id="select-animal-estudio" style="width: 70%;">
-                    </select>
+                <select id="select-animal-estudio" style="width: 70%;"></select>
                 <button onclick="estudiarAnimalEspecifico()" style="width: 30%;">VER</button>
             </div>
             <div id="resultado-patrones">
@@ -93,6 +89,8 @@
         </section>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <script src="security.js"></script>
     <script src="logic.js"></script>
 </body>
