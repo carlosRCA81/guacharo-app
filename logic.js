@@ -1,4 +1,4 @@
-/* LÓGICA INTEGRAL ANALIZADOR CRCA - CONEXIÓN SEGURA */
+/* LÓGICA INTEGRAL ANALIZADOR CRCA - VERSIÓN FINAL NUBE */
 
 const listaAnimales = [
     {n:'0', a:'DELFIN', t:'AGUA'}, {n:'00', a:'BALLENA', t:'AGUA'}, {n:'1', a:'CARNERO', t:'TIERRA'},
@@ -29,80 +29,64 @@ const listaAnimales = [
     {n:'74', a:'TURPIAL', t:'AIRE'}, {n:'75', a:'GUACHARO', t:'AIRE'}
 ];
 
-const URL_NUBE = 'https://analizador-crca-cloud-main-pzhkdp.free.laravel.cloud/api';
+const API_URL = 'https://analizador-crca-cloud-main-pzhkdp.free.laravel.cloud/api';
 let historial = [];
 let horaSeleccionadaActiva = null;
 
-// Inicialización
 function inicializarSistema() {
-    const panel = document.getElementById('panel-diario-sorteos');
-    if(panel) {
-        generarPanelDiario();
-        generarGridBotones();
-        llenarSelectEstudio();
-        const fechaInput = document.getElementById('fecha-analisis');
-        fechaInput.value = new Date().toISOString().split('T')[0];
-        fechaInput.addEventListener('change', generarPanelDiario);
-    }
+    generarPanelDiario();
+    generarGridBotones();
+    const fechaInput = document.getElementById('fecha-analisis');
+    fechaInput.value = new Date().toISOString().split('T')[0];
+    fechaInput.addEventListener('change', generarPanelDiario);
 }
 
-// Registro de Sorteo con envío a Nube
 async function registrarSorteo(num, animal, tipo, hora) {
     const fecha = document.getElementById('fecha-analisis').value;
-    const nuevoRegistro = { fecha, hora, num, animal, tipo };
+    const registro = { fecha, hora, num, animal, tipo };
 
-    // Actualización local para rapidez
-    const existeIdx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
-    if (existeIdx !== -1) historial.splice(existeIdx, 1);
-    historial.push(nuevoRegistro);
+    // Actualizar pantalla rápido
+    const idx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
+    if (idx !== -1) historial.splice(idx, 1);
+    historial.push(registro);
     actualizarInterfaz();
 
-    // ENVÍO A OHIO
+    // ENVÍO A LA NUBE
     try {
-        await fetch(`${URL_NUBE}/guardar`, {
+        await fetch(`${API_URL}/guardar`, {
             method: 'POST',
-            mode: 'cors', // <--- CRÍTICO PARA GITHUB
+            mode: 'cors',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(nuevoRegistro)
+            body: JSON.stringify(registro)
         });
-        console.log("✅ Blindado en Ohio");
-    } catch (e) {
-        console.error("⚠️ Error de conexión a la nube");
-    }
+    } catch (e) { console.error("Error al guardar"); }
 }
 
-// Cargar datos al entrar
 async function cargarHistorialRemoto() {
     try {
-        const respuesta = await fetch(`${URL_NUBE}/historial`, { mode: 'cors' });
-        const datos = await respuesta.json();
-        if (datos && datos.length > 0) {
+        const res = await fetch(`${API_URL}/historial`, { mode: 'cors' });
+        const datos = await res.json();
+        if (datos) {
             historial = datos;
             actualizarInterfaz();
         }
-    } catch (e) {
-        console.log("Servidor despertando...");
-    }
+    } catch (e) { console.log("Servidor cargando..."); }
 }
 
-// Funciones de Interfaz
 function generarPanelDiario() {
-    const horas = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
     const panel = document.getElementById('panel-diario-sorteos');
     panel.innerHTML = '';
-    const fechaActual = document.getElementById('fecha-analisis').value;
+    const fecha = document.getElementById('fecha-analisis').value;
+    const horas = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
 
-    horas.forEach(hora => {
+    horas.forEach(h => {
         const box = document.createElement('div');
         box.className = 'hora-box';
-        const reg = historial.find(r => r.fecha === fechaActual && r.hora === hora);
-        if (reg) {
-            box.classList.add('jugado');
-            box.innerText = `${hora}\n(${reg.num})`;
-        } else { box.innerText = hora; }
-        
+        const r = historial.find(x => x.fecha === fecha && x.hora === h);
+        box.innerText = r ? `${h}\n(${r.num})` : h;
+        if(r) box.classList.add('jugado');
         box.onclick = () => {
-            horaSeleccionadaActiva = hora;
+            horaSeleccionadaActiva = h;
             document.querySelectorAll('.hora-box').forEach(b => b.style.border = '1px solid #475569');
             box.style.border = '2px solid #38bdf8';
         };
@@ -114,40 +98,22 @@ function generarGridBotones() {
     const container = document.getElementById('grid-container');
     container.innerHTML = '';
     listaAnimales.forEach(a => {
-        const div = document.createElement('div');
-        div.className = 'animal-btn'; // Asegúrate de tener esta clase en style.css
-        div.style = "background:#334155; padding:5px; border-radius:4px; cursor:pointer; text-align:center;";
-        div.innerHTML = `<strong>${a.n}</strong><br><small>${a.a}</small>`;
-        div.onclick = () => {
-            if(!horaSeleccionadaActiva) return alert("Toca una HORA arriba");
+        const btn = document.createElement('div');
+        btn.style = "background:#334155; padding:8px; border-radius:4px; text-align:center; cursor:pointer;";
+        btn.innerHTML = `<strong>${a.n}</strong><br><small>${a.a}</small>`;
+        btn.onclick = () => {
+            if(!horaSeleccionadaActiva) return alert("Selecciona una hora");
             registrarSorteo(a.n, a.a, a.t, horaSeleccionadaActiva);
         };
-        container.appendChild(div);
+        container.appendChild(btn);
     });
 }
 
 function actualizarInterfaz() {
     const cuerpo = document.getElementById('lista-historial');
-    if(!cuerpo) return;
     cuerpo.innerHTML = '';
     historial.slice().reverse().forEach(r => {
         cuerpo.innerHTML += `<tr><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
     });
     generarPanelDiario();
-}
-
-function llenarSelectEstudio() {
-    const sel = document.getElementById('select-animal-estudio');
-    if(!sel) return;
-    sel.innerHTML = '<option value="">-- Ver Animal --</option>';
-    listaAnimales.forEach(a => {
-        sel.innerHTML += `<option value="${a.n}">${a.n} - ${a.a}</option>`;
-    });
-}
-
-function openTab(evt, tabName) {
-    document.querySelectorAll(".tab-content").forEach(t => t.style.display = "none");
-    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-    document.getElementById(tabName).style.display = "block";
-    evt.currentTarget.classList.add("active");
 }
