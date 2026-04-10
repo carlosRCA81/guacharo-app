@@ -2,59 +2,98 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>CRCA ELITE v3</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador CRCA - Pro</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .panel-diario { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 15px; background: #0f172a; padding: 10px; border-radius: 8px; font-size: 0.7rem;}
+        .hora-box { background: #334155; padding: 8px; text-align: center; border-radius: 4px; border: 1px solid #475569; color: #f8fafc;}
+        .hora-box.jugado { background: #22c55e !important; color: #0f172a; font-weight: bold;}
+        
+        .entrada-rapida-container { background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #38bdf8; display: flex; gap: 10px; align-items: center;}
+        .entrada-rapida-container h4 { margin: 0; color: #38bdf8; font-size: 0.8rem; flex-shrink: 0;}
+        #num-rapido { background: #1e293b; color: #fbbf24; border: none; padding: 8px; border-radius: 4px; font-size: 1rem; font-weight: bold; width: 60px; text-align: center;}
+
+        /* Estilo para la nueva ventana de estadísticas */
+        .search-box { margin-bottom: 15px; display: flex; gap: 10px; }
+        .stat-card-mini { background: #1e293b; padding: 10px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #38bdf8; }
+        .stat-card-mini h4 { color: #fbbf24; margin: 0 0 5px 0; font-size: 0.9rem; }
+        .stat-card-mini p { font-size: 0.8rem; margin: 2px 0; }
+    </style>
 </head>
-<body onload="cargarDatos()">
-    <div class="app-container">
-        <header class="header-elite">
-            <span class="logo">🛰️ CRCA ELITE</span>
-            <span id="reloj" class="clock">00:00</span>
+<body>
+    <div id="login-screen">
+        <h2>SISTEMA CRCA ENCRIPTADO</h2>
+        <input type="password" id="access-key" placeholder="Introduce tu clave">
+        <button onclick="checkAccess()">DESBLOQUEAR SISTEMA</button>
+    </div>
+
+    <div id="main-app" style="display: none;">
+        <header>
+            <h1>ANALIZADOR CRCA</h1>
+            <div id="live-clock">00:00:00</div>
+            
+            <div class="tab-container">
+                <button class="tab-btn active" onclick="openTab(event, 'registro')">REGISTRO</button>
+                <button class="tab-btn" onclick="openTab(event, 'estudio')">ESTUDIO 75</button>
+                <button class="tab-btn" onclick="openTab(event, 'stats-gen')">PATRONES</button>
+                <button class="tab-btn" onclick="openTab(event, 'historial')">HISTORIAL</button>
+            </div>
         </header>
 
-        <div class="stats-grid">
-            <div class="card-stat gold">
-                <small>OBJETIVO</small>
-                <div class="num-highlight">75</div>
-                <div id="count-75" class="total">0</div>
+        <section id="registro" class="tab-content active">
+            <div class="panel-diario" id="panel-diario-sorteos"></div>
+            <div class="controls-row">
+                <input type="date" id="fecha-analisis">
+                <select id="hora-sorteo" style="display:none;"></select>
             </div>
-            <div class="card-stat blue">
-                <small>PREDICCIÓN</small>
-                <div id="prediccion" class="pred-val">---</div>
-                <div id="animal-sugerido" class="pred-name">ESPERANDO...</div>
+            <div class="entrada-rapida-container">
+                <h4>ENTRADA RÁPIDA:</h4>
+                <input type="text" id="num-rapido" maxlength="2" placeholder="Nro">
+                <button onclick="registrarPorNumero()" style="width: auto; padding: 8px 15px;">OK</button>
             </div>
-        </div>
-
-        <section class="panel-input">
-            <h2>REGISTRO DE PODER</h2>
-            <div class="input-group">
-                <input type="date" id="fecha" value="2026-04-09">
-                <select id="hora">
-                    <option value="08:00 AM">08:00 AM</option>
-                    <option value="09:00 AM">09:00 AM</option>
-                    <option value="10:00 AM">10:00 AM</option>
-                    <option value="11:00 AM">11:00 AM</option>
-                    <option value="12:00 PM">12:00 PM</option>
-                    <option value="01:00 PM">01:00 PM</option>
-                    <option value="02:00 PM">02:00 PM</option>
-                    <option value="03:00 PM">03:00 PM</option>
-                    <option value="04:00 PM">04:00 PM</option>
-                    <option value="05:00 PM">05:00 PM</option>
-                    <option value="06:00 PM">06:00 PM</option>
-                    <option value="07:00 PM">07:00 PM</option>
-                </select>
-                <input type="number" id="num" placeholder="Nº GANADOR" pattern="\d*">
+            <div class="display-reciente">
+                <p>Último: <span id="last-num">--</span></p>
+                <button id="btn-borrar" class="btn-danger">BORRAR</button>
             </div>
-            <button class="btn-incrustar" onclick="guardarDato()">INCRUSTAR EN CEREBRO</button>
+            <div class="grid-animales" id="grid-container"></div>
         </section>
 
-        <section class="panel-history">
-            <h2>HISTORIAL RECIENTE</h2>
-            <div id="lista-movil" class="data-list"></div>
+        <section id="estudio" class="tab-content">
+            <h3>ANÁLISIS DEL GUACHARO</h3>
+            <div class="card-stats">
+                <p>Días sin 75: <span id="dias-sin-75">0</span></p>
+                <p>Elemento llamador: <span id="elemento-llamador">--</span></p>
+                <p>Número avisador: <span id="num-avisador">--</span></p>
+            </div>
+        </section>
+
+        <section id="stats-gen" class="tab-content">
+            <h3>PATRONES POR ANIMAL</h3>
+            <div class="search-box">
+                <select id="select-animal-estudio" style="width: 70%;">
+                    </select>
+                <button onclick="estudiarAnimalEspecifico()" style="width: 30%;">VER</button>
+            </div>
+            <div id="resultado-patrones">
+                <p style="text-align:center; color:#64748b;">Selecciona un animal para ver qué número sale antes y después de él.</p>
+            </div>
+        </section>
+
+        <section id="historial" class="tab-content">
+            <h3>DATOS ACUMULADOS</h3>
+            <div class="tabla-contenedor">
+                <table id="tabla-registros">
+                    <thead>
+                        <tr><th>Fecha</th><th>Hora</th><th>Nro</th><th>Animal</th><th>Tipo</th></tr>
+                    </thead>
+                    <tbody id="lista-historial"></tbody>
+                </table>
+            </div>
         </section>
     </div>
-    <script src="app.js"></script>
+
+    <script src="security.js"></script>
+    <script src="logic.js"></script>
 </body>
 </html>
