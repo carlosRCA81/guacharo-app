@@ -1,4 +1,8 @@
-/* ANALIZADOR CRCA - PROTOCOLO DE DATOS SEGUROS */
+// CONFIGURACIÓN SUPABASE - ANALIZADOR CRCA
+const SUPABASE_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 const listaAnimales = [
     {n:'0', a:'DELFIN', t:'AGUA'}, {n:'00', a:'BALLENA', t:'AGUA'}, {n:'1', a:'CARNERO', t:'TIERRA'},
     {n:'2', a:'TORO', t:'TIERRA'}, {n:'3', a:'CIEMPIES', t:'TIERRA'}, {n:'4', a:'ALACRAN', t:'TIERRA'},
@@ -28,77 +32,231 @@ const listaAnimales = [
     {n:'74', a:'TURPIAL', t:'AIRE'}, {n:'75', a:'GUACHARO', t:'AIRE'}
 ];
 
-const API_LINK = 'https://analizador-crca-cloud-main-pzhkdp.free.laravel.cloud/api';
+const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
 let historial = [];
 let horaSeleccionadaActiva = null;
 
-function inicializarSistema() {
-    document.getElementById('fecha-analisis').value = new Date().toISOString().split('T')[0];
+setInterval(() => {
+    const clock = document.getElementById('live-clock');
+    if(clock) clock.innerText = new Date().toLocaleTimeString();
+}, 1000);
+
+function openTab(evt, tabName) {
+    let tabcontent = document.getElementsByClassName("tab-content");
+    for (let i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
+    let tablinks = document.getElementsByClassName("tab-btn");
+    for (let i = 0; i < tablinks.length; i++) { tablinks[i].className = tablinks[i].className.replace(" active", ""); }
+    document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.className += " active";
+}
+
+async function inicializarSistema() {
     generarPanelDiario();
     generarGridBotones();
-    cargarHistorialRemoto();
-}
-
-async function registrarSorteo(num, animal, tipo) {
-    if (!horaSeleccionadaActiva) return alert("Primero selecciona una HORA arriba.");
-    const fecha = document.getElementById('fecha-analisis').value;
-    const registro = { fecha, hora: horaSeleccionadaActiva, num, animal, tipo };
-
-    try {
-        const res = await fetch(`${API_LINK}/guardar`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(registro)
-        });
-        if(res.ok) cargarHistorialRemoto(); // Recarga automático
-    } catch (e) { alert("Error al conectar con la base de datos."); }
-}
-
-async function cargarHistorialRemoto() {
-    try {
-        const res = await fetch(`${API_LINK}/historial`);
-        const datos = await res.json();
-        historial = datos;
-        actualizarTablas();
-    } catch (e) { console.error("Servidor despertando..."); }
-}
-
-function generarPanelDiario() {
-    const panel = document.getElementById('panel-diario-sorteos');
-    panel.innerHTML = '';
-    const horas = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
-    
-    horas.forEach(h => {
-        const div = document.createElement('div');
-        div.className = 'hora-box';
-        div.innerText = h;
-        div.onclick = () => {
-            horaSeleccionadaActiva = h;
-            document.querySelectorAll('.hora-box').forEach(b => b.style.border = '1px solid #475569');
-            div.style.border = '2px solid #38bdf8';
-        };
-        panel.appendChild(div);
-    });
+    llenarSelectEstudio();
+    const fechaInput = document.getElementById('fecha-analisis');
+    if(fechaInput) {
+        fechaInput.value = new Date().toISOString().split('T')[0];
+        fechaInput.addEventListener('change', generarPanelDiario);
+    }
+    // Cargar datos antiguos desde Supabase al iniciar
+    await cargarHistorialRemoto();
 }
 
 function generarGridBotones() {
     const container = document.getElementById('grid-container');
+    if(!container) return;
     container.innerHTML = '';
-    listaAnimales.forEach(a => {
-        const div = document.createElement('div');
-        div.className = 'animal-item';
-        div.style = "background:#334155; padding:8px; border-radius:4px; text-align:center; cursor:pointer;";
-        div.innerHTML = `<strong>${a.n}</strong><br>${a.a}`;
-        div.onclick = () => registrarSorteo(a.n, a.a, a.t);
-        container.appendChild(div);
+    listaAnimales.forEach(animal => {
+        const btn = document.createElement('div');
+        btn.className = 'animal-btn';
+        btn.innerHTML = `<strong>${animal.n}</strong><br><small>${animal.a}</small>`;
+        btn.onclick = () => {
+            if (!horaSeleccionadaActiva) return alert("Primero toca una HORA en el panel superior");
+            registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
+        };
+        container.appendChild(btn);
     });
 }
 
-function actualizarTablas() {
+function llenarSelectEstudio() {
+    const sel = document.getElementById('select-animal-estudio');
+    if(!sel) return;
+    sel.innerHTML = '<option value="">-- Elige Animal --</option>';
+    listaAnimales.forEach(a => {
+        let opt = document.createElement('option');
+        opt.value = a.n;
+        opt.innerText = `${a.n} - ${a.a}`;
+        sel.appendChild(opt);
+    });
+}
+
+function estudiarAnimalEspecifico() {
+    const numBuscado = document.getElementById('select-animal-estudio').value;
+    const resDiv = document.getElementById('resultado-patrones');
+    if(!numBuscado) return;
+    
+    let despues = {};
+    let antes = {};
+    let conteoTotal = 0;
+
+    historial.forEach((reg, idx) => {
+        if(reg.num === numBuscado) {
+            conteoTotal++;
+            if(idx < historial.length - 1) {
+                let sig = historial[idx+1].num + " - " + historial[idx+1].animal;
+                despues[sig] = (despues[sig] || 0) + 1;
+            }
+            if(idx > 0) {
+                let ant = historial[idx-1].num + " - " + historial[idx-1].animal;
+                antes[ant] = (antes[ant] || 0) + 1;
+            }
+        }
+    });
+
+    if(conteoTotal === 0) {
+        resDiv.innerHTML = `<p style="color:#ef4444; padding:10px;">Sin datos registrados para el número ${numBuscado}.</p>`;
+        return;
+    }
+
+    const masFrec = (obj) => {
+        const keys = Object.keys(obj);
+        return keys.length > 0 ? keys.reduce((a, b) => obj[a] > obj[b] ? a : b) : "Sin datos";
+    };
+
+    resDiv.innerHTML = `
+        <div class="stat-card-mini">
+            <h4>RESUMEN: ${numBuscado}</h4>
+            <p>Veces detectado: <strong>${conteoTotal}</strong></p>
+        </div>
+        <div class="stat-card-mini" style="border-left-color: #f87171;">
+            <h4>SUELE SALIR ANTES:</h4>
+            <p>🎯 ${masFrec(antes)}</p>
+        </div>
+        <div class="stat-card-mini" style="border-left-color: #4ade80;">
+            <h4>SUELE SALIR DESPUÉS:</h4>
+            <p>🚀 ${masFrec(despues)}</p>
+        </div>
+    `;
+}
+
+function generarPanelDiario() {
+    const panel = document.getElementById('panel-diario-sorteos');
+    if(!panel) return;
+    panel.innerHTML = '';
+    const fechaActual = document.getElementById('fecha-analisis').value;
+
+    horasSorteo.forEach(hora => {
+        const box = document.createElement('div');
+        box.className = 'hora-box';
+        const registroExistente = historial.find(r => r.fecha === fechaActual && r.hora === hora);
+        
+        if (registroExistente) {
+            box.classList.add('jugado');
+            box.innerText = `${hora}\n(${registroExistente.num})`;
+        } else {
+            box.innerText = hora;
+        }
+
+        box.onclick = () => {
+            horaSeleccionadaActiva = hora;
+            document.querySelectorAll('.hora-box').forEach(b => b.style.border = '1px solid #475569');
+            box.style.border = '2px solid #38bdf8';
+            document.getElementById('num-rapido').focus();
+        };
+        panel.appendChild(box);
+    });
+}
+
+function registrarPorNumero() {
+    if (!horaSeleccionadaActiva) return alert("Selecciona una HORA en los cuadros de arriba");
+    const inputNum = document.getElementById('num-rapido');
+    let numInput = inputNum.value.trim();
+    if(numInput === "0" || numInput === "00") { } 
+    else if(numInput.length === 1) numInput = "0" + numInput;
+
+    const animal = listaAnimales.find(a => a.n === numInput);
+    if (!animal) return alert("Ese número no existe en la ruleta");
+
+    registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
+    inputNum.value = '';
+}
+
+// FUNCIÓN DE GUARDADO EN SUPABASE 
+async function registrarSorteo(num, animal, tipo, hora) {
+    const fecha = document.getElementById('fecha-analisis').value;
+    const nuevoRegistro = { fecha, hora, num, animal, tipo };
+
+    // 1. Actualización Visual Inmediata
+    const existeIdx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
+    if (existeIdx !== -1) historial.splice(existeIdx, 1);
+    historial.push(nuevoRegistro);
+    actualizarInterfaz();
+
+    // 2. Guardado en la Nube (Supabase)
+    try {
+        const { error } = await _supabase
+            .from('historial_sorteos')
+            .upsert(nuevoRegistro, { onConflict: 'fecha,hora' }); // Evita duplicados en la misma hora 
+
+        if (error) throw error;
+        console.log("✅ Guardado en Supabase");
+    } catch (err) {
+        console.error("❌ Error Supabase:", err.message);
+    }
+}
+
+function actualizarInterfaz() {
+    if(historial.length > 0) {
+        const ult = historial[historial.length-1];
+        document.getElementById('last-num').innerText = `${ult.num} - ${ult.animal}`;
+    }
+    actualizarTabla();
+    analizarGuacharo();
+    generarPanelDiario();
+}
+
+function actualizarTabla() {
     const cuerpo = document.getElementById('lista-historial');
-    if (!cuerpo) return;
+    if(!cuerpo) return;
     cuerpo.innerHTML = '';
-    historial.forEach(r => {
+    historial.slice().reverse().forEach(r => {
         cuerpo.innerHTML += `<tr><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
     });
 }
+
+function analizarGuacharo() {
+    let sin75 = 0;
+    for(let i = historial.length-1; i >= 0; i--) {
+        if(historial[i].num === '75') break;
+        sin75++;
+    }
+    document.getElementById('dias-sin-75').innerText = sin75;
+}
+
+// CARGAR HISTORIAL DESDE SUPABASE AL ABRIR 
+async function cargarHistorialRemoto() {
+    try {
+        const { data, error } = await _supabase
+            .from('historial_sorteos')
+            .select('*')
+            .order('fecha', { ascending: true })
+            .order('hora', { ascending: true });
+
+        if (error) throw error;
+        if (data) {
+            historial = data;
+            actualizarInterfaz();
+        }
+    } catch (err) {
+        console.log("⚠️ No se pudo cargar la nube, usando modo local.");
+    }
+}
+
+document.getElementById('btn-borrar').onclick = async () => {
+    if(historial.length === 0) return;
+    const ult = historial.pop();
+    // Borrar también en la nube
+    await _supabase.from('historial_sorteos').delete().match({ fecha: ult.fecha, hora: ult.hora });
+    actualizarInterfaz();
+};
