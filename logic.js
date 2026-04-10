@@ -1,4 +1,4 @@
-/* LÓGICA INTEGRAL ANALIZADOR CRCA - VERSIÓN NUBE */
+/* LÓGICA INTEGRAL ANALIZADOR CRCA - CONEXIÓN SEGURA */
 
 const listaAnimales = [
     {n:'0', a:'DELFIN', t:'AGUA'}, {n:'00', a:'BALLENA', t:'AGUA'}, {n:'1', a:'CARNERO', t:'TIERRA'},
@@ -29,63 +29,78 @@ const listaAnimales = [
     {n:'74', a:'TURPIAL', t:'AIRE'}, {n:'75', a:'GUACHARO', t:'AIRE'}
 ];
 
-const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
+const URL_NUBE = 'https://analizador-crca-cloud-main-pzhkdp.free.laravel.cloud/api';
 let historial = [];
 let horaSeleccionadaActiva = null;
 
-function openTab(evt, tabName) {
-    let i, tabcontent, tablinks;
-    tabcontent = document.getElementsByClassName("tab-content");
-    for (i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
-    tablinks = document.getElementsByClassName("tab-btn");
-    for (i = 0; i < tablinks.length; i++) { tablinks[i].classList.remove("active"); }
-    document.getElementById(tabName).style.display = "block";
-    evt.currentTarget.classList.add("active");
-}
-
+// Inicialización
 function inicializarSistema() {
-    generarPanelDiario();
-    generarGridBotones();
-    llenarSelectEstudio();
-    const fechaInput = document.getElementById('fecha-analisis');
-    if(fechaInput) {
+    const panel = document.getElementById('panel-diario-sorteos');
+    if(panel) {
+        generarPanelDiario();
+        generarGridBotones();
+        llenarSelectEstudio();
+        const fechaInput = document.getElementById('fecha-analisis');
         fechaInput.value = new Date().toISOString().split('T')[0];
         fechaInput.addEventListener('change', generarPanelDiario);
     }
 }
 
-function generarGridBotones() {
-    const container = document.getElementById('grid-container');
-    if(!container) return;
-    container.innerHTML = '';
-    listaAnimales.forEach(animal => {
-        const btn = document.createElement('div');
-        btn.className = 'animal-btn'; // Asegura que esta clase esté en style.css
-        btn.innerHTML = `<strong>${animal.n}</strong><br><small>${animal.a}</small>`;
-        btn.onclick = () => {
-            if (!horaSeleccionadaActiva) return alert("Selecciona una HORA primero");
-            registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
-        };
-        container.appendChild(btn);
-    });
+// Registro de Sorteo con envío a Nube
+async function registrarSorteo(num, animal, tipo, hora) {
+    const fecha = document.getElementById('fecha-analisis').value;
+    const nuevoRegistro = { fecha, hora, num, animal, tipo };
+
+    // Actualización local para rapidez
+    const existeIdx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
+    if (existeIdx !== -1) historial.splice(existeIdx, 1);
+    historial.push(nuevoRegistro);
+    actualizarInterfaz();
+
+    // ENVÍO A OHIO
+    try {
+        await fetch(`${URL_NUBE}/guardar`, {
+            method: 'POST',
+            mode: 'cors', // <--- CRÍTICO PARA GITHUB
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(nuevoRegistro)
+        });
+        console.log("✅ Blindado en Ohio");
+    } catch (e) {
+        console.error("⚠️ Error de conexión a la nube");
+    }
 }
 
+// Cargar datos al entrar
+async function cargarHistorialRemoto() {
+    try {
+        const respuesta = await fetch(`${URL_NUBE}/historial`, { mode: 'cors' });
+        const datos = await respuesta.json();
+        if (datos && datos.length > 0) {
+            historial = datos;
+            actualizarInterfaz();
+        }
+    } catch (e) {
+        console.log("Servidor despertando...");
+    }
+}
+
+// Funciones de Interfaz
 function generarPanelDiario() {
+    const horas = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
     const panel = document.getElementById('panel-diario-sorteos');
-    if(!panel) return;
     panel.innerHTML = '';
     const fechaActual = document.getElementById('fecha-analisis').value;
 
-    horasSorteo.forEach(hora => {
+    horas.forEach(hora => {
         const box = document.createElement('div');
         box.className = 'hora-box';
         const reg = historial.find(r => r.fecha === fechaActual && r.hora === hora);
         if (reg) {
             box.classList.add('jugado');
             box.innerText = `${hora}\n(${reg.num})`;
-        } else {
-            box.innerText = hora;
-        }
+        } else { box.innerText = hora; }
+        
         box.onclick = () => {
             horaSeleccionadaActiva = hora;
             document.querySelectorAll('.hora-box').forEach(b => b.style.border = '1px solid #475569');
@@ -95,59 +110,44 @@ function generarPanelDiario() {
     });
 }
 
-async function registrarSorteo(num, animal, tipo, hora) {
-    const fecha = document.getElementById('fecha-analisis').value;
-    const nuevoRegistro = { fecha, hora, num, animal, tipo };
-
-    // Actualización local
-    const existeIdx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
-    if (existeIdx !== -1) historial.splice(existeIdx, 1);
-    historial.push(nuevoRegistro);
-    actualizarInterfaz();
-
-    // ENVÍO A OHIO
-    try {
-        await fetch('https://analizador-crca-cloud-main-pzhkdp.free.laravel.cloud/api/guardar', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(nuevoRegistro)
-        });
-    } catch (e) { console.error("Error nube"); }
+function generarGridBotones() {
+    const container = document.getElementById('grid-container');
+    container.innerHTML = '';
+    listaAnimales.forEach(a => {
+        const div = document.createElement('div');
+        div.className = 'animal-btn'; // Asegúrate de tener esta clase en style.css
+        div.style = "background:#334155; padding:5px; border-radius:4px; cursor:pointer; text-align:center;";
+        div.innerHTML = `<strong>${a.n}</strong><br><small>${a.a}</small>`;
+        div.onclick = () => {
+            if(!horaSeleccionadaActiva) return alert("Toca una HORA arriba");
+            registrarSorteo(a.n, a.a, a.t, horaSeleccionadaActiva);
+        };
+        container.appendChild(div);
+    });
 }
 
 function actualizarInterfaz() {
-    actualizarTabla();
-    generarPanelDiario();
-}
-
-function actualizarTabla() {
     const cuerpo = document.getElementById('lista-historial');
     if(!cuerpo) return;
     cuerpo.innerHTML = '';
     historial.slice().reverse().forEach(r => {
         cuerpo.innerHTML += `<tr><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
     });
-}
-
-async function cargarHistorialRemoto() {
-    try {
-        const res = await fetch('https://analizador-crca-cloud-main-pzhkdp.free.laravel.cloud/api/historial');
-        const datos = await res.json();
-        if (datos) {
-            historial = datos;
-            actualizarInterfaz();
-        }
-    } catch (e) { console.log("Modo local"); }
+    generarPanelDiario();
 }
 
 function llenarSelectEstudio() {
     const sel = document.getElementById('select-animal-estudio');
     if(!sel) return;
-    sel.innerHTML = '<option value="">-- Animal --</option>';
+    sel.innerHTML = '<option value="">-- Ver Animal --</option>';
     listaAnimales.forEach(a => {
-        let opt = document.createElement('option');
-        opt.value = a.n;
-        opt.innerText = `${a.n} - ${a.a}`;
-        sel.appendChild(opt);
+        sel.innerHTML += `<option value="${a.n}">${a.n} - ${a.a}</option>`;
     });
+}
+
+function openTab(evt, tabName) {
+    document.querySelectorAll(".tab-content").forEach(t => t.style.display = "none");
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.classList.add("active");
 }
