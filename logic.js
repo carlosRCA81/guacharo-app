@@ -1,4 +1,6 @@
+// ==========================================
 // CONFIGURACIÓN SUPABASE - ANALIZADOR CRCA
+// ==========================================
 const SUPABASE_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -36,11 +38,13 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historial = [];
 let horaSeleccionadaActiva = null;
 
+// Reloj en tiempo real
 setInterval(() => {
     const clock = document.getElementById('live-clock');
     if(clock) clock.innerText = new Date().toLocaleTimeString();
 }, 1000);
 
+// Control de Pestañas
 function openTab(evt, tabName) {
     let tabcontent = document.getElementsByClassName("tab-content");
     for (let i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
@@ -50,6 +54,7 @@ function openTab(evt, tabName) {
     evt.currentTarget.className += " active";
 }
 
+// Inicialización
 async function inicializarSistema() {
     generarPanelDiario();
     generarGridBotones();
@@ -59,7 +64,6 @@ async function inicializarSistema() {
         fechaInput.value = new Date().toISOString().split('T')[0];
         fechaInput.addEventListener('change', generarPanelDiario);
     }
-    // Cargar datos antiguos desde Supabase al iniciar
     await cargarHistorialRemoto();
 }
 
@@ -91,6 +95,7 @@ function llenarSelectEstudio() {
     });
 }
 
+// Estudio de Patrones mejorado
 function estudiarAnimalEspecifico() {
     const numBuscado = document.getElementById('select-animal-estudio').value;
     const resDiv = document.getElementById('resultado-patrones');
@@ -120,8 +125,9 @@ function estudiarAnimalEspecifico() {
     }
 
     const masFrec = (obj) => {
-        const keys = Object.keys(obj);
-        return keys.length > 0 ? keys.reduce((a, b) => obj[a] > obj[b] ? a : b) : "Sin datos";
+        const entries = Object.entries(obj);
+        if (entries.length === 0) return "Sin datos";
+        return entries.sort((a, b) => b[1] - a[1])[0][0];
     };
 
     resDiv.innerHTML = `
@@ -160,6 +166,9 @@ function generarPanelDiario() {
 
         box.onclick = () => {
             horaSeleccionadaActiva = hora;
+            document.querySelectorAll('.hora-box').forEach(b => b.classList.remove('active-select'));
+            box.classList.add('active-select');
+            // Estilo rápido de selección
             document.querySelectorAll('.hora-box').forEach(b => b.style.border = '1px solid #475569');
             box.style.border = '2px solid #38bdf8';
             document.getElementById('num-rapido').focus();
@@ -182,22 +191,22 @@ function registrarPorNumero() {
     inputNum.value = '';
 }
 
-// FUNCIÓN DE GUARDADO EN SUPABASE 
+// Registro principal
 async function registrarSorteo(num, animal, tipo, hora) {
     const fecha = document.getElementById('fecha-analisis').value;
     const nuevoRegistro = { fecha, hora, num, animal, tipo };
 
-    // 1. Actualización Visual Inmediata
+    // Actualización local
     const existeIdx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
     if (existeIdx !== -1) historial.splice(existeIdx, 1);
     historial.push(nuevoRegistro);
     actualizarInterfaz();
 
-    // 2. Guardado en la Nube (Supabase)
+    // Guardado en Supabase
     try {
         const { error } = await _supabase
             .from('historial_sorteos')
-            .upsert(nuevoRegistro, { onConflict: 'fecha,hora' }); // Evita duplicados en la misma hora 
+            .upsert(nuevoRegistro, { onConflict: 'fecha,hora' });
 
         if (error) throw error;
         console.log("✅ Guardado en Supabase");
@@ -208,7 +217,9 @@ async function registrarSorteo(num, animal, tipo, hora) {
 
 function actualizarInterfaz() {
     if(historial.length > 0) {
-        const ult = historial[historial.length-1];
+        // Ordenar historial por fecha y hora antes de mostrar el último
+        const tempHistorial = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha));
+        const ult = tempHistorial[tempHistorial.length-1];
         document.getElementById('last-num').innerText = `${ult.num} - ${ult.animal}`;
     }
     actualizarTabla();
@@ -220,43 +231,57 @@ function actualizarTabla() {
     const cuerpo = document.getElementById('lista-historial');
     if(!cuerpo) return;
     cuerpo.innerHTML = '';
-    historial.slice().reverse().forEach(r => {
+    // Mostrar lo más nuevo arriba
+    [...historial].reverse().forEach(r => {
         cuerpo.innerHTML += `<tr><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
     });
 }
 
 function analizarGuacharo() {
     let sin75 = 0;
-    for(let i = historial.length-1; i >= 0; i--) {
-        if(historial[i].num === '75') break;
+    const tempSorted = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha));
+    for(let i = tempSorted.length-1; i >= 0; i--) {
+        if(tempSorted[i].num === '75') break;
         sin75++;
     }
-    document.getElementById('dias-sin-75').innerText = sin75;
+    const display = document.getElementById('dias-sin-75');
+    if(display) display.innerText = sin75;
 }
 
-// CARGAR HISTORIAL DESDE SUPABASE AL ABRIR 
+// Carga robusta de datos
 async function cargarHistorialRemoto() {
     try {
         const { data, error } = await _supabase
             .from('historial_sorteos')
-            .select('*')
-            .order('fecha', { ascending: true })
-            .order('hora', { ascending: true });
+            .select('*');
 
         if (error) throw error;
         if (data) {
-            historial = data;
+            // Ordenar manualmente para asegurar consistencia
+            historial = data.sort((a, b) => {
+                if (a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
+                return horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora);
+            });
             actualizarInterfaz();
         }
     } catch (err) {
-        console.log("⚠️ No se pudo cargar la nube, usando modo local.");
+        console.log("⚠️ Modo offline o error de carga.");
     }
 }
 
-document.getElementById('btn-borrar').onclick = async () => {
-    if(historial.length === 0) return;
-    const ult = historial.pop();
-    // Borrar también en la nube
-    await _supabase.from('historial_sorteos').delete().match({ fecha: ult.fecha, hora: ult.hora });
-    actualizarInterfaz();
-};
+// Botón borrar
+const btnBorrar = document.getElementById('btn-borrar');
+if(btnBorrar) {
+    btnBorrar.onclick = async () => {
+        if(historial.length === 0) return;
+        if(!confirm("¿Borrar el último registro?")) return;
+        
+        const ult = historial.pop();
+        await _supabase.from('historial_sorteos')
+            .delete()
+            .match({ fecha: ult.fecha, hora: ult.hora });
+        actualizarInterfaz();
+    };
+}
+
+window.onload = inicializarSistema;
