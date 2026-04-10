@@ -6,11 +6,20 @@ use Illuminate\Support\Facades\DB;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes - ANALIZADOR CRCA
+| API CRCA - DESBLOQUEO DE COMUNICACIÓN GITHUB -> OHIO
 |--------------------------------------------------------------------------
 */
 
-// RUTA 1: Guardar el sorteo en la base de datos de Ohio
+// Middleware manual para permitir que cualquier sitio (GitHub) se conecte
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    exit; // Finaliza temprano para peticiones de verificación del navegador
+}
+
+// RUTA PARA GUARDAR
 Route::post('/guardar', function (Request $request) {
     try {
         DB::table('historial_sorteos')->updateOrInsert(
@@ -23,16 +32,21 @@ Route::post('/guardar', function (Request $request) {
                 'updated_at' => now()
             ]
         );
-        return response()->json(['status' => 'success', 'message' => 'Dato blindado en la nube']);
+        return response()->json(['status' => 'success']);
     } catch (\Exception $e) {
         return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
     }
 });
 
-// RUTA 2: Recuperar todo el historial para el análisis de patrones
+// RUTA PARA CARGAR HISTORIAL
 Route::get('/historial', function () {
-    return DB::table('historial_sorteos')
-             ->orderBy('fecha', 'asc')
-             ->orderBy('hora', 'asc')
-             ->get();
+    try {
+        $datos = DB::table('historial_sorteos')
+                 ->orderBy('fecha', 'desc')
+                 ->orderBy('hora', 'desc')
+                 ->get();
+        return response()->json($datos);
+    } catch (\Exception $e) {
+        return response()->json([]);
+    }
 });
