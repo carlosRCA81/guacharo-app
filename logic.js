@@ -6,10 +6,10 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const listaAnimales = [
-    {n:'0', a:'DELFIN', t:'AGUA'}, {n:'00', a:'BALLENA', t:'AGUA'}, {n:'1', a:'CARNERO', t:'TIERRA'},
-    {n:'2', a:'TORO', t:'TIERRA'}, {n:'3', a:'CIEMPIES', t:'TIERRA'}, {n:'4', a:'ALACRAN', t:'TIERRA'},
-    {n:'5', a:'LEON', t:'TIERRA'}, {n:'6', a:'RANA', t:'AGUA'}, {n:'7', a:'PERICO', t:'AIRE'},
-    {n:'8', a:'RATON', t:'TIERRA'}, {n:'9', a:'AGUILA', t:'AIRE'}, {n:'10', a:'TIGRE', t:'TIERRA'},
+    {n:'0', a:'DELFIN', t:'AGUA'}, {n:'00', a:'BALLENA', t:'AGUA'}, {n:'01', a:'CARNERO', t:'TIERRA'},
+    {n:'02', a:'TORO', t:'TIERRA'}, {n:'03', a:'CIEMPIES', t:'TIERRA'}, {n:'04', a:'ALACRAN', t:'TIERRA'},
+    {n:'05', a:'LEON', t:'TIERRA'}, {n:'06', a:'RANA', t:'AGUA'}, {n:'07', a:'PERICO', t:'AIRE'},
+    {n:'08', a:'RATON', t:'TIERRA'}, {n:'09', a:'AGUILA', t:'AIRE'}, {n:'10', a:'TIGRE', t:'TIERRA'},
     {n:'11', a:'GATO', t:'TIERRA'}, {n:'12', a:'CABALLO', t:'TIERRA'}, {n:'13', a:'MONO', t:'TIERRA'},
     {n:'14', a:'PALOMA', t:'AIRE'}, {n:'15', a:'ZORRO', t:'TIERRA'}, {n:'16', a:'OSO', t:'TIERRA'},
     {n:'17', a:'PAVO', t:'AIRE'}, {n:'18', a:'BURRO', t:'TIERRA'}, {n:'19', a:'CHIVO', t:'TIERRA'},
@@ -168,7 +168,6 @@ function generarPanelDiario() {
             horaSeleccionadaActiva = hora;
             document.querySelectorAll('.hora-box').forEach(b => b.classList.remove('active-select'));
             box.classList.add('active-select');
-            // Estilo rápido de selección
             document.querySelectorAll('.hora-box').forEach(b => b.style.border = '1px solid #475569');
             box.style.border = '2px solid #38bdf8';
             document.getElementById('num-rapido').focus();
@@ -177,15 +176,19 @@ function generarPanelDiario() {
     });
 }
 
+// CORRECCIÓN PARA NÚMEROS 01, 02, ETC.
 function registrarPorNumero() {
     if (!horaSeleccionadaActiva) return alert("Selecciona una HORA en los cuadros de arriba");
     const inputNum = document.getElementById('num-rapido');
     let numInput = inputNum.value.trim();
-    if(numInput === "0" || numInput === "00") { } 
-    else if(numInput.length === 1) numInput = "0" + numInput;
+
+    // Si el usuario escribe 1, 2, 3... lo convertimos a 01, 02, 03
+    if (numInput !== "0" && numInput !== "00" && numInput.length === 1) {
+        numInput = "0" + numInput;
+    }
 
     const animal = listaAnimales.find(a => a.n === numInput);
-    if (!animal) return alert("Ese número no existe en la ruleta");
+    if (!animal) return alert("Ese número no existe en la ruleta (0, 00 al 75)");
 
     registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
     inputNum.value = '';
@@ -196,13 +199,11 @@ async function registrarSorteo(num, animal, tipo, hora) {
     const fecha = document.getElementById('fecha-analisis').value;
     const nuevoRegistro = { fecha, hora, num, animal, tipo };
 
-    // Actualización local
     const existeIdx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
     if (existeIdx !== -1) historial.splice(existeIdx, 1);
     historial.push(nuevoRegistro);
     actualizarInterfaz();
 
-    // Guardado en Supabase
     try {
         const { error } = await _supabase
             .from('historial_sorteos')
@@ -217,8 +218,10 @@ async function registrarSorteo(num, animal, tipo, hora) {
 
 function actualizarInterfaz() {
     if(historial.length > 0) {
-        // Ordenar historial por fecha y hora antes de mostrar el último
-        const tempHistorial = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha));
+        const tempHistorial = [...historial].sort((a,b) => {
+             if (a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
+             return horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora);
+        });
         const ult = tempHistorial[tempHistorial.length-1];
         document.getElementById('last-num').innerText = `${ult.num} - ${ult.animal}`;
     }
@@ -231,7 +234,6 @@ function actualizarTabla() {
     const cuerpo = document.getElementById('lista-historial');
     if(!cuerpo) return;
     cuerpo.innerHTML = '';
-    // Mostrar lo más nuevo arriba
     [...historial].reverse().forEach(r => {
         cuerpo.innerHTML += `<tr><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
     });
@@ -239,7 +241,10 @@ function actualizarTabla() {
 
 function analizarGuacharo() {
     let sin75 = 0;
-    const tempSorted = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha));
+    const tempSorted = [...historial].sort((a,b) => {
+        if (a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
+        return horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora);
+    });
     for(let i = tempSorted.length-1; i >= 0; i--) {
         if(tempSorted[i].num === '75') break;
         sin75++;
@@ -248,7 +253,6 @@ function analizarGuacharo() {
     if(display) display.innerText = sin75;
 }
 
-// Carga robusta de datos
 async function cargarHistorialRemoto() {
     try {
         const { data, error } = await _supabase
@@ -257,7 +261,6 @@ async function cargarHistorialRemoto() {
 
         if (error) throw error;
         if (data) {
-            // Ordenar manualmente para asegurar consistencia
             historial = data.sort((a, b) => {
                 if (a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
                 return horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora);
@@ -269,7 +272,6 @@ async function cargarHistorialRemoto() {
     }
 }
 
-// Botón borrar
 const btnBorrar = document.getElementById('btn-borrar');
 if(btnBorrar) {
     btnBorrar.onclick = async () => {
