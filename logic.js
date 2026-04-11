@@ -38,13 +38,11 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historial = [];
 let horaSeleccionadaActiva = null;
 
-// Reloj en tiempo real
 setInterval(() => {
     const clock = document.getElementById('live-clock');
     if(clock) clock.innerText = new Date().toLocaleTimeString();
 }, 1000);
 
-// Control de Pestañas
 function openTab(evt, tabName) {
     let tabcontent = document.getElementsByClassName("tab-content");
     for (let i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
@@ -54,7 +52,6 @@ function openTab(evt, tabName) {
     evt.currentTarget.className += " active";
 }
 
-// Inicialización
 async function inicializarSistema() {
     generarPanelDiario();
     generarGridBotones();
@@ -95,7 +92,6 @@ function llenarSelectEstudio() {
     });
 }
 
-// Estudio de Patrones mejorado
 function estudiarAnimalEspecifico() {
     const numBuscado = document.getElementById('select-animal-estudio').value;
     const resDiv = document.getElementById('resultado-patrones');
@@ -131,7 +127,7 @@ function estudiarAnimalEspecifico() {
     };
 
     resDiv.innerHTML = `
-        <div class="stat-card-mini">
+        <div class="stat-card-mini" style="background: rgba(56, 189, 248, 0.1);">
             <h4>RESUMEN: ${numBuscado}</h4>
             <p>Veces detectado: <strong>${conteoTotal}</strong></p>
         </div>
@@ -176,13 +172,11 @@ function generarPanelDiario() {
     });
 }
 
-// CORRECCIÓN PARA NÚMEROS 01, 02, ETC.
 function registrarPorNumero() {
     if (!horaSeleccionadaActiva) return alert("Selecciona una HORA en los cuadros de arriba");
     const inputNum = document.getElementById('num-rapido');
     let numInput = inputNum.value.trim();
 
-    // Si el usuario escribe 1, 2, 3... lo convertimos a 01, 02, 03
     if (numInput !== "0" && numInput !== "00" && numInput.length === 1) {
         numInput = "0" + numInput;
     }
@@ -194,7 +188,6 @@ function registrarPorNumero() {
     inputNum.value = '';
 }
 
-// Registro principal
 async function registrarSorteo(num, animal, tipo, hora) {
     const fecha = document.getElementById('fecha-analisis').value;
     const nuevoRegistro = { fecha, hora, num, animal, tipo };
@@ -210,7 +203,6 @@ async function registrarSorteo(num, animal, tipo, hora) {
             .upsert(nuevoRegistro, { onConflict: 'fecha,hora' });
 
         if (error) throw error;
-        console.log("✅ Guardado en Supabase");
     } catch (err) {
         console.error("❌ Error Supabase:", err.message);
     }
@@ -228,47 +220,80 @@ function actualizarInterfaz() {
     actualizarTabla();
     analizarGuacharo();
     generarPanelDiario();
+    calcularBalanceElementos();
 }
 
 function actualizarTabla() {
     const cuerpo = document.getElementById('lista-historial');
     if(!cuerpo) return;
     cuerpo.innerHTML = '';
-    [...historial].reverse().forEach(r => {
-        cuerpo.innerHTML += `<tr><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
+    
+    [...historial].sort((a, b) => {
+        if (a.fecha !== b.fecha) return b.fecha.localeCompare(a.fecha);
+        return horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora);
+    }).forEach(r => {
+        // RESALTADO DEL 75 EN DORADO
+        const isGuacharo = r.num === '75' ? 'style="background: rgba(255, 215, 0, 0.2); font-weight: bold; color: #ffd700;"' : '';
+        cuerpo.innerHTML += `<tr ${isGuacharo}><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
     });
 }
 
 function analizarGuacharo() {
     let sin75 = 0;
+    // Ordenar de más antiguo a más reciente para contar correctamente
     const tempSorted = [...historial].sort((a,b) => {
         if (a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
         return horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora);
     });
+
     for(let i = tempSorted.length-1; i >= 0; i--) {
         if(tempSorted[i].num === '75') break;
         sin75++;
     }
     const display = document.getElementById('dias-sin-75');
     if(display) display.innerText = sin75;
+
+    // Lógica para la pestaña de "Estudio 75"
+    const resEstudio = document.getElementById('resultado-patrones-guacharo');
+    if (resEstudio) {
+        let antesDel75 = [];
+        tempSorted.forEach((reg, idx) => {
+            if (reg.num === '75' && idx > 0) {
+                antesDel75.push(tempSorted[idx-1].num + " - " + tempSorted[idx-1].animal);
+            }
+        });
+        
+        if (antesDel75.length > 0) {
+            const masFrec = antesDel75.sort((a,b) =>
+                antesDel75.filter(v => v===a).length - antesDel75.filter(v => v===b).length
+            ).pop();
+            resEstudio.innerHTML = `<div class="stat-card-mini" style="border-left-color: #ffd700;">
+                <h4>ALERTA GUACHARO</h4>
+                <p>Animal que más lo "anuncia":<br><strong>${masFrec}</strong></p>
+            </div>`;
+        }
+    }
+}
+
+function calcularBalanceElementos() {
+    if (historial.length === 0) return;
+    let counts = { TIERRA: 0, AIRE: 0, AGUA: 0 };
+    historial.slice(-20).forEach(r => { counts[r.tipo]++; });
+    
+    // Aquí puedes enviar estos datos a un contenedor en el HTML si lo deseas
+    console.log("Tendencia actual (últimos 20):", counts);
 }
 
 async function cargarHistorialRemoto() {
     try {
-        const { data, error } = await _supabase
-            .from('historial_sorteos')
-            .select('*');
-
+        const { data, error } = await _supabase.from('historial_sorteos').select('*');
         if (error) throw error;
         if (data) {
-            historial = data.sort((a, b) => {
-                if (a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
-                return horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora);
-            });
+            historial = data;
             actualizarInterfaz();
         }
     } catch (err) {
-        console.log("⚠️ Modo offline o error de carga.");
+        console.log("⚠️ Error de carga.");
     }
 }
 
@@ -277,11 +302,8 @@ if(btnBorrar) {
     btnBorrar.onclick = async () => {
         if(historial.length === 0) return;
         if(!confirm("¿Borrar el último registro?")) return;
-        
         const ult = historial.pop();
-        await _supabase.from('historial_sorteos')
-            .delete()
-            .match({ fecha: ult.fecha, hora: ult.hora });
+        await _supabase.from('historial_sorteos').delete().match({ fecha: ult.fecha, hora: ult.hora });
         actualizarInterfaz();
     };
 }
