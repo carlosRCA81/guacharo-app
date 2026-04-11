@@ -29,7 +29,7 @@ const listaAnimales = [
     {n:'59', a:'PANTERA', t:'TIERRA'}, {n:'60', a:'CAMALEON', t:'TIERRA'}, {n:'61', a:'PANDA', t:'TIERRA'},
     {n:'62', a:'CACHICAMO', t:'TIERRA'}, {n:'63', a:'CANGREJO', t:'AGUA'}, {n:'64', a:'GAVILÁN', t:'AIRE'},
     {n:'65', a:'ARAÑA', t:'TIERRA'}, {n:'66', a:'LOBO', t:'TIERRA'}, {n:'67', a:'AVESTRUZ', t:'AIRE'},
-    {n:'68', a:'JAGUAR', t:'TIERRA'}, {n:'69', a:'CONEJO', t:'TIERRA'}, {n:'70', a:'BISONTE', t:'TIERRA'},
+    {n:'68', a:'JAGUAR', t:'TIERRA'}, {n:'69', a:'CONEJO', t:'TIERRA'}, {n:'70', b:'BISONTE', t:'TIERRA'},
     {n:'71', a:'GUACAMAYA', t:'AIRE'}, {n:'72', a:'GORILA', t:'TIERRA'}, {n:'73', a:'HIPOPOTAMO', t:'TIERRA'},
     {n:'74', a:'TURPIAL', t:'AIRE'}, {n:'75', a:'GUACHARO', t:'AIRE'}
 ];
@@ -73,7 +73,7 @@ function generarGridBotones() {
         btn.className = 'animal-btn';
         btn.innerHTML = `<strong>${animal.n}</strong><br><small>${animal.a}</small>`;
         btn.onclick = () => {
-            if (!horaSeleccionadaActiva) return alert("Primero toca una HORA en el panel superior");
+            if (!horaSeleccionadaActiva) return alert("Primero toca una HORA");
             registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
         };
         container.appendChild(btn);
@@ -101,22 +101,27 @@ function estudiarAnimalEspecifico() {
     let antes = {};
     let conteoTotal = 0;
 
-    historial.forEach((reg, idx) => {
+    const tempSorted = [...historial].sort((a,b) => {
+        if (a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
+        return horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora);
+    });
+
+    tempSorted.forEach((reg, idx) => {
         if(reg.num === numBuscado) {
             conteoTotal++;
-            if(idx < historial.length - 1) {
-                let sig = historial[idx+1].num + " - " + historial[idx+1].animal;
+            if(idx < tempSorted.length - 1) {
+                let sig = tempSorted[idx+1].num + " - " + tempSorted[idx+1].animal;
                 despues[sig] = (despues[sig] || 0) + 1;
             }
             if(idx > 0) {
-                let ant = historial[idx-1].num + " - " + historial[idx-1].animal;
+                let ant = tempSorted[idx-1].num + " - " + tempSorted[idx-1].animal;
                 antes[ant] = (antes[ant] || 0) + 1;
             }
         }
     });
 
     if(conteoTotal === 0) {
-        resDiv.innerHTML = `<p style="color:#ef4444; padding:10px;">Sin datos registrados para el número ${numBuscado}.</p>`;
+        resDiv.innerHTML = `<p style="color:#ef4444; padding:10px;">Sin datos.</p>`;
         return;
     }
 
@@ -173,16 +178,14 @@ function generarPanelDiario() {
 }
 
 function registrarPorNumero() {
-    if (!horaSeleccionadaActiva) return alert("Selecciona una HORA en los cuadros de arriba");
+    if (!horaSeleccionadaActiva) return alert("Selecciona una HORA");
     const inputNum = document.getElementById('num-rapido');
-    let numInput = inputNum.value.trim();
+    let val = inputNum.value.trim();
 
-    if (numInput !== "0" && numInput !== "00" && numInput.length === 1) {
-        numInput = "0" + numInput;
-    }
+    if (val !== "0" && val !== "00" && val.length === 1) val = "0" + val;
 
-    const animal = listaAnimales.find(a => a.n === numInput);
-    if (!animal) return alert("Ese número no existe en la ruleta (0, 00 al 75)");
+    const animal = listaAnimales.find(a => a.n === val);
+    if (!animal) return alert("Número no existe");
 
     registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
     inputNum.value = '';
@@ -198,23 +201,17 @@ async function registrarSorteo(num, animal, tipo, hora) {
     actualizarInterfaz();
 
     try {
-        const { error } = await _supabase
-            .from('historial_sorteos')
-            .upsert(nuevoRegistro, { onConflict: 'fecha,hora' });
-
-        if (error) throw error;
-    } catch (err) {
-        console.error("❌ Error Supabase:", err.message);
-    }
+        await _supabase.from('historial_sorteos').upsert(nuevoRegistro, { onConflict: 'fecha,hora' });
+    } catch (err) { console.error(err.message); }
 }
 
 function actualizarInterfaz() {
     if(historial.length > 0) {
-        const tempHistorial = [...historial].sort((a,b) => {
+        const temp = [...historial].sort((a,b) => {
              if (a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
              return horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora);
         });
-        const ult = tempHistorial[tempHistorial.length-1];
+        const ult = temp[temp.length-1];
         document.getElementById('last-num').innerText = `${ult.num} - ${ult.animal}`;
     }
     actualizarTabla();
@@ -232,15 +229,13 @@ function actualizarTabla() {
         if (a.fecha !== b.fecha) return b.fecha.localeCompare(a.fecha);
         return horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora);
     }).forEach(r => {
-        // RESALTADO DEL 75 EN DORADO
-        const isGuacharo = r.num === '75' ? 'style="background: rgba(255, 215, 0, 0.2); font-weight: bold; color: #ffd700;"' : '';
+        const isGuacharo = r.num === '75' ? 'class="row-guacharo"' : '';
         cuerpo.innerHTML += `<tr ${isGuacharo}><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
     });
 }
 
 function analizarGuacharo() {
     let sin75 = 0;
-    // Ordenar de más antiguo a más reciente para contar correctamente
     const tempSorted = [...historial].sort((a,b) => {
         if (a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
         return horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora);
@@ -253,7 +248,6 @@ function analizarGuacharo() {
     const display = document.getElementById('dias-sin-75');
     if(display) display.innerText = sin75;
 
-    // Lógica para la pestaña de "Estudio 75"
     const resEstudio = document.getElementById('resultado-patrones-guacharo');
     if (resEstudio) {
         let antesDel75 = [];
@@ -264,24 +258,33 @@ function analizarGuacharo() {
         });
         
         if (antesDel75.length > 0) {
-            const masFrec = antesDel75.sort((a,b) =>
-                antesDel75.filter(v => v===a).length - antesDel75.filter(v => v===b).length
-            ).pop();
-            resEstudio.innerHTML = `<div class="stat-card-mini" style="border-left-color: #ffd700;">
-                <h4>ALERTA GUACHARO</h4>
-                <p>Animal que más lo "anuncia":<br><strong>${masFrec}</strong></p>
-            </div>`;
+            const counts = {};
+            antesDel75.forEach(x => counts[x] = (counts[x] || 0) + 1);
+            const masFrec = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+            
+            resEstudio.innerHTML = `
+                <div class="stat-card-mini" style="border-left-color: #ffd700;">
+                    <h4>ANUNCIANTE CLAVE (75)</h4>
+                    <p>Este animal suele salir antes del Guácharo:<br><strong>${masFrec}</strong></p>
+                    <small>Frecuencia: ${counts[masFrec]} veces detectado</small>
+                </div>`;
         }
     }
 }
 
 function calcularBalanceElementos() {
-    if (historial.length === 0) return;
+    const fechaActual = document.getElementById('fecha-analisis').value;
     let counts = { TIERRA: 0, AIRE: 0, AGUA: 0 };
-    historial.slice(-20).forEach(r => { counts[r.tipo]++; });
     
-    // Aquí puedes enviar estos datos a un contenedor en el HTML si lo deseas
-    console.log("Tendencia actual (últimos 20):", counts);
+    // Filtrar solo los del día seleccionado
+    const delDia = historial.filter(r => r.fecha === fechaActual);
+    delDia.forEach(r => { if(counts[r.tipo] !== undefined) counts[r.tipo]++; });
+    
+    if(document.getElementById('val-tierra')) {
+        document.getElementById('val-tierra').innerText = counts.TIERRA;
+        document.getElementById('val-aire').innerText = counts.AIRE;
+        document.getElementById('val-agua').innerText = counts.AGUA;
+    }
 }
 
 async function cargarHistorialRemoto() {
@@ -292,16 +295,14 @@ async function cargarHistorialRemoto() {
             historial = data;
             actualizarInterfaz();
         }
-    } catch (err) {
-        console.log("⚠️ Error de carga.");
-    }
+    } catch (err) { console.log("⚠️ Error Supabase"); }
 }
 
 const btnBorrar = document.getElementById('btn-borrar');
 if(btnBorrar) {
     btnBorrar.onclick = async () => {
         if(historial.length === 0) return;
-        if(!confirm("¿Borrar el último registro?")) return;
+        if(!confirm("¿Borrar último?")) return;
         const ult = historial.pop();
         await _supabase.from('historial_sorteos').delete().match({ fecha: ult.fecha, hora: ult.hora });
         actualizarInterfaz();
