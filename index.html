@@ -18,6 +18,12 @@
         .stat-card-mini { background: #1e293b; padding: 10px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #38bdf8; }
         .stat-card-mini h4 { color: #fbbf24; margin: 0 0 5px 0; font-size: 0.9rem; }
         .stat-card-mini p { font-size: 0.8rem; margin: 2px 0; }
+        
+        /* Estilo para resaltar el 75 en la tabla */
+        .row-guacharo { background: rgba(251, 191, 36, 0.2) !important; color: #fbbf24; font-weight: bold; border-left: 4px solid #fbbf24; }
+        
+        /* Indicador de tendencia */
+        #balance-elementos { display: flex; justify-content: space-around; margin-top: 15px; background: #0f172a; padding: 10px; border-radius: 8px; font-size: 0.8rem; border: 1px dashed #475569; }
     </style>
 </head>
 <body>
@@ -59,10 +65,21 @@
         </section>
 
         <section id="estudio" class="tab-content">
-            <h3>ANÁLISIS DEL GUACHARO</h3>
-            <div class="card-stats">
-                <p>Días sin 75: <span id="dias-sin-75">0</span></p>
+            <h3>ANÁLISIS ESTRATÉGICO: GUACHARO</h3>
+            <div class="card-stats" style="background: #0f172a; border: 1px solid #fbbf24;">
+                <p style="font-size: 1.2rem; color: #fbbf24;">Días sin salir: <span id="dias-sin-75" style="font-weight: 900;">0</span></p>
             </div>
+            
+            <div id="resultado-patrones-guacharo">
+                <p style="text-align:center; padding:20px; color:#64748b;">Analizando historial para detectar anunciantes...</p>
+            </div>
+
+            <div id="balance-elementos">
+                <span>🌬️ AIRE: <strong id="val-aire">0</strong></span>
+                <span>🌱 TIERRA: <strong id="val-tierra">0</strong></span>
+                <span>💧 AGUA: <strong id="val-agua">0</strong></span>
+            </div>
+            <p style="font-size: 0.7rem; color: #64748b; text-align: center; margin-top: 10px;">* Tendencia basada en los últimos 20 sorteos.</p>
         </section>
 
         <section id="stats-gen" class="tab-content">
@@ -90,7 +107,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <script src="security.js"></script>
     <script src="logic.js"></script>
 </body>
