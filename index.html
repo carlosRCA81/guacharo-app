@@ -3,74 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador CRCA - Inteligencia Superior</title>
+    <title>Analizador CRCA - Pro</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="main-app">
-        <h1>ANALIZADOR CRCA</h1>
-        <div id="live-clock">00:00:00</div>
+    <div id="login-screen">
+        <h2>SISTEMA CRCA ENCRIPTADO</h2>
+        <input type="password" id="access-key" placeholder="Introduce tu clave">
+        <button onclick="checkAccess()">DESBLOQUEAR SISTEMA</button>
+    </div>
 
-        <div class="tab-container">
-            <button class="tab-btn active" onclick="showTab('registro')">REGISTRO</button>
-            <button class="tab-btn" onclick="showTab('ia-oraculo')">PROYECCIÓN IA</button>
-            <button class="tab-btn" onclick="showTab('estudio')">ESTUDIO 75</button>
-            <button class="tab-btn" onclick="showTab('historial')">HISTORIAL</button>
-        </div>
+    <div id="main-app" style="display: none;">
+        <header>
+            <h1>ANALIZADOR CRCA</h1>
+            <div id="live-clock">00:00:00</div>
+            <div class="tab-container">
+                <button class="tab-btn active" onclick="openTab(event, 'registro')">REGISTRO</button>
+                <button class="tab-btn" onclick="openTab(event, 'ia-oraculo')">PROYECCIÓN IA</button>
+                <button class="tab-btn" onclick="openTab(event, 'estudio')">ESTUDIO 75</button>
+                <button class="tab-btn" onclick="openTab(event, 'historial')">HISTORIAL</button>
+            </div>
+        </header>
 
-        <section id="registro" class="tab-content active">
-            <div class="panel-diario" id="grid-horas"></div>
+        <section id="registro" class="tab-content">
+            <div class="panel-diario" id="panel-diario-sorteos"></div>
+            <input type="date" id="fecha-analisis" style="margin-bottom:10px;">
             <div class="entrada-rapida-container">
-                <input type="number" id="num-rapido" placeholder="Nro">
-                <button onclick="guardarRapido()">OK</button>
+                <h4>Nro:</h4>
+                <input type="text" id="num-rapido" maxlength="2">
+                <button onclick="registrarPorNumero()">OK</button>
             </div>
             <div class="display-reciente">
-                <span>Último: <strong id="txt-ultimo">--</strong></span>
-                <button class="btn-danger" onclick="borrarUltimo()">BORRAR</button>
+                <span>Último: <b id="last-num">--</b></span>
+                <button onclick="borrarUltimo()" class="btn-danger">BORRAR</button>
             </div>
-            <div class="grid-animales" id="grid-botones-animales"></div>
+            <div class="grid-animales" id="grid-container"></div>
         </section>
 
-        <section id="ia-oraculo" class="tab-content">
-            <h3 style="color:#38bdf8;">ORÁCULO DE PREDICCIÓN</h3>
-            <div style="background:#1e293b; padding:15px; border-radius:10px; border:1px solid #fbbf24; text-align:center;">
-                <p>PRÓXIMOS MÁS PROBABLES:</p>
-                <div id="panel-ia-datos" style="display:flex; justify-content:space-around; margin:15px 0;">
-                    </div>
-                <p id="razon-ia" style="font-size:0.8rem; color:#94a3b8;"></p>
-            </div>
+        <section id="ia-oraculo" class="tab-content" style="display:none;">
+            <h3>PROYECCIÓN IA</h3>
+            <div id="panel-ia-datos" style="display:flex; justify-content:center; padding:20px;"></div>
         </section>
 
-        <section id="estudio" class="tab-content">
-            <h3>CICLOS DEL GUACHARO</h3>
+        <section id="estudio" class="tab-content" style="display:none;">
             <div class="card-stats">
-                <p>Días sin salir: <span id="dias-sin-75" style="color:#fbbf24; font-size:1.5rem;">0</span></p>
-                <div id="ciclos-75" style="font-size:0.8rem; margin-top:10px;"></div>
+                <p>Días sin 75: <span id="dias-sin-75" style="color:#fbbf24; font-size:1.5rem;">0</span></p>
             </div>
         </section>
 
-        <section id="historial" class="tab-content">
-            <h3>HISTORIAL 2026</h3>
-            <select id="filtro-mes" onchange="renderizarHistorial()" style="width:100%; margin-bottom:10px; padding:12px; background:#0f172a; color:white; border:1px solid #38bdf8; border-radius:8px;">
-                <option value="todos">Ver Todo el Año</option>
-                <option value="01">Enero</option>
-                <option value="02">Febrero</option>
-                <option value="03">Marzo</option>
-                <option value="04">Abril</option>
-                <option value="05">Mayo</option>
-                <option value="06">Junio</option>
-                <option value="07">Julio</option>
-                <option value="08">Agosto</option>
-                <option value="09">Septiembre</option>
-                <option value="10">Octubre</option>
-                <option value="11">Noviembre</option>
-                <option value="12">Diciembre</option>
+        <section id="historial" class="tab-content" style="display:none;">
+            <select id="filtro-mes" onchange="renderizarHistorial()" style="margin-bottom:10px;">
+                <option value="todos">Todo el Año</option>
+                <option value="01">Enero</option><option value="02">Febrero</option>
+                <option value="03">Marzo</option><option value="04">Abril</option>
             </select>
             <div class="tabla-contenedor">
-                <table id="tabla-registros">
-                    <thead>
-                        <tr><th>Fecha</th><th>Hora</th><th>Nro</th><th>Animal</th></tr>
-                    </thead>
+                <table>
+                    <thead><tr><th>Fecha</th><th>Hora</th><th>Nro</th><th>Animal</th><th>Tipo</th></tr></thead>
                     <tbody id="lista-historial"></tbody>
                 </table>
             </div>
