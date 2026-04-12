@@ -1,4 +1,5 @@
-/* LÓGICA IA CRCA - VERSIÓN MÁXIMA CAPACIDAD */
+/* LÓGICA REPARADA ANALIZADOR CRCA */
+
 const listaAnimales = [
     {n:'0', a:'DELFIN', t:'AGUA'}, {n:'00', a:'BALLENA', t:'AGUA'}, {n:'1', a:'CARNERO', t:'TIERRA'},
     {n:'2', a:'TORO', t:'TIERRA'}, {n:'3', a:'CIEMPIES', t:'TIERRA'}, {n:'4', a:'ALACRAN', t:'TIERRA'},
@@ -28,123 +29,167 @@ const listaAnimales = [
     {n:'74', a:'TURPIAL', t:'AIRE'}, {n:'75', a:'GUACHARO', t:'AIRE'}
 ];
 
+const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
 let historial = [];
+let horaSeleccionada = null;
 
-// CARGA INICIAL
 window.onload = async () => {
-    await cargarHistorialRemoto();
-    actualizarInterfaz();
     iniciarReloj();
+    await cargarHistorialRemoto();
+    renderizarBotonesAnimales();
 };
+
+function iniciarReloj() {
+    setInterval(() => {
+        const h = document.getElementById('live-clock');
+        if(h) h.innerText = new Date().toLocaleTimeString();
+    }, 1000);
+}
 
 async function cargarHistorialRemoto() {
     try {
         const res = await fetch('https://analizador-crca-cloud-main-pzhkdp.free.laravel.cloud/api/historial');
-        historial = await res.json() || [];
-        console.log("Base de datos cargada: " + historial.length + " registros.");
-    } catch (e) { console.error("Error al conectar con la nube."); }
+        const datos = await res.json();
+        if (datos && datos.length > 0) {
+            historial = datos;
+            actualizarInterfaz();
+        }
+    } catch (e) { console.error("Error al cargar datos remotos"); }
 }
 
 function actualizarInterfaz() {
-    renderizarBotonesAnimales();
     renderizarHoras();
     renderizarHistorial();
-    motorIA();
-    estudio75();
+    analizar75();
+    oraculoIA();
+    const ultimo = historial[historial.length - 1];
+    if(ultimo) document.getElementById('txt-ultimo').innerText = `${ultimo.num} - ${ultimo.animal}`;
 }
 
-// FILTRO DE HISTORIAL (PARA QUE SEA RÁPIDA)
 function renderizarHistorial() {
     const lista = document.getElementById('lista-historial');
-    const filtroMes = document.getElementById('filtro-mes').value;
+    const filtro = document.getElementById('filtro-mes').value;
+    if(!lista) return;
     lista.innerHTML = "";
-    
-    // Invertir para ver lo más reciente arriba
-    const datosFiltrados = historial.slice().reverse().filter(reg => {
-        if (filtroMes === "todos") return true;
-        return reg.fecha.split('-')[1] === filtroMes;
+
+    const filtrados = historial.slice().reverse().filter(reg => {
+        if (filtro === "todos") return true;
+        return reg.fecha && reg.fecha.split('-')[1] === filtro;
     });
 
-    datosFiltrados.forEach(reg => {
-        const esGuacharo = reg.num === "75" ? 'class="75-especial"' : '';
-        lista.innerHTML += `<tr ${esGuacharo}>
-            <td>${reg.fecha}</td>
-            <td>${reg.hora}</td>
-            <td>${reg.num}</td>
-            <td>${listaAnimales.find(a => a.n === reg.num)?.a || '---'}</td>
-        </tr>`;
+    filtrados.forEach(reg => {
+        const tr = document.createElement('tr');
+        if(reg.num === "75") tr.style.background = "rgba(251, 191, 36, 0.3)";
+        tr.innerHTML = `<td>${reg.fecha}</td><td>${reg.hora}</td><td>${reg.num}</td><td>${reg.animal}</td>`;
+        lista.appendChild(tr);
     });
 }
 
-// EL MOTOR IA DE PREDICCIÓN (PESOS)
-function motorIA() {
-    if (historial.length < 5) return;
-    
+function oraculoIA() {
+    if(historial.length < 2) return;
+    const panel = document.getElementById('panel-ia-datos');
     const ultimo = historial[historial.length - 1];
-    const penultimo = historial[historial.length - 2];
+    
     let pesos = {};
-
     listaAnimales.forEach(a => pesos[a.n] = 0);
 
-    // REGLA 1: ESPEJO (+40 pts)
-    const espejoUltimo = ultimo.num.split('').reverse().join('');
-    if (pesos[espejoUltimo] !== undefined) pesos[espejoUltimo] += 40;
+    const espejo = ultimo.num.split('').reverse().join('');
+    if(pesos[espejo] !== undefined) pesos[espejo] += 50;
 
-    // REGLA 2: ESCALERA (+30 pts)
-    const siguienteEscalera = (parseInt(ultimo.num) + 1).toString();
-    if (pesos[siguienteEscalera] !== undefined) pesos[siguienteEscalera] += 30;
+    const sig = (parseInt(ultimo.num) + 1).toString();
+    if(pesos[sig] !== undefined) pesos[sig] += 40;
 
-    // REGLA 3: FAMILIA (TIERRA/AIRE/AGUA) (+20 pts)
-    const tipoUltimo = listaAnimales.find(a => a.n === ultimo.num)?.t;
-    listaAnimales.filter(a => a.t === tipoUltimo).forEach(a => pesos[a.n] += 20);
-
-    // REGLA 4: ANUNCIANTE 75 (MONO)
-    if (ultimo.num === "13") pesos["75"] += 100;
-
-    const ordenados = Object.entries(pesos).sort((a,b) => b[1] - a[1]);
-    const top3 = ordenados.slice(0, 3);
-
-    const contenedor = document.getElementById('top-3-ia');
-    contenedor.innerHTML = "";
-    top3.forEach(item => {
-        const animal = listaAnimales.find(a => a.n === item[0]);
-        contenedor.innerHTML += `
-            <div class="hora-box" style="border: 1px solid #fbbf24;">
-                <span class="num-ia">${item[0]}</span>
-                <span style="font-size:0.6rem;">${animal.a}</span>
+    const top3 = Object.entries(pesos).sort((a,b) => b[1] - a[1]).slice(0, 3);
+    
+    if(panel) {
+        panel.innerHTML = "";
+        top3.forEach(n => {
+            const ani = listaAnimales.find(a => a.n === n[0]);
+            panel.innerHTML += `<div style="background:#0f172a; padding:10px; border-radius:8px; border:1px solid #38bdf8;">
+                <b style="font-size:1.2rem; color:#fbbf24;">${n[0]}</b><br><small>${ani.a}</small>
             </div>`;
-    });
-
-    document.getElementById('ia-razon').innerText = `Basado en el último resultado (${ultimo.num} - ${listaAnimales.find(a => a.n === ultimo.num).a}) y patrones de ${ultimo.fecha.split('-')[1]}.`;
-}
-
-// ESTUDIO DEL 75
-function estudio75() {
-    const salidas = historial.filter(r => r.num === "75");
-    const container = document.getElementById('ciclos-historicos');
-    container.innerHTML = "<strong>Ciclos pasados:</strong><br>";
-
-    if (salidas.length > 0) {
-        const ultimaFecha = new Date(salidas[salidas.length-1].fecha);
-        const hoy = new Date();
-        const diff = Math.floor((hoy - ultimaFecha) / (1000 * 60 * 60 * 24));
-        document.getElementById('dias-sin-75').innerText = diff;
+        });
     }
 }
 
-// FUNCIONES DE CONTROL (BOTONES Y RELOJ)
-function showTab(tabId) {
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+function analizar75() {
+    const salidas = historial.filter(r => r.num === "75");
+    const display = document.getElementById('dias-sin-75');
+    if(salidas.length > 0 && display) {
+        const ultima = new Date(salidas[salidas.length-1].fecha);
+        const hoy = new Date();
+        const diff = Math.floor((hoy - ultima) / (1000 * 60 * 60 * 24));
+        display.innerText = diff;
+    }
+}
+
+// FUNCIONES DE REGISTRO (Tus originales intactas)
+function renderizarHoras() {
+    const grid = document.getElementById('grid-horas');
+    if(!grid) return;
+    grid.innerHTML = "";
+    const hoy = new Date().toISOString().split('T')[0];
+    horasSorteo.forEach(h => {
+        const div = document.createElement('div');
+        div.className = 'hora-box';
+        const reg = historial.find(r => r.fecha === hoy && r.hora === h);
+        if(reg) {
+            div.classList.add('jugado');
+            div.innerText = `${h}\n(${reg.num})`;
+        } else { div.innerText = h; }
+        div.onclick = () => {
+            horaSeleccionada = h;
+            document.querySelectorAll('.hora-box').forEach(b => b.style.border = "1px solid #475569");
+            div.style.border = "2px solid #38bdf8";
+        };
+        grid.appendChild(div);
+    });
+}
+
+function renderizarBotonesAnimales() {
+    const grid = document.getElementById('grid-botones-animales');
+    if(!grid) return;
+    grid.innerHTML = "";
+    listaAnimales.forEach(a => {
+        const btn = document.createElement('div');
+        btn.className = 'animal-item';
+        btn.innerHTML = `<b>${a.n}</b><br>${a.a}`;
+        btn.onclick = () => registrar(a.n, a.a, a.t);
+        grid.appendChild(btn);
+    });
+}
+
+async function registrar(num, animal, tipo) {
+    if(!horaSeleccionada) return alert("Selecciona una hora");
+    const fecha = new Date().toISOString().split('T')[0];
+    const reg = {fecha, hora: horaSeleccionada, num, animal, tipo};
+    historial.push(reg);
+    actualizarInterfaz();
+    try {
+        await fetch('https://analizador-crca-cloud-main-pzhkdp.free.laravel.cloud/api/guardar', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(reg)
+        });
+    } catch (e) {}
+}
+
+function guardarRapido() {
+    const val = document.getElementById('num-rapido').value;
+    const ani = listaAnimales.find(a => a.n === val);
+    if(ani) registrar(ani.n, ani.a, ani.t);
+    document.getElementById('num-rapido').value = "";
+}
+
+function showTab(id) {
+    document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
+    document.getElementById(id).classList.add('active');
     event.currentTarget.classList.add('active');
 }
 
-function iniciarReloj() {
-    setInterval(() => {
-        const ahora = new Date();
-        document.getElementById('live-clock').innerText = ahora.toLocaleTimeString();
-    }, 1000);
+async function borrarUltimo() {
+    if(!confirm("¿Borrar el último?")) return;
+    historial.pop();
+    actualizarInterfaz();
 }
-
-// (Aquí incluirías tus funciones de registro guardarRapido(), renderizarHoras(), etc. de tu código original para no perder la funcionalidad de los botones)
