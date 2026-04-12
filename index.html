@@ -19,19 +19,18 @@
             <div id="live-clock">00:00:00</div>
             <div class="tab-container">
                 <button class="tab-btn active" onclick="openTab(event, 'registro')">REGISTRO</button>
-                <button class="tab-btn" onclick="openTab(event, 'ia-oraculo')">PROYECCIÓN IA</button>
                 <button class="tab-btn" onclick="openTab(event, 'estudio')">ESTUDIO 75</button>
                 <button class="tab-btn" onclick="openTab(event, 'historial')">HISTORIAL</button>
             </div>
         </header>
 
-        <section id="registro" class="tab-content">
+        <section id="registro" class="tab-content" style="display: block;">
             <div class="panel-diario" id="panel-diario-sorteos"></div>
             <input type="date" id="fecha-analisis" style="margin-bottom:10px;">
             <div class="entrada-rapida-container">
-                <h4>Nro:</h4>
-                <input type="text" id="num-rapido" maxlength="2">
-                <button onclick="registrarPorNumero()">OK</button>
+                <h4 style="margin:0; color:#38bdf8;">Nro:</h4>
+                <input type="text" id="num-rapido" maxlength="2" style="width:60px; text-align:center;">
+                <button onclick="registrarPorNumero()" style="width:auto; padding:5px 15px;">OK</button>
             </div>
             <div class="display-reciente">
                 <span>Último: <b id="last-num">--</b></span>
@@ -40,22 +39,21 @@
             <div class="grid-animales" id="grid-container"></div>
         </section>
 
-        <section id="ia-oraculo" class="tab-content" style="display:none;">
-            <h3>PROYECCIÓN IA</h3>
-            <div id="panel-ia-datos" style="display:flex; justify-content:center; padding:20px;"></div>
-        </section>
-
-        <section id="estudio" class="tab-content" style="display:none;">
+        <section id="estudio" class="tab-content" style="display: none;">
+            <h3>ANÁLISIS DEL GUACHARO</h3>
             <div class="card-stats">
                 <p>Días sin 75: <span id="dias-sin-75" style="color:#fbbf24; font-size:1.5rem;">0</span></p>
             </div>
         </section>
 
-        <section id="historial" class="tab-content" style="display:none;">
+        <section id="historial" class="tab-content" style="display: none;">
+            <h3>HISTORIAL TOTAL</h3>
             <select id="filtro-mes" onchange="renderizarHistorial()" style="margin-bottom:10px;">
                 <option value="todos">Todo el Año</option>
-                <option value="01">Enero</option><option value="02">Febrero</option>
-                <option value="03">Marzo</option><option value="04">Abril</option>
+                <option value="01">Enero</option>
+                <option value="02">Febrero</option>
+                <option value="03">Marzo</option>
+                <option value="04">Abril</option>
             </select>
             <div class="tabla-contenedor">
                 <table>
