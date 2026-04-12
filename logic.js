@@ -218,7 +218,7 @@ function actualizarInterfaz() {
     analizarGuacharo();
     generarPanelDiario();
     calcularBalanceElementos();
-    detectarDormidos(); // <-- ¡NUEVA!
+    detectarDormidos();
 }
 
 function detectarDormidos() {
@@ -240,18 +240,45 @@ function detectarDormidos() {
     }
 }
 
+// ==========================================
+// FUNCIÓN DE TABLA ORGANIZADA (NUEVA MEJORA)
+// ==========================================
 function actualizarTabla() {
     const cuerpo = document.getElementById('lista-historial');
+    const filtro = document.getElementById('filtro-tiempo') ? document.getElementById('filtro-tiempo').value : 'dia';
     if(!cuerpo) return;
     cuerpo.innerHTML = '';
     
-    [...historial].sort((a, b) => {
+    const hoy = new Date();
+    
+    const datosFiltrados = [...historial].filter(r => {
+        if (filtro === 'todos') return true;
+        
+        const fechaReg = new Date(r.fecha + "T12:00:00");
+        const diffTiempo = Math.abs(hoy - fechaReg);
+        const diffDias = Math.ceil(diffTiempo / (1000 * 60 * 60 * 24));
+
+        if (filtro === 'dia') {
+            const hoyStr = hoy.toISOString().split('T')[0];
+            return r.fecha === hoyStr;
+        }
+        if (filtro === 'semana') return diffDias <= 7;
+        if (filtro === 'mes') return diffDias <= 30;
+        
+        return true;
+    });
+
+    datosFiltrados.sort((a, b) => {
         if (a.fecha !== b.fecha) return b.fecha.localeCompare(a.fecha);
         return horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora);
     }).forEach(r => {
         const isGuacharo = r.num === '75' ? 'class="row-guacharo"' : '';
         cuerpo.innerHTML += `<tr ${isGuacharo}><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
     });
+
+    if(datosFiltrados.length === 0) {
+        cuerpo.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:#64748b;">No hay registros</td></tr>';
+    }
 }
 
 function analizarGuacharo() {
@@ -269,7 +296,7 @@ function analizarGuacharo() {
     if(display) display.innerText = sin75;
 
     const resEstudio = document.getElementById('resultado-patrones-guacharo');
-    const alertaProb = document.getElementById('alerta-probabilidad'); // <-- ¡NUEVO!
+    const alertaProb = document.getElementById('alerta-probabilidad');
 
     if (resEstudio) {
         let antesDel75 = [];
@@ -291,12 +318,11 @@ function analizarGuacharo() {
                     <small>Frecuencia: ${counts[masFrec]} veces detectado</small>
                 </div>`;
 
-            // Lógica de alerta parpadeante
             const ultimoSorteo = tempSorted[tempSorted.length - 1];
             if (ultimoSorteo && (ultimoSorteo.num + " - " + ultimoSorteo.animal) === masFrec && alertaProb) {
                 alertaProb.innerHTML = '<span class="probabilidad-alta">🔥 ¡ALTA PROBABILIDAD! Salió el anunciante.</span>';
             } else if (alertaProb) {
-                alertaProb.innerHTML = '<span style="color:#64748b">Esperando señal del anunciante...</span>';
+                alertaProb.innerHTML = '<span style="color:#64748b">Esperando señal...</span>';
             }
         }
     }
@@ -305,10 +331,8 @@ function analizarGuacharo() {
 function calcularBalanceElementos() {
     const fechaActual = document.getElementById('fecha-analisis').value;
     let counts = { TIERRA: 0, AIRE: 0, AGUA: 0 };
-    
     const delDia = historial.filter(r => r.fecha === fechaActual);
     delDia.forEach(r => { if(counts[r.tipo] !== undefined) counts[r.tipo]++; });
-    
     if(document.getElementById('val-tierra')) {
         document.getElementById('val-tierra').innerText = counts.TIERRA;
         document.getElementById('val-aire').innerText = counts.AIRE;
