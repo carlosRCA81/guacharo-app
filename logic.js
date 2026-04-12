@@ -1,4 +1,4 @@
-/* LÓGICA INTEGRAL ANALIZADOR CRCA - REPARADA */
+/* LÓGICA INTEGRAL ANALIZADOR CRCA - VERSIÓN PATRONES ACTUALIZADA */
 
 const listaAnimales = [
     {n:'0', a:'DELFIN', t:'AGUA'}, {n:'00', a:'BALLENA', t:'AGUA'}, {n:'1', a:'CARNERO', t:'TIERRA'},
@@ -33,37 +33,36 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historial = [];
 let horaSeleccionadaActiva = null;
 
-// RELOJ
+// Reloj en vivo
 setInterval(() => {
     const clock = document.getElementById('live-clock');
     if(clock) clock.innerText = new Date().toLocaleTimeString();
 }, 1000);
 
-// NAVEGACIÓN
+// Cambiar de pestañas
 function openTab(evt, tabName) {
-    const contents = document.getElementsByClassName("tab-content");
-    for (let i = 0; i < contents.length; i++) contents[i].style.display = "none";
-    
-    const btns = document.getElementsByClassName("tab-btn");
-    for (let i = 0; i < btns.length; i++) btns[i].classList.remove("active");
-    
+    let i, tabcontent, tablinks;
+    tabcontent = document.getElementsByClassName("tab-content");
+    for (i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
+    tablinks = document.getElementsByClassName("tab-btn");
+    for (i = 0; i < tablinks.length; i++) { tablinks[i].className = tablinks[i].className.replace(" active", ""); }
     document.getElementById(tabName).style.display = "block";
-    evt.currentTarget.classList.add("active");
+    evt.currentTarget.className += " active";
 }
 
-// ARRANQUE DEL SISTEMA
+// INICIO DEL SISTEMA
 function inicializarSistema() {
+    generarPanelDiario();
+    generarGridBotones(); // <--- Dibuja los cuadros de animales
+    llenarSelectEstudio();
     const fechaInput = document.getElementById('fecha-analisis');
     if(fechaInput) {
         fechaInput.value = new Date().toISOString().split('T')[0];
         fechaInput.addEventListener('change', generarPanelDiario);
     }
-    generarPanelDiario();
-    generarGridBotones();
-    llenarSelectEstudio();
-    cargarHistorialRemoto();
 }
 
+// Dibuja la cuadrícula de animales en el Registro
 function generarGridBotones() {
     const container = document.getElementById('grid-container');
     if(!container) return;
@@ -73,94 +72,14 @@ function generarGridBotones() {
         btn.className = 'animal-btn';
         btn.innerHTML = `<strong>${animal.n}</strong><br><small>${animal.a}</small>`;
         btn.onclick = () => {
-            if (!horaSeleccionadaActiva) return alert("Primero selecciona una HORA");
+            if (!horaSeleccionadaActiva) return alert("Primero toca una HORA en el panel superior");
             registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
         };
         container.appendChild(btn);
     });
 }
 
-function generarPanelDiario() {
-    const panel = document.getElementById('panel-diario-sorteos');
-    if(!panel) return;
-    panel.innerHTML = '';
-    const fechaActual = document.getElementById('fecha-analisis').value;
-
-    horasSorteo.forEach(hora => {
-        const box = document.createElement('div');
-        box.className = 'hora-box';
-        const reg = historial.find(r => r.fecha === fechaActual && r.hora === hora);
-        
-        if (reg) {
-            box.classList.add('jugado');
-            box.innerText = `${hora}\n(${reg.num})`;
-        } else {
-            box.innerText = hora;
-        }
-
-        box.onclick = () => {
-            horaSeleccionadaActiva = hora;
-            document.querySelectorAll('.hora-box').forEach(b => b.style.border = '1px solid #475569');
-            box.style.border = '2px solid #38bdf8';
-        };
-        panel.appendChild(box);
-    });
-}
-
-async function registrarSorteo(num, animal, tipo, hora) {
-    const fecha = document.getElementById('fecha-analisis').value;
-    
-    // Eliminar si ya existe esa hora en esa fecha
-    const existeIdx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
-    if (existeIdx !== -1) historial.splice(existeIdx, 1);
-
-    const nuevoRegistro = { fecha, hora, num, animal, tipo };
-    historial.push(nuevoRegistro);
-    
-    actualizarInterfaz();
-
-    // Sincronizar nube
-    try {
-        await fetch('https://analizador-crca-cloud-main-pzhkdp.free.laravel.cloud/api/guardar', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(nuevoRegistro)
-        });
-    } catch (e) { console.log("Error nube, guardado local."); }
-}
-
-function actualizarInterfaz() {
-    generarPanelDiario();
-    actualizarTabla();
-    analizarGuacharo();
-    if(historial.length > 0) {
-        const ult = historial[historial.length-1];
-        const lastDisp = document.getElementById('last-num');
-        if(lastDisp) lastDisp.innerText = `${ult.num} - ${ult.animal}`;
-    }
-}
-
-function actualizarTabla() {
-    const cuerpo = document.getElementById('lista-historial');
-    if(!cuerpo) return;
-    cuerpo.innerHTML = '';
-    historial.slice().reverse().forEach(r => {
-        cuerpo.innerHTML += `<tr><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
-    });
-}
-
-async function cargarHistorialRemoto() {
-    try {
-        const res = await fetch('https://analizador-crca-cloud-main-pzhkdp.free.laravel.cloud/api/historial');
-        const datos = await res.json();
-        if (datos) {
-            historial = datos;
-            actualizarInterfaz();
-        }
-    } catch (e) { console.log("Usando datos locales."); }
-}
-
-// Funciones adicionales de análisis
+// Llena el selector de la pestaña Patrones
 function llenarSelectEstudio() {
     const sel = document.getElementById('select-animal-estudio');
     if(!sel) return;
@@ -173,25 +92,185 @@ function llenarSelectEstudio() {
     });
 }
 
+// Analiza quién sale antes y después
+function estudiarAnimalEspecifico() {
+    const numBuscado = document.getElementById('select-animal-estudio').value;
+    const resDiv = document.getElementById('resultado-patrones');
+    if(!numBuscado) return;
+    
+    let conteoTotal = 0;
+    let despues = {};
+    let antes = {};
+
+    historial.forEach((reg, idx) => {
+        if(reg.num === numBuscado) {
+            conteoTotal++;
+            if(idx < historial.length - 1) {
+                let sig = historial[idx+1].num + " - " + historial[idx+1].animal;
+                despues[sig] = (despues[sig] || 0) + 1;
+            }
+            if(idx > 0) {
+                let ant = historial[idx-1].num + " - " + historial[idx-1].animal;
+                antes[ant] = (antes[ant] || 0) + 1;
+            }
+        }
+    });
+
+    if(conteoTotal === 0) {
+        resDiv.innerHTML = `<p style="color:#ef4444; padding:10px;">Sin datos registrados para el número ${numBuscado}.</p>`;
+        return;
+    }
+
+    const masFrec = (obj) => {
+        const keys = Object.keys(obj);
+        return keys.length > 0 ? keys.reduce((a, b) => obj[a] > obj[b] ? a : b) : "Sin datos";
+    };
+
+    resDiv.innerHTML = `
+        <div class="stat-card-mini">
+            <h4>RESUMEN: ${numBuscado}</h4>
+            <p>Veces detectado: <strong>${conteoTotal}</strong></p>
+        </div>
+        <div class="stat-card-mini" style="border-left-color: #f87171;">
+            <h4>SUELE SALIR ANTES:</h4>
+            <p>🎯 ${masFrec(antes)}</p>
+        </div>
+        <div class="stat-card-mini" style="border-left-color: #4ade80;">
+            <h4>SUELE SALIR DESPUÉS:</h4>
+            <p>🚀 ${masFrec(despues)}</p>
+        </div>
+    `;
+}
+
+// Panel de horas (Mapa de calor)
+function generarPanelDiario() {
+    const panel = document.getElementById('panel-diario-sorteos');
+    if(!panel) return;
+    panel.innerHTML = '';
+    const fechaActual = document.getElementById('fecha-analisis').value;
+
+    horasSorteo.forEach(hora => {
+        const box = document.createElement('div');
+        box.className = 'hora-box';
+        const registroExistente = historial.find(r => r.fecha === fechaActual && r.hora === hora);
+        
+        if (registroExistente) {
+            box.classList.add('jugado');
+            box.innerText = `${hora}\n(${registroExistente.num})`;
+        } else {
+            box.innerText = hora;
+        }
+
+        box.onclick = () => {
+            horaSeleccionadaActiva = hora;
+            document.querySelectorAll('.hora-box').forEach(b => b.style.border = '1px solid #475569');
+            box.style.border = '2px solid #38bdf8';
+            const inputR = document.getElementById('num-rapido');
+            if(inputR) inputR.focus();
+        };
+        panel.appendChild(box);
+    });
+}
+
+function registrarPorNumero() {
+    if (!horaSeleccionadaActiva) return alert("Selecciona una HORA en los cuadros de arriba");
+    const inputNum = document.getElementById('num-rapido');
+    let numInput = inputNum.value.trim();
+    if(numInput === "0" || numInput === "00") { /* OK */ } 
+    else if(numInput.length === 1) numInput = "0" + numInput;
+
+    const animal = listaAnimales.find(a => a.n === numInput);
+    if (!animal) return alert("Ese número no existe en la ruleta");
+
+    registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
+    inputNum.value = '';
+}
+
+function registrarSorteo(num, animal, tipo, hora) {
+    const fecha = document.getElementById('fecha-analisis').value;
+    const existeIdx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
+    if (existeIdx !== -1) historial.splice(existeIdx, 1);
+
+    historial.push({ fecha, hora, num, animal, tipo });
+    actualizarInterfaz();
+}
+
+function actualizarInterfaz() {
+    if(historial.length > 0) {
+        const ult = historial[historial.length-1];
+        const lastDisp = document.getElementById('last-num');
+        if(lastDisp) lastDisp.innerText = `${ult.num} - ${ult.animal}`;
+    }
+    actualizarTabla();
+    analizarGuacharo();
+    generarPanelDiario();
+}
+
+function actualizarTabla() {
+    const cuerpo = document.getElementById('lista-historial');
+    if(!cuerpo) return;
+    cuerpo.innerHTML = '';
+    historial.slice().reverse().forEach(r => {
+        cuerpo.innerHTML += `<tr><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
+    });
+}
+
 function analizarGuacharo() {
     let sin75 = 0;
+    const dias75 = document.getElementById('dias-sin-75');
+    if(!dias75) return;
     for(let i = historial.length-1; i >= 0; i--) {
         if(historial[i].num === '75') break;
         sin75++;
     }
-    const d = document.getElementById('dias-sin-75');
-    if(d) d.innerText = sin75;
+    dias75.innerText = sin75;
 }
 
-function registrarPorNumero() {
-    const inputNum = document.getElementById('num-rapido');
-    let val = inputNum.value.trim();
-    if (!horaSeleccionadaActiva) return alert("Selecciona una HORA");
-    if (val.length === 1 && val !== "0") val = "0" + val;
+const btnBorrar = document.getElementById('btn-borrar');
+if(btnBorrar) btnBorrar.onclick = () => { historial.pop(); actualizarInterfaz(); };
+// MODIFICACIÓN PROFESIONAL: Registro con envío a la Nube
+async function registrarSorteo(num, animal, tipo, hora) {
+    const fecha = document.getElementById('fecha-analisis').value;
     
-    const animal = listaAnimales.find(a => a.n === val);
-    if (!animal) return alert("Número inválido");
+    // 1. Registro local (para que sea instantáneo en pantalla)
+    const existeIdx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
+    if (existeIdx !== -1) historial.splice(existeIdx, 1);
+    const nuevoRegistro = { fecha, hora, num, animal, tipo };
+    historial.push(nuevoRegistro);
+    
+    actualizarInterfaz();
 
-    registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
-    inputNum.value = '';
+    // 2. ENVÍO DE SEGURIDAD A LA NUBE (Ohio)
+    try {
+        const respuesta = await fetch('https://analizador-crca-cloud-main-pzhkdp.free.laravel.cloud/api/guardar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(nuevoRegistro)
+        });
+
+        if (respuesta.ok) {
+            console.log("✅ Datos respaldados en la nube exitosamente");
+        } else {
+            console.error("❌ Error de conexión al servidor");
+        }
+    } catch (error) {
+        console.error("⚠️ El servidor está en hibernación o no hay internet:", error);
+    }
+}
+
+// Nueva función para recuperar datos al abrir la App
+async function cargarHistorialRemoto() {
+    try {
+        const respuesta = await fetch('https://analizador-crca-cloud-main-pzhkdp.free.laravel.cloud/api/historial');
+        const datos = await respuesta.json();
+        if (datos) {
+            historial = datos;
+            actualizarInterfaz();
+        }
+    } catch (error) {
+        console.log("Modo local activo");
+    }
 }
