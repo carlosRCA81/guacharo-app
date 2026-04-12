@@ -1,4 +1,4 @@
-/* LÓGICA INTEGRAL ANALIZADOR CRCA - VERSIÓN COMPLETA REPARADA */
+/* LÓGICA INTEGRAL ANALIZADOR CRCA - RECUPERADA */
 
 const listaAnimales = [
     {n:'0', a:'DELFIN', t:'AGUA'}, {n:'00', a:'BALLENA', t:'AGUA'}, {n:'1', a:'CARNERO', t:'TIERRA'},
@@ -33,13 +33,23 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historial = [];
 let horaSeleccionadaActiva = null;
 
-// RELOJ
+// Reloj
 setInterval(() => {
     const clock = document.getElementById('live-clock');
     if(clock) clock.innerText = new Date().toLocaleTimeString();
 }, 1000);
 
-// ACCESO
+// Pestañas
+function openTab(evt, tabName) {
+    let contents = document.getElementsByClassName("tab-content");
+    for (let i = 0; i < contents.length; i++) { contents[i].style.display = "none"; }
+    let btns = document.getElementsByClassName("tab-btn");
+    for (let i = 0; i < btns.length; i++) { btns[i].className = btns[i].className.replace(" active", ""); }
+    document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.className += " active";
+}
+
+// Control de Acceso
 function checkAccess() {
     const key = document.getElementById('access-key').value;
     if(key === "2026") {
@@ -51,27 +61,16 @@ function checkAccess() {
     }
 }
 
-// PESTAÑAS
-function openTab(evt, tabName) {
-    let contents = document.getElementsByClassName("tab-content");
-    for (let i = 0; i < contents.length; i++) { contents[i].style.display = "none"; }
-    let btns = document.getElementsByClassName("tab-btn");
-    for (let i = 0; i < btns.length; i++) { btns[i].className = btns[i].className.replace(" active", ""); }
-    document.getElementById(tabName).style.display = "block";
-    evt.currentTarget.className += " active";
-}
-
-// INICIO
 function inicializarSistema() {
+    generarPanelDiario();
+    generarGridBotones();
+    llenarSelectEstudio();
     const fechaInput = document.getElementById('fecha-analisis');
     if(fechaInput) {
         fechaInput.value = new Date().toISOString().split('T')[0];
         fechaInput.addEventListener('change', generarPanelDiario);
     }
-    generarPanelDiario();
-    generarGridBotones();
-    llenarSelectEstudio();
-    cargarHistorialRemoto();
+    cargarHistorialRemoto(); // Esto trae tus datos completos de la nube
 }
 
 function generarGridBotones() {
@@ -81,9 +80,10 @@ function generarGridBotones() {
     listaAnimales.forEach(animal => {
         const btn = document.createElement('div');
         btn.className = 'animal-btn';
+        btn.style = "background:#334155; padding:10px; text-align:center; border-radius:5px; cursor:pointer; color:white;";
         btn.innerHTML = `<strong>${animal.n}</strong><br><small>${animal.a}</small>`;
         btn.onclick = () => {
-            if (!horaSeleccionadaActiva) return alert("Primero toca una HORA");
+            if (!horaSeleccionadaActiva) return alert("Selecciona una HORA");
             registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
         };
         container.appendChild(btn);
@@ -103,9 +103,8 @@ function generarPanelDiario() {
         if (reg) {
             box.classList.add('jugado');
             box.innerText = `${hora}\n(${reg.num})`;
-        } else {
-            box.innerText = hora;
-        }
+        } else { box.innerText = hora; }
+
         box.onclick = () => {
             horaSeleccionadaActiva = hora;
             document.querySelectorAll('.hora-box').forEach(b => b.style.border = '1px solid #475569');
@@ -130,7 +129,7 @@ async function registrarSorteo(num, animal, tipo, hora) {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(nuevoRegistro)
         });
-    } catch (e) { console.error("Error nube"); }
+    } catch (e) { console.log("Guardado local"); }
 }
 
 function actualizarInterfaz() {
@@ -145,16 +144,9 @@ function actualizarInterfaz() {
 
 function actualizarTabla() {
     const cuerpo = document.getElementById('lista-historial');
-    const filtro = document.getElementById('filtro-mes').value;
     if(!cuerpo) return;
     cuerpo.innerHTML = '';
-
-    const filtrados = historial.slice().reverse().filter(r => {
-        if(filtro === "todos") return true;
-        return r.fecha.split('-')[1] === filtro;
-    });
-
-    filtrados.forEach(r => {
+    historial.slice().reverse().forEach(r => {
         cuerpo.innerHTML += `<tr><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
     });
 }
@@ -163,10 +155,7 @@ async function cargarHistorialRemoto() {
     try {
         const res = await fetch('https://analizador-crca-cloud-main-pzhkdp.free.laravel.cloud/api/historial');
         const datos = await res.json();
-        if (datos) {
-            historial = datos;
-            actualizarInterfaz();
-        }
+        if (datos) { historial = datos; actualizarInterfaz(); }
     } catch (e) { console.log("Modo local"); }
 }
 
@@ -184,11 +173,9 @@ function registrarPorNumero() {
     if (!horaSeleccionadaActiva) return alert("Selecciona una HORA");
     let val = document.getElementById('num-rapido').value.trim();
     if(val.length === 1 && val !== "0") val = "0" + val;
-    const animal = listaAnimales.find(a => a.n === val);
-    if (animal) {
-        registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
-        document.getElementById('num-rapido').value = '';
-    }
+    const ani = listaAnimales.find(a => a.n === val);
+    if(ani) registrarSorteo(ani.n, ani.a, ani.t, horaSeleccionadaActiva);
+    document.getElementById('num-rapido').value = "";
 }
 
 function llenarSelectEstudio() {
@@ -208,7 +195,6 @@ function estudiarAnimalEspecifico() {
     const resDiv = document.getElementById('resultado-patrones');
     if(!numBuscado) return;
     let conteo = 0, despues = {}, antes = {};
-
     historial.forEach((reg, idx) => {
         if(reg.num === numBuscado) {
             conteo++;
@@ -222,12 +208,10 @@ function estudiarAnimalEspecifico() {
             }
         }
     });
-
     const masFrec = (obj) => {
         const keys = Object.keys(obj);
         return keys.length > 0 ? keys.reduce((a, b) => obj[a] > obj[b] ? a : b) : "Sin datos";
     };
-
     resDiv.innerHTML = `
         <div class="stat-card-mini"><h4>VECES: ${conteo}</h4></div>
         <div class="stat-card-mini" style="border-left-color: #f87171;"><h4>ANTES: ${masFrec(antes)}</h4></div>
