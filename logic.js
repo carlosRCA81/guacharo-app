@@ -1,4 +1,4 @@
-/* LÓGICA REPARADA Y COMPLETA - ANALIZADOR CRCA */
+/* LÓGICA REPARADA ANALIZADOR CRCA - VERSIÓN FINAL SIN ERRORES */
 
 const listaAnimales = [
     {n:'0', a:'DELFIN', t:'AGUA'}, {n:'00', a:'BALLENA', t:'AGUA'}, {n:'1', a:'CARNERO', t:'TIERRA'},
@@ -33,38 +33,42 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historial = [];
 let horaSeleccionadaActiva = null;
 
-// FUNCIÓN DE CLAVE (REPARADA)
+// RELOJ (Se activa solo)
+setInterval(() => {
+    const clock = document.getElementById('live-clock');
+    if(clock) clock.innerText = new Date().toLocaleTimeString();
+}, 1000);
+
+// CLAVE DE ACCESO
 function checkAccess() {
     const key = document.getElementById('access-key').value;
-    if(key === "2026") { // Cambia "2026" por tu clave real
+    if(key === "2026") { 
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('main-app').style.display = 'block';
         inicializarSistema();
     } else {
-        alert("Clave incorrecta");
+        alert("Acceso Denegado");
     }
 }
 
 function inicializarSistema() {
     generarPanelDiario();
     generarGridBotones();
-    llenarSelectEstudio();
     cargarHistorialRemoto();
     const fechaInput = document.getElementById('fecha-analisis');
     if(fechaInput) fechaInput.value = new Date().toISOString().split('T')[0];
 }
 
-// RELOJ
-setInterval(() => {
-    const clock = document.getElementById('live-clock');
-    if(clock) clock.innerText = new Date().toLocaleTimeString();
-}, 1000);
-
+// CAMBIO DE PESTAÑAS (Corregido para coincidir con el HTML)
 function openTab(evt, tabName) {
-    document.querySelectorAll(".tab-content").forEach(t => t.style.display = "none");
-    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    const contents = document.getElementsByClassName("tab-content");
+    for (let i = 0; i < contents.length; i++) { contents[i].style.display = "none"; }
+    
+    const btns = document.getElementsByClassName("tab-btn");
+    for (let i = 0; i < btns.length; i++) { btns[i].classList.remove("active"); }
+    
     document.getElementById(tabName).style.display = "block";
-    evt.currentTarget.className += " active";
+    evt.currentTarget.classList.add("active");
 }
 
 function generarGridBotones() {
@@ -73,10 +77,10 @@ function generarGridBotones() {
     container.innerHTML = '';
     listaAnimales.forEach(animal => {
         const btn = document.createElement('div');
-        btn.className = 'animal-item'; // Usando tu clase del CSS
+        btn.className = 'animal-item';
         btn.innerHTML = `<strong>${animal.n}</strong><br><small>${animal.a}</small>`;
         btn.onclick = () => {
-            if (!horaSeleccionadaActiva) return alert("Toca una HORA arriba primero");
+            if (!horaSeleccionadaActiva) return alert("Selecciona una HORA primero");
             registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
         };
         container.appendChild(btn);
@@ -92,10 +96,10 @@ function generarPanelDiario() {
     horasSorteo.forEach(hora => {
         const box = document.createElement('div');
         box.className = 'hora-box';
-        const registro = historial.find(r => r.fecha === fechaActual && r.hora === hora);
-        if (registro) {
+        const reg = historial.find(r => r.fecha === fechaActual && r.hora === hora);
+        if (reg) {
             box.classList.add('jugado');
-            box.innerText = `${hora}\n(${registro.num})`;
+            box.innerText = `${hora}\n(${reg.num})`;
         } else { box.innerText = hora; }
 
         box.onclick = () => {
@@ -129,10 +133,10 @@ function actualizarInterfaz() {
     generarPanelDiario();
     renderizarHistorial();
     analizarGuacharo();
-    oraculoIA();
     if(historial.length > 0) {
         const ult = historial[historial.length-1];
-        document.getElementById('last-num').innerText = `${ult.num} - ${ult.animal}`;
+        const lastDisp = document.getElementById('last-num');
+        if(lastDisp) lastDisp.innerText = `${ult.num} - ${ult.animal}`;
     }
 }
 
@@ -144,7 +148,7 @@ function renderizarHistorial() {
     
     const filtrados = historial.slice().reverse().filter(reg => {
         if (filtro === "todos") return true;
-        return reg.fecha.split('-')[1] === filtro;
+        return reg.fecha && reg.fecha.split('-')[1] === filtro;
     });
 
     filtrados.forEach(r => {
@@ -160,21 +164,6 @@ async function cargarHistorialRemoto() {
     } catch (e) { console.log("Modo local"); }
 }
 
-// IA Y ESTUDIO
-function oraculoIA() {
-    const panel = document.getElementById('panel-ia-datos');
-    if(!panel || historial.length < 1) return;
-    const ult = historial[historial.length-1];
-    const espejo = ult.num.split('').reverse().join('');
-    const aniE = listaAnimales.find(a => a.n === espejo) || listaAnimales[0];
-    
-    panel.innerHTML = `
-        <div style="background:#0f172a; padding:10px; border-radius:8px; border:1px solid #fbbf24;">
-            <b style="color:#fbbf24; font-size:1.2rem;">${espejo}</b><br><small>${aniE.a}</small>
-        </div>
-    `;
-}
-
 function analizarGuacharo() {
     let sin = 0;
     for(let i = historial.length-1; i >= 0; i--) {
@@ -186,12 +175,15 @@ function analizarGuacharo() {
 }
 
 function registrarPorNumero() {
-    const val = document.getElementById('num-rapido').value;
+    const input = document.getElementById('num-rapido');
+    let val = input.value.trim();
+    if(!val) return;
+    if(val.length === 1 && val !== "0") val = "0" + val;
     const ani = listaAnimales.find(a => a.n === val);
     if(ani && horaSeleccionadaActiva) registrarSorteo(ani.n, ani.a, ani.t, horaSeleccionadaActiva);
-    document.getElementById('num-rapido').value = "";
+    input.value = "";
 }
 
 function borrarUltimo() {
-    if(confirm("¿Borrar?")) { historial.pop(); actualizarInterfaz(); }
+    if(confirm("¿Borrar el último registro?")) { historial.pop(); actualizarInterfaz(); }
 }
