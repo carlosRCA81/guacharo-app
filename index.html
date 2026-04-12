@@ -14,11 +14,12 @@
         .entrada-rapida-container h4 { margin: 0; color: #38bdf8; font-size: 0.8rem; flex-shrink: 0;}
         #num-rapido { background: #1e293b; color: #fbbf24; border: none; padding: 8px; border-radius: 4px; font-size: 1rem; font-weight: bold; width: 60px; text-align: center;}
 
-        /* Estilo para la nueva ventana de estadísticas */
         .search-box { margin-bottom: 15px; display: flex; gap: 10px; }
         .stat-card-mini { background: #1e293b; padding: 10px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #38bdf8; }
         .stat-card-mini h4 { color: #fbbf24; margin: 0 0 5px 0; font-size: 0.9rem; }
         .stat-card-mini p { font-size: 0.8rem; margin: 2px 0; }
+        
+        #filtro-mes { background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; padding: 5px; border-radius: 4px; width: 100%; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -45,7 +46,6 @@
             <div class="panel-diario" id="panel-diario-sorteos"></div>
             <div class="controls-row">
                 <input type="date" id="fecha-analisis">
-                <select id="hora-sorteo" style="display:none;"></select>
             </div>
             <div class="entrada-rapida-container">
                 <h4>ENTRADA RÁPIDA:</h4>
@@ -71,8 +71,7 @@
         <section id="stats-gen" class="tab-content">
             <h3>PATRONES POR ANIMAL</h3>
             <div class="search-box">
-                <select id="select-animal-estudio" style="width: 70%;">
-                    </select>
+                <select id="select-animal-estudio" style="width: 70%;"></select>
                 <button onclick="estudiarAnimalEspecifico()" style="width: 30%;">VER</button>
             </div>
             <div id="resultado-patrones">
@@ -82,6 +81,13 @@
 
         <section id="historial" class="tab-content">
             <h3>DATOS ACUMULADOS</h3>
+            <select id="filtro-mes" onchange="actualizarTabla()">
+                <option value="todos">Ver Todo (Carga Lenta)</option>
+                <option value="01">Enero</option>
+                <option value="02">Febrero</option>
+                <option value="03">Marzo</option>
+                <option value="04">Abril</option>
+            </select>
             <div class="tabla-contenedor">
                 <table id="tabla-registros">
                     <thead>
@@ -93,7 +99,6 @@
         </section>
     </div>
 
-    <script src="security.js"></script>
     <script src="logic.js"></script>
 </body>
 </html>
