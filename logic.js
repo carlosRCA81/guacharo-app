@@ -36,71 +36,165 @@ const listaAnimales = [
 
 const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
 let historial = [];
+let horaSeleccionadaActiva = null;
 
-// Función para cargar TODO desde el principio
-async function cargarHistorialRecuperacion() {
-    console.log("Intentando recuperar datos de Supabase...");
-    const { data, error } = await _supabase
-        .from('historial_sorteos')
-        .select('*')
-        .order('fecha', { ascending: false });
-
-    if (error) {
-        console.error("Error cargando historial:", error);
-        return;
+async function inicializarSistema() {
+    generarPanelDiario();
+    generarGridBotones();
+    llenarSelectEstudio();
+    const fechaInput = document.getElementById('fecha-analisis');
+    if(fechaInput) {
+        fechaInput.value = new Date().toISOString().split('T')[0];
+        fechaInput.addEventListener('change', generarPanelDiario);
     }
-
-    if (data) {
-        historial = data;
-        console.log("Datos recuperados:", historial.length);
-        actualizarInterfaz();
-    }
+    await cargarHistorialRemoto();
 }
 
-// Función que calcula los días ausente y el balance
+function generarGridBotones() {
+    const container = document.getElementById('grid-container');
+    if(!container) return;
+    container.innerHTML = '';
+    listaAnimales.forEach(animal => {
+        const btn = document.createElement('div');
+        btn.className = 'animal-btn';
+        btn.innerHTML = `<strong>${animal.n}</strong><br><small>${animal.a}</small>`;
+        btn.onclick = () => {
+            if (!horaSeleccionadaActiva) return alert("Primero toca una HORA");
+            registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
+        };
+        container.appendChild(btn);
+    });
+}
+
+function generarPanelDiario() {
+    const panel = document.getElementById('panel-diario-sorteos');
+    if(!panel) return;
+    panel.innerHTML = '';
+    const fechaActual = document.getElementById('fecha-analisis').value;
+
+    horasSorteo.forEach(hora => {
+        const box = document.createElement('div');
+        box.className = 'hora-box';
+        const registroExistente = historial.find(r => r.fecha === fechaActual && r.hora === hora);
+        
+        if (registroExistente) {
+            box.classList.add('jugado');
+            box.innerText = `${hora}\n(${registroExistente.num})`;
+        } else {
+            box.innerText = hora;
+        }
+
+        if(hora === horaSeleccionadaActiva) box.classList.add('active-select');
+
+        box.onclick = () => {
+            horaSeleccionadaActiva = hora;
+            generarPanelDiario();
+            const inputRapido = document.getElementById('num-rapido');
+            if(inputRapido) inputRapido.focus();
+        };
+        panel.appendChild(box);
+    });
+}
+
+async function registrarSorteo(num, animal, tipo, hora) {
+    const fecha = document.getElementById('fecha-analisis').value;
+    const nuevoRegistro = { fecha, hora, num, animal, tipo };
+
+    const existeIdx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
+    if (existeIdx !== -1) historial.splice(existeIdx, 1);
+    
+    historial.push(nuevoRegistro);
+    actualizarInterfaz();
+
+    try {
+        await _supabase.from('historial_sorteos').upsert(nuevoRegistro, { onConflict: 'fecha,hora' });
+    } catch (err) { console.error("Error al guardar:", err.message); }
+}
+
 function actualizarInterfaz() {
-    // 1. Mostrar el último resultado
-    if (historial.length > 0) {
-        const ultimo = historial[0];
-        document.getElementById('last-num').innerText = `${ultimo.num} - ${ultimo.animal}`;
+    // Ordenar historial por fecha y hora para cálculos
+    const tempSorted = [...historial].sort((a,b) => {
+        if (a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
+        return horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora);
+    });
+
+    if(tempSorted.length > 0) {
+        const ult = tempSorted[tempSorted.length - 1];
+        const lastDisplay = document.getElementById('last-num');
+        if(lastDisplay) lastDisplay.innerText = `${ult.num} - ${ult.animal}`;
     }
 
-    // 2. Calcular días sin el 75 (Guacharo)
+    actualizarTabla();
+    analizarGuacharo(tempSorted);
+    generarPanelDiario();
+    calcularBalanceElementos();
+    detectarDormidos();
+}
+
+function analizarGuacharo(sortedData) {
     let sin75 = 0;
-    const sorted = [...historial].sort((a, b) => b.fecha.localeCompare(a.fecha) || horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
-    
-    for (let r of sorted) {
-        if (r.num === '75') break;
+    for(let i = sortedData.length - 1; i >= 0; i--) {
+        if(sortedData[i].num === '75') break;
         sin75++;
     }
-    document.getElementById('dias-sin-75').innerText = sin75;
+    const display = document.getElementById('dias-sin-75');
+    if(display) display.innerText = sin75;
+}
 
-    // 3. Balance de Elementos (Tierra, Aire, Agua) para la fecha seleccionada
+function calcularBalanceElementos() {
     const fechaActual = document.getElementById('fecha-analisis').value;
     let counts = { TIERRA: 0, AIRE: 0, AGUA: 0 };
     historial.filter(r => r.fecha === fechaActual).forEach(r => {
-        if (counts[r.tipo] !== undefined) counts[r.tipo]++;
+        if(counts[r.tipo] !== undefined) counts[r.tipo]++;
     });
     
-    document.getElementById('val-tierra').innerText = counts.TIERRA;
-    document.getElementById('val-aire').innerText = counts.AIRE;
-    document.getElementById('val-agua').innerText = counts.AGUA;
-
-    generarPanelDiario();
+    if(document.getElementById('val-tierra')) document.getElementById('val-tierra').innerText = counts.TIERRA;
+    if(document.getElementById('val-aire')) document.getElementById('val-aire').innerText = counts.AIRE;
+    if(document.getElementById('val-agua')) document.getElementById('val-agua').innerText = counts.AGUA;
 }
 
-async function inicializarSistema() {
-    const hoy = new Date().toISOString().split('T')[0];
-    document.getElementById('fecha-analisis').value = hoy;
-    document.getElementById('fecha-historial').value = hoy;
-    
-    // Escuchar cambios de fecha
-    document.getElementById('fecha-analisis').addEventListener('change', actualizarInterfaz);
-    
-    await cargarHistorialRecuperacion();
-    llenarSelectEstudio();
-    generarGridBotones();
+async function cargarHistorialRemoto() {
+    try {
+        const { data, error } = await _supabase.from('historial_sorteos').select('*');
+        if (error) throw error;
+        if (data) {
+            historial = data;
+            actualizarInterfaz();
+        }
+    } catch (err) { console.log("⚠️ Error Supabase:", err.message); }
 }
 
-// Asegurarse de que el sistema inicie
+function actualizarTabla() {
+    const cuerpo = document.getElementById('lista-historial');
+    if(!cuerpo) return;
+    cuerpo.innerHTML = '';
+    
+    [...historial].sort((a, b) => {
+        if (a.fecha !== b.fecha) return b.fecha.localeCompare(a.fecha);
+        return horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora);
+    }).forEach(r => {
+        const isGuacharo = r.num === '75' ? 'class="row-guacharo"' : '';
+        cuerpo.innerHTML += `<tr ${isGuacharo}><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
+    });
+}
+
+function llenarSelectEstudio() {
+    const sel = document.getElementById('select-animal-estudio');
+    if(!sel) return;
+    sel.innerHTML = '<option value="">-- Elige Animal --</option>';
+    listaAnimales.forEach(a => {
+        let opt = document.createElement('option');
+        opt.value = a.n;
+        opt.innerText = `${a.n} - ${a.a}`;
+        sel.appendChild(opt);
+    });
+}
+
+function detectarDormidos() {
+    const listaDormidosCont = document.getElementById('lista-dormidos');
+    if(!listaDormidosCont) return;
+    let dormidos = listaAnimales.filter(ani => !historial.some(r => r.num === ani.n)).map(a => a.n);
+    listaDormidosCont.innerText = dormidos.slice(0, 10).join(', ') + "...";
+}
+
 window.onload = inicializarSistema;
