@@ -1,6 +1,4 @@
-// ==========================================
-// CONFIGURACIÓN SUPABASE - ANALIZADOR CRCA
-// ==========================================
+// CONFIGURACIÓN DE CONEXIÓN ÚNICA
 const SUPABASE_URL = 'https://jvbsalpnycnokynpsexw.supabase.co';
 const SUPABASE_KEY = 'sb_publisible_hurtMxONK9ce5XNemgTYFg_4TzbkkVe';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -12,18 +10,9 @@ const DATA_GUACHARO = {
 let historial = [];
 
 async function inicializarSistema() {
-    llenarSelectAnimales();
+    llenarSelect();
     await cargarDatosDeOhio();
-    
-    // Configuración de pestañas para tu HTML
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.onclick = () => {
-            document.querySelectorAll('.tab-btn, .tab-content').forEach(el => el.classList.remove('active'));
-            btn.classList.add('active');
-            const target = btn.getAttribute('data-tab');
-            if(document.getElementById(target)) document.getElementById(target).classList.add('active');
-        };
-    });
+    configurarTabs();
 }
 
 async function cargarDatosDeOhio() {
@@ -35,89 +24,68 @@ async function cargarDatosDeOhio() {
 
     if (!error && data) {
         historial = data;
-        actualizarTodo();
-    } else {
-        console.error("Error cargando Ohio:", error);
+        actualizarVista();
     }
 }
 
-function actualizarTodo() {
-    renderHistorialTabla();
-    renderDormidos();
-    calcularFrecuencias();
-}
-
-function renderHistorialTabla() {
+function actualizarVista() {
     const lista = document.getElementById('lista-historial');
-    if (!lista) return;
-    lista.innerHTML = historial.slice(0, 50).map(i => `
-        <tr>
-            <td>${i.fecha}</td>
-            <td><b>${i.hora}</b></td>
-            <td style="color:#fbbf24; font-weight:bold;">${i.numero}</td>
-            <td>${i.animal}</td>
-            <td><small>${DATA_GUACHARO[i.numero]?.t || 'TIERRA'}</small></td>
-        </tr>
-    `).join('');
-}
-
-function renderDormidos() {
-    const div = document.getElementById('lista-dormidos');
-    if (!div) return;
-    const atrasos = Object.keys(DATA_GUACHARO).map(num => {
-        const index = historial.findIndex(r => r.numero === num);
-        return { num, a: DATA_GUACHARO[num].a, gap: index === -1 ? historial.length : index };
-    }).sort((a,b) => b.gap - a.gap);
-    div.innerHTML = atrasos.slice(0, 5).map(d => `<div>${d.num} ${d.a} (${d.gap})</div>`).join('');
-}
-
-function calcularFrecuencias() {
-    const counts = {};
-    historial.slice(0, 100).forEach(r => counts[r.numero] = (counts[r.numero] || 0) + 1);
-    const sorted = Object.keys(counts).sort((a,b) => counts[b] - counts[a]);
-    if(document.getElementById('p1')) document.getElementById('p1').innerText = sorted[0] || "--";
-    if(document.getElementById('p2')) document.getElementById('p2').innerText = sorted[1] || "--";
-    if(document.getElementById('p3')) document.getElementById('p3').innerText = sorted[2] || "--";
-}
-
-function llenarSelectAnimales() {
-    const sel = document.getElementById('select-animal-estudio');
-    if(!sel) return;
-    sel.innerHTML = Object.keys(DATA_GUACHARO).map(n => `<option value="${n}">${n} - ${DATA_GUACHARO[n].a}</option>`).join('');
+    if (lista) {
+        lista.innerHTML = historial.slice(0, 50).map(i => `
+            <tr>
+                <td>${i.fecha}</td>
+                <td><b>${i.hora}</b></td>
+                <td style="color:#fbbf24;">${i.numero}</td>
+                <td>${i.animal}</td>
+                <td><small>${DATA_GUACHARO[i.numero]?.t || 'T'}</small></td>
+            </tr>
+        `).join('');
+    }
+    // Dormidos
+    const dorm = document.getElementById('lista-dormidos');
+    if (dorm) {
+        const sorted = Object.keys(DATA_GUACHARO).map(n => ({
+            n, a: DATA_GUACHARO[n].a, g: historial.findIndex(r => r.numero === n)
+        })).sort((a,b) => (b.g === -1 ? 999 : b.g) - (a.g === -1 ? 999 : a.g));
+        dorm.innerHTML = sorted.slice(0, 5).map(d => `<div>${d.n} ${d.a}</div>`).join('');
+    }
 }
 
 function estudiarAnimalEspecifico() {
     const num = document.getElementById('select-animal-estudio').value;
     const res = document.getElementById('resultado-patrones');
-    const encuentros = historial.map((r, i) => r.numero === num ? i : -1).filter(i => i !== -1);
-    
-    let antes = {}, despues = {};
-    encuentros.forEach(i => {
-        if(historial[i+1]) antes[historial[i+1].numero] = (antes[historial[i+1].numero] || 0) + 1;
-        if(historial[i-1]) despues[historial[i-1].numero] = (despues[historial[i-1].numero] || 0) + 1;
+    const matches = historial.map((r, i) => r.numero === num ? i : -1).filter(i => i !== -1);
+    let a = {}, d = {};
+    matches.forEach(i => {
+        if(historial[i+1]) a[historial[i+1].numero] = (a[historial[i+1].numero] || 0) + 1;
+        if(historial[i-1]) d[historial[i-1].numero] = (d[historial[i-1].numero] || 0) + 1;
     });
-
-    const mayorA = Object.keys(antes).sort((a,b) => antes[b] - antes[a])[0] || "--";
-    const mayorD = Object.keys(despues).sort((a,b) => despues[b] - despues[a])[0] || "--";
-
-    res.innerHTML = `<div style="padding:10px; background:#1e293b; border-radius:8px; border:1px solid #38bdf8">
-        <p>Antes de ${num} suele salir: <b>${mayorA}</b></p>
-        <p>Después de ${num} suele salir: <b>${mayorD}</b></p>
-    </div>`;
+    const ma = Object.keys(a).sort((x,y) => a[y]-a[x])[0] || "--";
+    const md = Object.keys(d).sort((x,y) => d[y]-d[x])[0] || "--";
+    res.innerHTML = `<p>Antes: <b>${ma}</b> | Después: <b>${md}</b></p>`;
 }
 
-async function guardarDato() {
-    const input = document.getElementById('num-rapido');
-    const n = input.value.trim();
-    if(!DATA_GUACHARO[n]) return alert("Número inválido");
-
+async function guardarDatoRapido() {
+    const n = document.getElementById('num-rapido').value;
+    if(!DATA_GUACHARO[n]) return alert("Nro Inválido");
     const f = new Date().toISOString().split('T')[0];
     const h = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-
-    await _supabase.from('historial_resultados').insert([
-        { fecha: f, hora: h, numero: n, animal: DATA_GUACHARO[n].a }
-    ]);
-
-    input.value = "";
+    await _supabase.from('historial_resultados').insert([{ fecha: f, hora: h, numero: n, animal: DATA_GUACHARO[n].a }]);
+    document.getElementById('num-rapido').value = "";
     await cargarDatosDeOhio();
+}
+
+function llenarSelect() {
+    const s = document.getElementById('select-animal-estudio');
+    if(s) s.innerHTML = Object.keys(DATA_GUACHARO).map(n => `<option value="${n}">${n}-${DATA_GUACHARO[n].a}</option>`).join('');
+}
+
+function configurarTabs() {
+    document.querySelectorAll('.tab-btn').forEach(b => {
+        b.onclick = () => {
+            document.querySelectorAll('.tab-btn, .tab-content').forEach(e => e.classList.remove('active'));
+            b.classList.add('active');
+            document.getElementById(b.dataset.tab).classList.add('active');
+        };
+    });
 }
