@@ -1,3 +1,4 @@
+// CONFIGURACIÓN SUPABASE - CONEXIÓN OHIO
 const SUPABASE_URL = 'https://jvbsalpnycnokynpsexw.supabase.co';
 const SUPABASE_KEY = 'sb_publisible_hurtMxONK9ce5XNemgTYFg_4TzbkkVe';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -8,12 +9,13 @@ const DATA_ANIMALES = {
 
 let historial = [];
 
+// Función que arranca todo al poner la clave
 async function inicializarSistema() {
     cargarSelectAnimales();
-    await cargarDatosRemotos();
+    await cargarHistorialRemoto();
 }
 
-async function cargarDatosRemotos() {
+async function cargarHistorialRemoto() {
     const { data, error } = await _supabase
         .from('historial_resultados')
         .select('*')
@@ -30,7 +32,6 @@ function actualizarInterfaz() {
     renderHistorial();
     renderDormidos();
     calcularFrecuencia();
-    estudiar75();
 }
 
 function renderHistorial() {
@@ -42,7 +43,7 @@ function renderHistorial() {
             <td><b>${i.hora}</b></td>
             <td style="color:#fbbf24; font-weight:bold;">${i.numero}</td>
             <td>${i.animal}</td>
-            <td><small>${DATA_ANIMALES[i.numero]?.t || '---'}</small></td>
+            <td><small>${DATA_ANIMALES[i.numero]?.t || 'TIERRA'}</small></td>
         </tr>
     `).join('');
 }
@@ -54,7 +55,7 @@ function renderDormidos() {
         const index = historial.findIndex(r => r.numero === num);
         return { num, a: DATA_ANIMALES[num].a, gap: index === -1 ? historial.length : index };
     }).sort((a,b) => b.gap - a.gap);
-    div.innerHTML = atrasos.slice(0, 5).map(d => `<div>${d.num} ${d.a} (${d.gap})</div>`).join('');
+    div.innerHTML = atrasos.slice(0, 5).map(d => `<div>${d.num} ${d.a} (${d.gap} sort.)</div>`).join('');
 }
 
 function calcularFrecuencia() {
@@ -64,14 +65,6 @@ function calcularFrecuencia() {
     if(document.getElementById('p1')) document.getElementById('p1').innerText = sorted[0] || "--";
     if(document.getElementById('p2')) document.getElementById('p2').innerText = sorted[1] || "--";
     if(document.getElementById('p3')) document.getElementById('p3').innerText = sorted[2] || "--";
-}
-
-function estudiar75() {
-    const radar = document.getElementById('guacharo-intel');
-    const pos = historial.findIndex(i => i.numero === "75");
-    if(radar && pos !== -1) {
-        radar.innerHTML = `Radar 🦅: 75 atrasado <b>${pos}</b> sorteos.`;
-    }
 }
 
 function cargarSelectAnimales() {
@@ -91,20 +84,28 @@ function estudiarAnimalEspecifico() {
     });
     const mayorA = Object.keys(antes).sort((a,b) => antes[b] - antes[a])[0] || "--";
     const mayorD = Object.keys(despues).sort((a,b) => despues[b] - despues[a])[0] || "--";
-    res.innerHTML = `<div style="padding:10px; background:#1e293b; border-radius:8px; margin-top:10px;">
+    res.innerHTML = `<div style="padding:10px; background:#1e293b; border-radius:8px; margin-top:10px; border:1px solid #38bdf8">
         <p>Antes del ${num} suele salir: <b>${mayorA}</b></p>
         <p>Después del ${num} suele salir: <b>${mayorD}</b></p>
     </div>`;
 }
 
-async function guardarDato() {
+async function guardarDatoRapido() {
     const n = document.getElementById('num-rapido').value;
     const f = new Date().toISOString().split('T')[0];
     const h = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-    if(!DATA_ANIMALES[n]) { alert("Número inválido"); return; }
-    await _supabase.from('historial_resultados').insert([{ fecha: f, hora: h, numero: n, animal: DATA_ANIMALES[n].a }]);
+    
+    if(!DATA_ANIMALES[n]) return;
+
+    await _supabase.from('historial_resultados').insert([{ 
+        fecha: f, 
+        hora: h, 
+        numero: n, 
+        animal: DATA_ANIMALES[n].a 
+    }]);
+
     document.getElementById('num-rapido').value = "";
-    await cargarDatosRemotos();
+    await cargarHistorialRemoto();
 }
 
 // Gestión de Pestañas
