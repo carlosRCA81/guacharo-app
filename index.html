@@ -5,73 +5,65 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analizador CRCA - Pro</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        body { background-color: #0f172a; color: white; font-family: sans-serif; margin: 0; padding: 0; }
-        #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; padding: 20px; text-align: center; }
-        #login-screen input { background: #1e293b; border: 1px solid #38bdf8; color: white; padding: 15px; border-radius: 8px; width: 80%; margin-bottom: 20px; font-size: 1.2rem; text-align: center; }
-        #login-screen button { background: #38bdf8; color: #0f172a; border: none; padding: 15px; border-radius: 8px; width: 80%; font-weight: bold; cursor: pointer; }
-        
-        /* Estilos de la App */
-        .panel-diario { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin: 15px; background: #0f172a; padding: 10px; border-radius: 8px; font-size: 0.7rem;}
-        .hora-box { background: #334155; padding: 8px; text-align: center; border-radius: 4px; border: 1px solid #475569; color: #f8fafc;}
-        .hora-box.jugado { background: #22c55e !important; color: #0f172a; font-weight: bold;}
-        .tab-btn.active { background: #38bdf8 !important; color: #0f172a !important; }
-        .row-guacharo { background: rgba(251, 191, 36, 0.2) !important; color: #fbbf24; font-weight: bold; }
-        .grid-animales { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 15px; }
-        .animal-btn { background: #1e293b; padding: 10px; text-align: center; border-radius: 8px; border: 1px solid #475569; }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
-
     <div id="login-screen">
-        <h2 style="color: #38bdf8;">SISTEMA CRCA ENCRIPTADO</h2>
-        <input type="password" id="access-key" placeholder="••••">
+        <h2>SISTEMA CRCA ENCRIPTADO</h2>
+        <input type="password" id="access-key" placeholder="Introduce tu clave">
         <button onclick="checkAccess()">DESBLOQUEAR SISTEMA</button>
     </div>
 
     <div id="main-app" style="display: none;">
-        <header style="padding: 15px; text-align: center; background: #1e293b;">
-            <h1 style="color: #38bdf8; margin: 0; font-size: 1.5rem;">ANALIZADOR CRCA</h1>
-            <div id="live-clock" style="color: #fbbf24; font-size: 1.2rem; margin: 10px 0;">00:00:00</div>
-            
-            <div style="display: flex; justify-content: space-around; background: #334155; border-radius: 5px; overflow: hidden;">
-                <button class="tab-btn active" onclick="openTab(event, 'registro')" style="flex:1; padding: 10px; border:none; background:none; color:white;">REGISTRO</button>
-                <button class="tab-btn" onclick="openTab(event, 'estudio')" style="flex:1; padding: 10px; border:none; background:none; color:white;">ESTUDIO 75</button>
-                <button class="tab-btn" onclick="openTab(event, 'historial')" style="flex:1; padding: 10px; border:none; background:none; color:white;">HISTORIAL</button>
+        <header>
+            <h1>ANALIZADOR CRCA</h1>
+            <div id="live-clock">00:00:00</div>
+            <div class="tab-container">
+                <button class="tab-btn active" onclick="openTab(event, 'registro')">REGISTRO</button>
+                <button class="tab-btn" onclick="openTab(event, 'estudio')">ESTUDIO 75</button>
+                <button class="tab-btn" onclick="openTab(event, 'stats-gen')">PATRONES</button>
+                <button class="tab-btn" onclick="openTab(event, 'historial')">HISTORIAL</button>
             </div>
         </header>
 
-        <section id="registro" class="tab-content">
+        <section id="registro" class="tab-content active">
             <div class="panel-diario" id="panel-diario-sorteos"></div>
-            <div style="padding: 15px;">
-                <input type="date" id="fecha-analisis" style="width: 100%; padding: 10px; background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; border-radius: 5px;">
+            <div class="controls-row">
+                <input type="date" id="fecha-analisis">
+            </div>
+            <div class="entrada-rapida-container">
+                <h4>ENTRADA RÁPIDA:</h4>
+                <input type="text" id="num-rapido" maxlength="2" placeholder="Nro">
+                <button onclick="registrarPorNumero()">OK</button>
+            </div>
+            <div class="display-reciente">
+                <p>Último: <span id="last-num">--</span></p>
+                <button id="btn-borrar" class="btn-danger">BORRAR</button>
             </div>
             <div class="grid-animales" id="grid-container"></div>
         </section>
 
-        <section id="estudio" class="tab-content" style="display:none; padding: 20px;">
-            <div style="background: #0f172a; border: 1px solid #fbbf24; text-align: center; padding: 30px; border-radius: 10px;">
-                <h3 style="color: #fbbf24; margin: 0;">DÍAS SIN GUACHARO (75)</h3>
-                <div style="font-size: 4rem; font-weight: bold;" id="dias-sin-75">0</div>
+        <section id="historial" class="tab-content">
+            <h3>DATOS ACUMULADOS</h3>
+            <div class="search-box" style="background: #1e293b; padding: 10px; border-radius: 8px; margin-bottom: 10px; display: flex; gap: 5px;">
+                <input type="date" id="fecha-consulta-historial" style="flex: 2;">
+                <button onclick="consultarFechaEspecifica()" style="flex: 1;">ACEPTAR</button>
+            </div>
+            <div class="tabla-contenedor">
+                <table>
+                    <thead>
+                        <tr><th>Fecha</th><th>Hora</th><th>Nº</th><th>Animal</th><th>Tipo</th></tr>
+                    </thead>
+                    <tbody id="lista-historial"></tbody>
+                </table>
             </div>
         </section>
 
-        <section id="historial" class="tab-content" style="display:none; padding: 15px;">
-            <div style="display: flex; gap: 5px; margin-bottom: 15px;">
-                <input type="date" id="fecha-consulta-historial" style="flex:1; padding: 10px; background: #1e293b; color: white; border: 1px solid #38bdf8;">
-                <button onclick="consultarFechaEspecifica()" style="background: #22c55e; color: white; border:none; padding: 10px 20px; border-radius: 5px;">ACEPTAR</button>
-            </div>
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
-                <thead>
-                    <tr style="background: #334155;">
-                        <th style="padding: 10px;">Fecha</th><th style="padding: 10px;">Hora</th><th style="padding: 10px;">Nro</th><th style="padding: 10px;">Animal</th>
-                    </tr>
-                </thead>
-                <tbody id="lista-historial" style="text-align: center;"></tbody>
-            </table>
-        </section>
+        <section id="estudio" class="tab-content">...</section>
+        <section id="stats-gen" class="tab-content">...</section>
     </div>
 
-    <script src="app.js"></script>
+    <script src="security.js"></script>
+    <script src="Logic.js"></script>
 </body>
 </html>
