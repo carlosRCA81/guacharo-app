@@ -1,12 +1,8 @@
-// ==========================================
-// CONFIGURACIÓN SUPABASE
-// ==========================================
 const SUPABASE_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// DATA MAESTRA
-const listaAnimales = [
+const animales = [
     {n:'0', a:'DELFIN', t:'AGUA'}, {n:'00', a:'BALLENA', t:'AGUA'}, {n:'01', a:'CARNERO', t:'TIERRA'},
     {n:'02', a:'TORO', t:'TIERRA'}, {n:'03', a:'CIEMPIES', t:'TIERRA'}, {n:'04', a:'ALACRAN', t:'TIERRA'},
     {n:'05', a:'LEON', t:'TIERRA'}, {n:'06', a:'RANA', t:'AGUA'}, {n:'07', a:'PERICO', t:'AIRE'},
@@ -35,138 +31,82 @@ const listaAnimales = [
     {n:'74', a:'TURPIAL', t:'AIRE'}, {n:'75', a:'GUACHARO', t:'AIRE'}
 ];
 
-const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
-let historialGlobal = [];
-let horaSeleccionada = null;
+const horas = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
+let dbData = [];
+let selHora = null;
 
-// INICIO
 window.onload = async () => {
     const hoy = new Date().toISOString().split('T')[0];
-    document.getElementById('fecha-analisis').value = hoy;
-    document.getElementById('filtro-fecha-historial').value = hoy;
-    
-    generarGridAnimales();
-    await cargarTodoElHistorial();
-    
-    setInterval(() => {
-        document.getElementById('live-clock').innerText = new Date().toLocaleTimeString();
-    }, 1000);
+    document.getElementById('fecha-reg').value = hoy;
+    document.getElementById('fecha-hist').value = hoy;
+    renderAnimales();
+    await fetchAll();
+    setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 };
 
-function openTab(evt, tabName) {
-    let tabcontent = document.getElementsByClassName("tab-content");
-    for (let i = 0; i < tabcontent.length; i++) tabcontent[i].style.display = "none";
-    let tablinks = document.getElementsByClassName("tab-btn");
-    for (let i = 0; i < tablinks.length; i++) tablinks[i].classList.remove("active");
-    document.getElementById(tabName).style.display = "block";
-    evt.currentTarget.classList.add("active");
+async function fetchAll() {
+    const { data } = await _supabase.from('historial_sorteos').select('*').order('fecha', {ascending: false});
+    if(data) { dbData = data; refresh(); }
 }
 
-async function cargarTodoElHistorial() {
-    try {
-        const { data, error } = await _supabase
-            .from('historial_sorteos')
-            .select('*')
-            .order('fecha', { ascending: false });
-        if (data) {
-            historialGlobal = data;
-            actualizarTodo();
-        }
-    } catch (e) { console.error("Error cargando datos"); }
-}
-
-function generarGridAnimales() {
-    const grid = document.getElementById('grid-container');
-    grid.innerHTML = '';
-    listaAnimales.forEach(a => {
-        const div = document.createElement('div');
-        div.className = 'animal-item';
-        div.innerHTML = `<b>${a.n}</b><br><small>${a.a}</small>`;
-        div.onclick = () => {
-            if(!horaSeleccionada) return alert("Selecciona una hora primero");
-            guardarSorteo(a.n, a.a, a.t);
-        };
-        grid.appendChild(div);
+function renderAnimales() {
+    const cont = document.getElementById('animal-grid');
+    cont.innerHTML = '';
+    animales.forEach(a => {
+        const d = document.createElement('div');
+        d.className = 'animal-item';
+        d.innerHTML = `<b>${a.n}</b><br>${a.a}`;
+        d.onclick = () => save(a.n, a.a, a.t);
+        cont.appendChild(d);
     });
 }
 
-function dibujarPanelHoras() {
-    const panel = document.getElementById('panel-diario-sorteos');
-    panel.innerHTML = '';
-    const fecha = document.getElementById('fecha-analisis').value;
-
-    horasSorteo.forEach(h => {
-        const box = document.createElement('div');
-        box.className = 'hora-box';
-        const registro = historialGlobal.find(r => r.fecha === fecha && r.hora === h);
-        
-        if (registro) {
-            box.classList.add('jugado');
-            box.innerText = `${h}\n(${registro.num})`;
-        } else {
-            box.innerText = h;
-        }
-
-        if (h === horaSeleccionada) box.classList.add('active-select');
-
-        box.onclick = () => {
-            horaSeleccionada = h;
-            dibujarPanelHoras();
-            document.getElementById('num-rapido').focus();
-        };
-        panel.appendChild(box);
+function renderHoras() {
+    const p = document.getElementById('hora-panel');
+    p.innerHTML = '';
+    const f = document.getElementById('fecha-reg').value;
+    horas.forEach(h => {
+        const b = document.createElement('div');
+        b.className = 'hora-box';
+        const r = dbData.find(x => x.fecha === f && x.hora === h);
+        if(r) { b.classList.add('jugado'); b.innerText = `${h}\n(${r.num})`; }
+        else { b.innerText = h; }
+        if(h === selHora) b.classList.add('active-select');
+        b.onclick = () => { selHora = h; renderHoras(); };
+        p.appendChild(b);
     });
 }
 
-async function guardarSorteo(n, a, t) {
-    const f = document.getElementById('fecha-analisis').value;
-    const nuevo = { fecha: f, hora: horaSeleccionada, num: n, animal: a, tipo: t };
-    
-    const { error } = await _supabase.from('historial_sorteos').upsert(nuevo);
-    if(!error) {
-        document.getElementById('last-num').innerText = `${n} - ${a}`;
-        await cargarTodoElHistorial();
-    }
+async function save(n, a, t) {
+    if(!selHora) return alert("Selecciona Hora");
+    const f = document.getElementById('fecha-reg').value;
+    await _supabase.from('historial_sorteos').upsert({fecha: f, hora: selHora, num: n, animal: a, tipo: t});
+    await fetchAll();
 }
 
-function registrarRapido() {
-    if(!horaSeleccionada) return alert("Selecciona una hora");
-    let val = document.getElementById('num-rapido').value.trim();
-    if(val.length === 1 && val !== "0") val = "0" + val;
-    const animal = listaAnimales.find(a => a.n === val);
-    if(animal) {
-        guardarSorteo(animal.n, animal.a, animal.t);
-        document.getElementById('num-rapido').value = '';
-    } else {
-        alert("Número inválido");
-    }
-}
-
-function filtrarHistorial() {
-    const tabla = document.getElementById('lista-historial');
-    const fechaBusqueda = document.getElementById('filtro-fecha-historial').value;
-    tabla.innerHTML = '';
-
-    const filtrados = historialGlobal.filter(r => r.fecha === fechaBusqueda);
-
-    if(filtrados.length === 0) {
-        tabla.innerHTML = '<tr><td colspan="5">Sin datos para esta fecha</td></tr>';
-        return;
-    }
-
-    filtrados.sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora)).forEach(r => {
-        tabla.innerHTML += `<tr><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
+function filterHist() {
+    const t = document.getElementById('hist-body');
+    const f = document.getElementById('fecha-hist').value;
+    t.innerHTML = '';
+    const filtered = dbData.filter(x => x.fecha === f);
+    if(filtered.length === 0) { t.innerHTML = '<tr><td colspan="5">No hay datos</td></tr>'; return; }
+    filtered.sort((a,b) => horas.indexOf(b.hora) - horas.indexOf(a.hora)).forEach(r => {
+        t.innerHTML += `<tr><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
     });
 }
 
-function actualizarTodo() {
-    dibujarPanelHoras();
-    filtrarHistorial();
-    const count = [...historialGlobal].sort((a,b) => a.fecha.localeCompare(b.fecha) || horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
+function refresh() {
+    renderHoras();
+    filterHist();
     let sin75 = 0;
-    for(let i = count.length-1; i>=0; i--) {
-        if(count[i].num === '75') break;
-        sin75++;
-    }
-    document.getElementById('dias-sin-75').innerText = sin75;
+    const sorted = [...dbData].sort((a,b) => a.fecha.localeCompare(b.fecha) || horas.indexOf(a.hora) - horas.indexOf(b.hora));
+    for(let i = sorted.length-1; i>=0; i--) { if(sorted[i].num === '75') break; sin75++; }
+    document.getElementById('stat-75').innerText = sin75;
+}
+
+function openTab(e, n) {
+    document.querySelectorAll('.tab-content').forEach(x => x.style.display = 'none');
+    document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active'));
+    document.getElementById(n).style.display = 'block';
+    e.currentTarget.classList.add('active');
 }
