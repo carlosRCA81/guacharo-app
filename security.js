@@ -1,10 +1,11 @@
+const CLAVE_MAESTRA = '1234'; 
 function checkAccess() {
-    const pass = document.getElementById('access-key').value;
-    if(pass === '1234') {
+    const inputPass = document.getElementById('access-key').value;
+    if (inputPass === CLAVE_MAESTRA) {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('main-app').style.display = 'block';
-        inicializarSistema();
+        if (typeof inicializarSistema === 'function') inicializarSistema();
     } else {
-        alert("Clave incorrecta");
+        alert("CLAVE INCORRECTA");
     }
 }
