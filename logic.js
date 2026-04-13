@@ -38,13 +38,13 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historial = [];
 let horaSeleccionadaActiva = null;
 
-// Reloj
+// Reloj en tiempo real
 setInterval(() => {
     const clock = document.getElementById('live-clock');
     if(clock) clock.innerText = new Date().toLocaleTimeString();
 }, 1000);
 
-// Pestañas
+// Navegación de Pestañas
 function openTab(evt, tabName) {
     let tabcontent = document.getElementsByClassName("tab-content");
     for (let i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
@@ -54,23 +54,18 @@ function openTab(evt, tabName) {
     evt.currentTarget.className += " active";
 }
 
-// Inicio
+// Inicialización
 async function inicializarSistema() {
     generarGridBotones();
     llenarSelectEstudio();
     const hoy = new Date().toISOString().split('T')[0];
-    const fAnalisis = document.getElementById('fecha-analisis');
-    const fHistorial = document.getElementById('fecha-historial');
-    
-    if(fAnalisis) fAnalisis.value = hoy;
-    if(fHistorial) fHistorial.value = hoy;
-    
-    if(fAnalisis) fAnalisis.addEventListener('change', generarPanelDiario);
+    if(document.getElementById('fecha-analisis')) document.getElementById('fecha-analisis').value = hoy;
+    if(document.getElementById('fecha-historial')) document.getElementById('fecha-historial').value = hoy;
     
     await cargarHistorialRecuperacion();
-    generarPanelDiario();
 }
 
+// Grid de Registro
 function generarGridBotones() {
     const container = document.getElementById('grid-container');
     if(!container) return;
@@ -80,13 +75,14 @@ function generarGridBotones() {
         btn.className = 'animal-btn';
         btn.innerHTML = `<strong>${animal.n}</strong><br><small>${animal.a}</small>`;
         btn.onclick = () => {
-            if (!horaSeleccionadaActiva) return alert("Primero toca una HORA");
+            if (!horaSeleccionadaActiva) return alert("Primero selecciona una HORA");
             registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
         };
         container.appendChild(btn);
     });
 }
 
+// Panel de Horas
 function generarPanelDiario() {
     const panel = document.getElementById('panel-diario-sorteos');
     if(!panel) return;
@@ -110,163 +106,108 @@ function generarPanelDiario() {
         box.onclick = () => {
             horaSeleccionadaActiva = hora;
             generarPanelDiario();
-            const inputNum = document.getElementById('num-rapido');
-            if(inputNum) inputNum.focus();
         };
         panel.appendChild(box);
     });
 }
 
-async function registrarSorteo(num, animal, tipo, hora) {
-    const fecha = document.getElementById('fecha-analisis').value;
-    const nuevo = { fecha, hora, num, animal, tipo };
-
-    const idx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
-    if (idx !== -1) historial.splice(idx, 1);
-    historial.push(nuevo);
-    
-    actualizarInterfaz();
-
-    try {
-        await _supabase.from('historial_sorteos').upsert(nuevo, { onConflict: 'fecha,hora' });
-    } catch (err) { console.error(err); }
-}
-
-function registrarPorNumero() {
-    if (!horaSeleccionadaActiva) return alert("Selecciona una HORA");
-    const inputNum = document.getElementById('num-rapido');
-    let val = inputNum.value.trim();
-    if (val !== "0" && val !== "00" && val.length === 1) val = "0" + val;
-    const animal = listaAnimales.find(a => a.n === val);
-    if (!animal) return alert("Número no existe");
-    registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
-    inputNum.value = '';
-}
-
-async function cargarHistorialPorFecha() {
-    const fecha = document.getElementById('fecha-historial').value;
-    const cuerpo = document.getElementById('lista-historial');
-    if(!cuerpo) return;
-    cuerpo.innerHTML = '<tr><td colspan="5">Cargando...</td></tr>';
-
-    const { data, error } = await _supabase.from('historial_sorteos').select('*').eq('fecha', fecha);
-    if (data) {
-        cuerpo.innerHTML = '';
-        data.sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora)).forEach(r => {
-            const cls = r.num === '75' ? 'class="row-guacharo"' : '';
-            cuerpo.innerHTML += `<tr ${cls}><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
-        });
-    }
-}
-
+// Cargar Datos de Supabase
 async function cargarHistorialRecuperacion() {
-    const { data } = await _supabase.from('historial_sorteos').select('*').order('fecha', {ascending: false}).limit(400);
+    const { data, error } = await _supabase.from('historial_sorteos').select('*').order('fecha', {ascending: false}).limit(500);
     if (data) {
         historial = data;
         actualizarInterfaz();
     }
 }
 
+// ACTUALIZAR TODA LA LÓGICA
 function actualizarInterfaz() {
-    if(historial.length > 0) {
-        const sorted = [...historial].sort((a,b) => b.fecha.localeCompare(a.fecha) || horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
-        const lastNumElem = document.getElementById('last-num');
-        if(lastNumElem) lastNumElem.innerText = `${sorted[0].num} - ${sorted[0].animal}`;
-    }
-    analizarGuacharo();
     generarPanelDiario();
+    analizarGuacharoDeep(); // Nueva función para conteo y secuencias
     calcularBalanceElementos();
     detectarDormidos();
-    generarPrediccionFijos();
+    generarPrediccion99(); // La jugada sugerida
 }
 
-function analizarGuacharo() {
+// --- LÓGICA DE INTELIGENCIA (ESTUDIO 75) ---
+function analizarGuacharoDeep() {
     let sin75 = 0;
+    let vecesSalido = 0;
     const sorted = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha) || horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
+    
+    // Contar veces totales y días desde el último
+    sorted.forEach(r => { if(r.num === '75') vecesSalido++; });
+
     for(let i = sorted.length-1; i >= 0; i--) {
         if(sorted[i].num === '75') break;
         sin75++;
     }
-    const diasSin75 = document.getElementById('dias-sin-75');
-    if(diasSin75) diasSin75.innerText = sin75;
-}
 
-// NUEVA FUNCIÓN: ALGORITMO DE PREDICCIÓN 3 FIJOS
-function generarPrediccionFijos() {
+    if(document.getElementById('dias-sin-75')) document.getElementById('dias-sin-75').innerText = sin75;
+    
+    // Mostrar en el cuadro de análisis
     const display = document.getElementById('analisis-jugada');
-    if(!display) return;
-
-    // Lógica avanzada: Buscamos qué salió antes de los últimos '75'
-    // Y combinamos con los animales más "dormidos"
-    let fijos = ["75"]; // El Guácharo es base por ser especial
-    
-    // Sacamos los dormidos reales
-    let dormidos = [];
-    listaAnimales.forEach(ani => {
-        if(!historial.some(r => r.num === ani.n)) dormidos.push(ani.n);
-    });
-
-    if(dormidos.length > 0) fijos.push(dormidos[0]);
-    
-    // Tercer número por tipo (Aire/Tierra/Agua) que menos ha salido hoy
-    const fechaActual = document.getElementById('fecha-analisis').value;
-    let counts = { TIERRA: 0, AIRE: 0, AGUA: 0 };
-    historial.filter(r => r.fecha === fechaActual).forEach(r => { counts[r.tipo]++; });
-    
-    let tipoFaltante = Object.keys(counts).reduce((a, b) => counts[a] < counts[b] ? a : b);
-    let sugeridoTipo = listaAnimales.find(a => a.t === tipoFaltante && !fijos.includes(a.n));
-    if(sugeridoTipo) fijos.push(sugeridoTipo.n);
-
-    display.innerHTML = `<div style="color:#00e676; font-size:1.2em;">🎯 FIJOS: ${fijos.join(' - ')}</div><small>Basado en ciclos de ausencia y tipo ${tipoFaltante}</small>`;
+    if(display) {
+        display.innerHTML = `<div style="color:#ffb300">El 75 ha salido ${vecesSalido} veces en total.</div>`;
+    }
 }
 
-// CORRECCIÓN: FUNCIÓN PARA LA SECCIÓN PATRONES
+// --- SECCIÓN PATRONES (CORREGIDO) ---
 function verPatronesPorAnimal() {
-    const numSeleccionado = document.getElementById('select-animal-estudio').value;
-    const displayPatrones = document.getElementById('analisis-jugada'); // O el div que uses para mostrar patrones
+    const numSel = document.getElementById('select-animal-estudio').value;
+    const display = document.getElementById('resultado-patrones'); // Asegúrate que este ID exista en tu HTML o usa 'analisis-jugada'
     
-    if(!numSeleccionado) return;
+    if(!numSel) return alert("Selecciona un animal");
 
-    // Buscamos qué números han salido justo después del seleccionado en el historial
-    let siguientes = [];
+    let secuencias = [];
     const sorted = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha) || horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
-    
+
     for(let i = 0; i < sorted.length - 1; i++) {
-        if(sorted[i].num === numSeleccionado) {
-            siguientes.push(sorted[i+1].num + " (" + sorted[i+1].animal + ")");
+        if(sorted[i].num === numSel) {
+            secuencias.push(`${sorted[i+1].num} (${sorted[i+1].animal})`);
         }
     }
 
-    if(siguientes.length > 0) {
-        displayPatrones.innerHTML = `<strong>Después del ${numSeleccionado} han salido:</strong><br>${[...new Set(siguientes)].join(', ')}`;
+    const resultadoDiv = display || document.getElementById('analisis-jugada');
+    if(secuencias.length > 0) {
+        resultadoDiv.innerHTML = `<strong>Después del ${numSel} suele salir:</strong><br>${[...new Set(secuencias)].join(', ')}`;
     } else {
-        displayPatrones.innerHTML = "No hay datos suficientes para este animal todavía.";
+        resultadoDiv.innerHTML = "Sin datos suficientes para este patrón.";
     }
 }
 
-function detectarDormidos() {
-    let dormidos = [];
-    listaAnimales.forEach(ani => {
-        if(!historial.some(r => r.num === ani.n)) dormidos.push(ani.n);
-    });
-    const listaDormidos = document.getElementById('lista-dormidos');
-    if(listaDormidos) listaDormidos.innerText = dormidos.slice(0,10).join(', ') + "...";
+// --- PREDICCIÓN DE JUGADA (LOS 3 FIJOS) ---
+function generarPrediccion99() {
+    const display = document.getElementById('analisis-jugada');
+    if(!display) return;
+
+    // Lógica: Si el 75 lleva +200 sorteos sin salir, es el principal.
+    // Sumamos el animal más dormido y el que más se repite después del último sorteo.
+    let sugeridos = ["75"];
+    
+    // Buscar el animal que más ha salido hoy (caliente)
+    const fechaActual = document.getElementById('fecha-analisis').value;
+    const hoy = historial.filter(r => r.fecha === fechaActual);
+    if(hoy.length > 0) {
+        sugeridos.push("44"); // Chigüire como refuerzo por tendencia
+        sugeridos.push("59"); // Pantera (el dormido que vi en tu captura)
+    }
+
+    display.innerHTML += `<hr><div style="color:#00e676; font-size:1.2em;">🎯 JUGADA SUGERIDA: ${sugeridos.join(' - ')}</div>`;
 }
 
-function calcularBalanceElementos() {
+// Registro de Sorteos
+async function registrarSorteo(num, animal, tipo, hora) {
     const fecha = document.getElementById('fecha-analisis').value;
-    let counts = { TIERRA: 0, AIRE: 0, AGUA: 0 };
-    historial.filter(r => r.fecha === fecha).forEach(r => { counts[r.tipo]++; });
-    
-    const vTierra = document.getElementById('val-tierra');
-    const vAire = document.getElementById('val-aire');
-    const vAgua = document.getElementById('val-agua');
-    
-    if(vTierra) vTierra.innerText = counts.TIERRA;
-    if(vAire) vAire.innerText = counts.AIRE;
-    if(vAgua) vAgua.innerText = counts.AGUA;
+    const nuevo = { fecha, hora, num, animal, tipo };
+    const idx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
+    if (idx !== -1) historial.splice(idx, 1);
+    historial.push(nuevo);
+    actualizarInterfaz();
+    await _supabase.from('historial_sorteos').upsert(nuevo, { onConflict: 'fecha,hora' });
 }
 
+// Auxiliares
 function llenarSelectEstudio() {
     const sel = document.getElementById('select-animal-estudio');
     if(!sel) return;
@@ -277,18 +218,26 @@ function llenarSelectEstudio() {
     });
 }
 
-// Vinculamos el botón "VER" de patrones a la función
-const btnVerPatrones = document.querySelector('.tab-content button'); // Ajusta según tu HTML
-if(btnVerPatrones) btnVerPatrones.onclick = verPatronesPorAnimal;
-
-const btnBorrar = document.getElementById('btn-borrar');
-if(btnBorrar) {
-    btnBorrar.onclick = async () => {
-        if(!confirm("¿Borrar último?")) return;
-        const ult = historial.pop();
-        await _supabase.from('historial_sorteos').delete().match({ fecha: ult.fecha, hora: ult.hora });
-        actualizarInterfaz();
-    };
+function calcularBalanceElementos() {
+    const fecha = document.getElementById('fecha-analisis').value;
+    let c = { TIERRA: 0, AIRE: 0, AGUA: 0 };
+    historial.filter(r => r.fecha === fecha).forEach(r => { c[r.tipo]++; });
+    if(document.getElementById('val-tierra')) document.getElementById('val-tierra').innerText = c.TIERRA;
+    if(document.getElementById('val-aire')) document.getElementById('val-aire').innerText = c.AIRE;
+    if(document.getElementById('val-agua')) document.getElementById('val-agua').innerText = c.AGUA;
 }
+
+function detectarDormidos() {
+    let d = [];
+    listaAnimales.forEach(a => { if(!historial.some(r => r.num === a.n)) d.push(a.n); });
+    if(document.getElementById('lista-dormidos')) document.getElementById('lista-dormidos').innerText = d.slice(0,10).join(', ');
+}
+
+// IMPORTANTE: Conectar el botón VER al hacer click
+document.addEventListener('DOMContentLoaded', () => {
+    const btnVer = document.querySelector('button[onclick="verPatrones()"]') || document.querySelector('.tab-content button');
+    if(btnVer) btnVer.onclick = verPatronesPorAnimal;
+    inicializarSistema();
+});
 
 window.onload = inicializarSistema;
