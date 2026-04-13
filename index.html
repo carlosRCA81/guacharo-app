@@ -3,73 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador CRCA Pro</title>
+    <title>CRCA ELITE v3</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="login-screen">
-        <h2>SISTEMA CRCA</h2>
-        <input type="password" id="access-key" placeholder="Clave">
-        <button onclick="checkAccess()">ENTRAR</button>
+    <header>
+        <h1>ANALIZADOR CRCA</h1>
+        <div id="live-clock">00:00:00</div>
+        <div class="tab-container">
+            <button class="tab-btn active" onclick="openTab(event, 'registro')">REGISTRO</button>
+            <button class="tab-btn" onclick="openTab(event, 'estudio')">ESTUDIO 75</button>
+            <button class="tab-btn" onclick="openTab(event, 'historial')">HISTORIAL</button>
+        </div>
+    </header>
+
+    <div id="registro" class="tab-content active">
+        <div class="panel-diario" id="panel-diario-sorteos"></div>
+        
+        <input type="date" id="fecha-analisis" class="input-full">
+        
+        <div class="entrada-rapida">
+            <input type="text" id="num-rapido" placeholder="Nro" maxlength="2">
+            <button onclick="registrarRapido()">OK</button>
+        </div>
+
+        <p>Último: <span id="last-num">--</span></p>
+        <div class="grid-animales" id="grid-container"></div>
     </div>
 
-    <div id="main-app" style="display: none;">
-        <header>
-            <h1>ANALIZADOR CRCA</h1>
-            <div id="live-clock">00:00:00</div>
-            <div class="tab-container">
-                <button class="tab-btn active" onclick="openTab(event, 'registro')">REGISTRO</button>
-                <button class="tab-btn" onclick="openTab(event, 'estudio')">ESTUDIO 75</button>
-                <button class="tab-btn" onclick="openTab(event, 'historial')">HISTORIAL</button>
-            </div>
-        </header>
+    <div id="estudio" class="tab-content">
+        <div class="card">
+            <h3>AUSENCIA GUACHARO</h3>
+            <div id="dias-sin-75" class="big-num">0</div>
+            <p>Sorteos transcurridos</p>
+        </div>
+    </div>
 
-        <section id="registro" class="tab-content active">
-            <div class="panel-diario" id="panel-diario-sorteos"></div>
-            
-            <div class="controls-row">
-                <input type="date" id="fecha-analisis">
-            </div>
-
-            <div class="entrada-rapida-container">
-                <input type="text" id="num-rapido" maxlength="2" placeholder="Nro">
-                <button onclick="registrarPorNumero()">OK</button>
-            </div>
-
-            <p class="ultimo-p">Último: <span id="last-num">--</span></p>
-            
-            <div class="grid-animales" id="grid-container"></div>
-        </section>
-
-        <section id="estudio" class="tab-content">
-            <div class="card-stats">
-                <h3>GUACHARO (75)</h3>
-                <div class="counter-box">
-                    <span id="dias-sin-75">0</span>
-                    <p>Sorteos Ausente</p>
-                </div>
-            </div>
-        </section>
-
-        <section id="historial" class="tab-content">
-            <div class="filtro-historial">
-                <input type="date" id="filtro-fecha-historial">
-                <button onclick="actualizarTabla()" class="btn-accept">ACEPTAR</button>
-            </div>
-
-            <div class="tabla-scroll">
-                <table>
-                    <thead>
-                        <tr><th>Fecha</th><th>Hora</th><th>Nro</th><th>Animal</th><th>Tipo</th></tr>
-                    </thead>
-                    <tbody id="lista-historial"></tbody>
-                </table>
-            </div>
-        </section>
+    <div id="historial" class="tab-content">
+        <div class="filtro">
+            <input type="date" id="filtro-fecha-historial">
+            <button onclick="filtrarHistorial()" class="btn-ver">ACEPTAR</button>
+        </div>
+        <div class="tabla-scroll">
+            <table>
+                <thead>
+                    <tr><th>Fecha</th><th>Hora</th><th>Nro</th><th>Animal</th><th>Tipo</th></tr>
+                </thead>
+                <tbody id="lista-historial"></tbody>
+            </table>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-    <script src="security.js"></script>
     <script src="logic.js"></script>
 </body>
 </html>
