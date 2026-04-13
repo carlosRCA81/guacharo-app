@@ -3,53 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRCA ELITE v3</title>
+    <title>CRCA ELITE</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <h1>ANALIZADOR CRCA</h1>
-        <div id="live-clock">00:00:00</div>
-        <div class="tab-container">
-            <button class="tab-btn active" onclick="openTab(event, 'registro')">REGISTRO</button>
-            <button class="tab-btn" onclick="openTab(event, 'estudio')">ESTUDIO 75</button>
-            <button class="tab-btn" onclick="openTab(event, 'historial')">HISTORIAL</button>
-        </div>
+    <header style="text-align: center; margin-bottom: 10px;">
+        <h2 style="color: var(--blue); margin: 5px;">ANALIZADOR CRCA</h2>
+        <div id="clock" style="color: #fbbf24; font-size: 1.2rem; font-weight: bold;">00:00:00</div>
     </header>
 
-    <div id="registro" class="tab-content active">
-        <div class="panel-diario" id="panel-diario-sorteos"></div>
-        
-        <input type="date" id="fecha-analisis" class="input-full">
-        
-        <div class="entrada-rapida">
-            <input type="text" id="num-rapido" placeholder="Nro" maxlength="2">
-            <button onclick="registrarRapido()">OK</button>
-        </div>
-
-        <p>Último: <span id="last-num">--</span></p>
-        <div class="grid-animales" id="grid-container"></div>
+    <div class="tab-container">
+        <button class="tab-btn active" onclick="openTab(event, 'reg')">REGISTRO</button>
+        <button class="tab-btn" onclick="openTab(event, 'est')">ESTUDIO 75</button>
+        <button class="tab-btn" onclick="openTab(event, 'hist')">HISTORIAL</button>
     </div>
 
-    <div id="estudio" class="tab-content">
-        <div class="card">
+    <div id="reg" class="tab-content">
+        <div class="panel-diario" id="hora-panel"></div>
+        <input type="date" id="fecha-reg" class="input-full" onchange="renderHoras()">
+        <div class="grid-animales" id="animal-grid"></div>
+    </div>
+
+    <div id="est" class="tab-content" style="display: none; text-align: center;">
+        <div style="background: var(--card); padding: 20px; border-radius: 10px;">
             <h3>AUSENCIA GUACHARO</h3>
-            <div id="dias-sin-75" class="big-num">0</div>
-            <p>Sorteos transcurridos</p>
+            <div id="stat-75" style="font-size: 3rem; color: var(--green); font-weight: bold;">0</div>
+            <p>Sorteos sin salir</p>
         </div>
     </div>
 
-    <div id="historial" class="tab-content">
-        <div class="filtro">
-            <input type="date" id="filtro-fecha-historial">
-            <button onclick="filtrarHistorial()" class="btn-ver">ACEPTAR</button>
-        </div>
-        <div class="tabla-scroll">
+    <div id="hist" class="tab-content" style="display: none;">
+        <input type="date" id="fecha-hist" class="input-full">
+        <button class="btn-ok" onclick="filterHist()">ACEPTAR / VER FECHA</button>
+        <div class="tabla-scroll" style="margin-top: 15px;">
             <table>
                 <thead>
                     <tr><th>Fecha</th><th>Hora</th><th>Nro</th><th>Animal</th><th>Tipo</th></tr>
                 </thead>
-                <tbody id="lista-historial"></tbody>
+                <tbody id="hist-body"></tbody>
             </table>
         </div>
     </div>
