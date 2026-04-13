@@ -1,10 +1,11 @@
 // ==========================================
-// CONFIGURACIÓN SUPABASE - ANALIZADOR CRCA
+// CONFIGURACIÓN SUPABASE
 // ==========================================
 const SUPABASE_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// DATA MAESTRA
 const listaAnimales = [
     {n:'0', a:'DELFIN', t:'AGUA'}, {n:'00', a:'BALLENA', t:'AGUA'}, {n:'01', a:'CARNERO', t:'TIERRA'},
     {n:'02', a:'TORO', t:'TIERRA'}, {n:'03', a:'CIEMPIES', t:'TIERRA'}, {n:'04', a:'ALACRAN', t:'TIERRA'},
@@ -35,158 +36,137 @@ const listaAnimales = [
 ];
 
 const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
-let historial = [];
-let horaSeleccionadaActiva = null;
+let historialGlobal = [];
+let horaSeleccionada = null;
 
-// RELOJ
-setInterval(() => {
-    const clock = document.getElementById('live-clock');
-    if(clock) clock.innerText = new Date().toLocaleTimeString();
-}, 1000);
+// INICIO
+window.onload = async () => {
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('fecha-analisis').value = hoy;
+    document.getElementById('filtro-fecha-historial').value = hoy;
+    
+    generarGridAnimales();
+    await cargarTodoElHistorial();
+    
+    setInterval(() => {
+        document.getElementById('live-clock').innerText = new Date().toLocaleTimeString();
+    }, 1000);
+};
 
-// NAVEGACIÓN
 function openTab(evt, tabName) {
     let tabcontent = document.getElementsByClassName("tab-content");
-    for (let i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
+    for (let i = 0; i < tabcontent.length; i++) tabcontent[i].style.display = "none";
     let tablinks = document.getElementsByClassName("tab-btn");
-    for (let i = 0; i < tablinks.length; i++) { tablinks[i].classList.remove("active"); }
+    for (let i = 0; i < tablinks.length; i++) tablinks[i].classList.remove("active");
     document.getElementById(tabName).style.display = "block";
     evt.currentTarget.classList.add("active");
 }
 
-async function inicializarSistema() {
-    const fechaInput = document.getElementById('fecha-analisis');
-    const fechaHistorial = document.getElementById('filtro-fecha-historial');
-    const hoy = new Date().toISOString().split('T')[0];
-    
-    if(fechaInput) {
-        fechaInput.value = hoy;
-        fechaInput.addEventListener('change', generarPanelDiario);
-    }
-    if(fechaHistorial) fechaHistorial.value = hoy;
-
-    generarGridBotones();
-    await cargarHistorialRemoto();
+async function cargarTodoElHistorial() {
+    try {
+        const { data, error } = await _supabase
+            .from('historial_sorteos')
+            .select('*')
+            .order('fecha', { ascending: false });
+        if (data) {
+            historialGlobal = data;
+            actualizarTodo();
+        }
+    } catch (e) { console.error("Error cargando datos"); }
 }
 
-function generarGridBotones() {
-    const container = document.getElementById('grid-container');
-    if(!container) return;
-    container.innerHTML = '';
-    listaAnimales.forEach(animal => {
-        const btn = document.createElement('div');
-        btn.className = 'animal-item';
-        btn.innerHTML = `<strong>${animal.n}</strong><br><small>${animal.a}</small>`;
-        btn.onclick = () => {
-            if (!horaSeleccionadaActiva) return alert("Selecciona una HORA arriba");
-            registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
+function generarGridAnimales() {
+    const grid = document.getElementById('grid-container');
+    grid.innerHTML = '';
+    listaAnimales.forEach(a => {
+        const div = document.createElement('div');
+        div.className = 'animal-item';
+        div.innerHTML = `<b>${a.n}</b><br><small>${a.a}</small>`;
+        div.onclick = () => {
+            if(!horaSeleccionada) return alert("Selecciona una hora primero");
+            guardarSorteo(a.n, a.a, a.t);
         };
-        container.appendChild(btn);
+        grid.appendChild(div);
     });
 }
 
-function generarPanelDiario() {
+function dibujarPanelHoras() {
     const panel = document.getElementById('panel-diario-sorteos');
-    if(!panel) return;
     panel.innerHTML = '';
-    const fechaActual = document.getElementById('fecha-analisis').value;
+    const fecha = document.getElementById('fecha-analisis').value;
 
-    horasSorteo.forEach(hora => {
+    horasSorteo.forEach(h => {
         const box = document.createElement('div');
         box.className = 'hora-box';
-        const reg = historial.find(r => r.fecha === fechaActual && r.hora === hora);
+        const registro = historialGlobal.find(r => r.fecha === fecha && r.hora === h);
         
-        if (reg) {
+        if (registro) {
             box.classList.add('jugado');
-            box.innerText = `${hora}\n(${reg.num})`;
+            box.innerText = `${h}\n(${registro.num})`;
         } else {
-            box.innerText = hora;
+            box.innerText = h;
         }
 
-        if (hora === horaSeleccionadaActiva) {
-            box.classList.add('active-select');
-        }
+        if (h === horaSeleccionada) box.classList.add('active-select');
 
         box.onclick = () => {
-            horaSeleccionadaActiva = hora;
-            generarPanelDiario(); // Refresca para marcar la selección
+            horaSeleccionada = h;
+            dibujarPanelHoras();
             document.getElementById('num-rapido').focus();
         };
         panel.appendChild(box);
     });
 }
 
-async function registrarSorteo(num, animal, tipo, hora) {
-    const fecha = document.getElementById('fecha-analisis').value;
-    const nuevoRegistro = { fecha, hora, num, animal, tipo };
-    try {
-        const { error } = await _supabase.from('historial_sorteos').upsert(nuevoRegistro);
-        if(error) throw error;
-        await cargarHistorialRemoto();
-    } catch (err) { console.error("Error al guardar:", err); }
-}
-
-function registrarPorNumero() {
-    if (!horaSeleccionadaActiva) return alert("Selecciona una HORA");
-    const inputNum = document.getElementById('num-rapido');
-    let val = inputNum.value.trim();
-    if (val !== "0" && val !== "00" && val.length === 1) val = "0" + val;
-    const animal = listaAnimales.find(a => a.n === val);
-    if (!animal) return alert("Número no existe");
-    registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
-    inputNum.value = '';
-}
-
-// CARGA OPTIMIZADA (Límite de 100 para no poner lenta la web)
-async function cargarHistorialRemoto() {
-    try {
-        const { data, error } = await _supabase
-            .from('historial_sorteos')
-            .select('*')
-            .order('fecha', { ascending: false })
-            .limit(100);
-        if (data) {
-            historial = data;
-            actualizarInterfaz();
-        }
-    } catch (err) { console.log("Error Supabase"); }
-}
-
-function actualizarInterfaz() {
-    generarPanelDiario();
-    actualizarTabla();
-    analizarGuacharo();
-}
-
-// TABLA CON FILTRO DE FECHA PARA VELOCIDAD
-function actualizarTabla() {
-    const cuerpo = document.getElementById('lista-historial');
-    const filtro = document.getElementById('filtro-fecha-historial').value;
-    if(!cuerpo) return;
+async function guardarSorteo(n, a, t) {
+    const f = document.getElementById('fecha-analisis').value;
+    const nuevo = { fecha: f, hora: horaSeleccionada, num: n, animal: a, tipo: t };
     
-    cuerpo.innerHTML = '';
-    const datosFiltrados = historial.filter(r => r.fecha === filtro);
+    const { error } = await _supabase.from('historial_sorteos').upsert(nuevo);
+    if(!error) {
+        document.getElementById('last-num').innerText = `${n} - ${a}`;
+        await cargarTodoElHistorial();
+    }
+}
 
-    if(datosFiltrados.length === 0) {
-        cuerpo.innerHTML = '<tr><td colspan="5">No hay datos para esta fecha</td></tr>';
+function registrarRapido() {
+    if(!horaSeleccionada) return alert("Selecciona una hora");
+    let val = document.getElementById('num-rapido').value.trim();
+    if(val.length === 1 && val !== "0") val = "0" + val;
+    const animal = listaAnimales.find(a => a.n === val);
+    if(animal) {
+        guardarSorteo(animal.n, animal.a, animal.t);
+        document.getElementById('num-rapido').value = '';
+    } else {
+        alert("Número inválido");
+    }
+}
+
+function filtrarHistorial() {
+    const tabla = document.getElementById('lista-historial');
+    const fechaBusqueda = document.getElementById('filtro-fecha-historial').value;
+    tabla.innerHTML = '';
+
+    const filtrados = historialGlobal.filter(r => r.fecha === fechaBusqueda);
+
+    if(filtrados.length === 0) {
+        tabla.innerHTML = '<tr><td colspan="5">Sin datos para esta fecha</td></tr>';
         return;
     }
 
-    datosFiltrados.sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora)).forEach(r => {
-        const isGuacharo = r.num === '75' ? 'class="row-guacharo"' : '';
-        cuerpo.innerHTML += `<tr ${isGuacharo}><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
+    filtrados.sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora)).forEach(r => {
+        tabla.innerHTML += `<tr><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
     });
 }
 
-function analizarGuacharo() {
+function actualizarTodo() {
+    dibujarPanelHoras();
+    filtrarHistorial();
+    const count = [...historialGlobal].sort((a,b) => a.fecha.localeCompare(b.fecha) || horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
     let sin75 = 0;
-    const temp = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha) || horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
-    for(let i = temp.length-1; i >= 0; i--) {
-        if(temp[i].num === '75') break;
+    for(let i = count.length-1; i>=0; i--) {
+        if(count[i].num === '75') break;
         sin75++;
     }
-    const display = document.getElementById('dias-sin-75');
-    if(display) display.innerText = sin75;
+    document.getElementById('dias-sin-75').innerText = sin75;
 }
-
-window.onload = inicializarSistema;
