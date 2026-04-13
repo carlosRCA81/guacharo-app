@@ -36,75 +36,71 @@ const listaAnimales = [
 
 const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
 let historial = [];
-let horaSeleccionadaActiva = null;
 
-// Reloj
-setInterval(() => {
-    const clock = document.getElementById('live-clock');
-    if(clock) clock.innerText = new Date().toLocaleTimeString();
-}, 1000);
+// Función para cargar TODO desde el principio
+async function cargarHistorialRecuperacion() {
+    console.log("Intentando recuperar datos de Supabase...");
+    const { data, error } = await _supabase
+        .from('historial_sorteos')
+        .select('*')
+        .order('fecha', { ascending: false });
 
-// Pestañas
-function openTab(evt, tabName) {
-    let tabcontent = document.getElementsByClassName("tab-content");
-    for (let i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
-    let tablinks = document.getElementsByClassName("tab-btn");
-    for (let i = 0; i < tablinks.length; i++) { tablinks[i].className = tablinks[i].className.replace(" active", ""); }
-    document.getElementById(tabName).style.display = "block";
-    evt.currentTarget.className += " active";
+    if (error) {
+        console.error("Error cargando historial:", error);
+        return;
+    }
+
+    if (data) {
+        historial = data;
+        console.log("Datos recuperados:", historial.length);
+        actualizarInterfaz();
+    }
 }
 
-// Inicio - Se añaden los event listeners faltantes
+// Función que calcula los días ausente y el balance
+function actualizarInterfaz() {
+    // 1. Mostrar el último resultado
+    if (historial.length > 0) {
+        const ultimo = historial[0];
+        document.getElementById('last-num').innerText = `${ultimo.num} - ${ultimo.animal}`;
+    }
+
+    // 2. Calcular días sin el 75 (Guacharo)
+    let sin75 = 0;
+    const sorted = [...historial].sort((a, b) => b.fecha.localeCompare(a.fecha) || horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
+    
+    for (let r of sorted) {
+        if (r.num === '75') break;
+        sin75++;
+    }
+    document.getElementById('dias-sin-75').innerText = sin75;
+
+    // 3. Balance de Elementos (Tierra, Aire, Agua) para la fecha seleccionada
+    const fechaActual = document.getElementById('fecha-analisis').value;
+    let counts = { TIERRA: 0, AIRE: 0, AGUA: 0 };
+    historial.filter(r => r.fecha === fechaActual).forEach(r => {
+        if (counts[r.tipo] !== undefined) counts[r.tipo]++;
+    });
+    
+    document.getElementById('val-tierra').innerText = counts.TIERRA;
+    document.getElementById('val-aire').innerText = counts.AIRE;
+    document.getElementById('val-agua').innerText = counts.AGUA;
+
+    generarPanelDiario();
+}
+
 async function inicializarSistema() {
-    generarGridBotones();
-    llenarSelectEstudio();
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById('fecha-analisis').value = hoy;
     document.getElementById('fecha-historial').value = hoy;
     
-    // Conectar el botón BUSCAR del historial (Botón Verde)
-    const btnBuscar = document.querySelector('button.btn-buscar') || document.querySelector('#historial button');
-    if(btnBuscar) btnBuscar.onclick = cargarHistorialPorFecha;
-
-    document.getElementById('fecha-analisis').addEventListener('change', generarPanelDiario);
+    // Escuchar cambios de fecha
+    document.getElementById('fecha-analisis').addEventListener('change', actualizarInterfaz);
     
     await cargarHistorialRecuperacion();
-    generarPanelDiario();
+    llenarSelectEstudio();
+    generarGridBotones();
 }
 
-// ... (Funciones de registro y grid se mantienen igual para no romper tu lógica)
-
-async function cargarHistorialPorFecha() {
-    const fecha = document.getElementById('fecha-historial').value;
-    const cuerpo = document.getElementById('lista-historial');
-    if(!cuerpo) return;
-
-    cuerpo.innerHTML = '<tr><td colspan="5">Buscando datos...</td></tr>';
-
-    const { data, error } = await _supabase
-        .from('historial_sorteos')
-        .select('*')
-        .eq('fecha', fecha)
-        .order('hora', { ascending: true });
-
-    if (error) {
-        cuerpo.innerHTML = '<tr><td colspan="5">Error de conexión</td></tr>';
-        return;
-    }
-
-    if (data && data.length > 0) {
-        cuerpo.innerHTML = '';
-        // Ordenar según el array horasSorteo para que la 8 AM salga primero
-        data.sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora)).forEach(r => {
-            const cls = r.num === '75' ? 'class="row-guacharo"' : '';
-            cuerpo.innerHTML += `<tr ${cls}><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
-        });
-    } else {
-        cuerpo.innerHTML = '<tr><td colspan="5">No hay resultados para esta fecha</td></tr>';
-    }
-}
-
-// El resto de tus funciones de análisis permanecen igual
-// ...
-
+// Asegurarse de que el sistema inicie
 window.onload = inicializarSistema;
