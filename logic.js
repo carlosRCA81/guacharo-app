@@ -55,14 +55,17 @@ function openTab(evt, tabName) {
 }
 
 async function inicializarSistema() {
-    generarPanelDiario();
-    generarGridBotones();
-    llenarSelectEstudio();
     const fechaInput = document.getElementById('fecha-analisis');
+    const fechaHistorial = document.getElementById('filtro-fecha-historial');
+    const hoy = new Date().toISOString().split('T')[0];
+    
     if(fechaInput) {
-        fechaInput.value = new Date().toISOString().split('T')[0];
+        fechaInput.value = hoy;
         fechaInput.addEventListener('change', generarPanelDiario);
     }
+    if(fechaHistorial) fechaHistorial.value = hoy;
+
+    generarGridBotones();
     await cargarHistorialRemoto();
 }
 
@@ -72,10 +75,10 @@ function generarGridBotones() {
     container.innerHTML = '';
     listaAnimales.forEach(animal => {
         const btn = document.createElement('div');
-        btn.className = 'animal-item'; // Cambiado de animal-btn a animal-item según tu CSS
+        btn.className = 'animal-item';
         btn.innerHTML = `<strong>${animal.n}</strong><br><small>${animal.a}</small>`;
         btn.onclick = () => {
-            if (!horaSeleccionadaActiva) return alert("Toca una HORA primero");
+            if (!horaSeleccionadaActiva) return alert("Selecciona una HORA arriba");
             registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
         };
         container.appendChild(btn);
@@ -92,16 +95,21 @@ function generarPanelDiario() {
         const box = document.createElement('div');
         box.className = 'hora-box';
         const reg = historial.find(r => r.fecha === fechaActual && r.hora === hora);
+        
         if (reg) {
             box.classList.add('jugado');
             box.innerText = `${hora}\n(${reg.num})`;
         } else {
             box.innerText = hora;
         }
+
+        if (hora === horaSeleccionadaActiva) {
+            box.classList.add('active-select');
+        }
+
         box.onclick = () => {
             horaSeleccionadaActiva = hora;
-            document.querySelectorAll('.hora-box').forEach(b => b.style.border = '1px solid #475569');
-            box.style.border = '2px solid #38bdf8';
+            generarPanelDiario(); // Refresca para marcar la selección
             document.getElementById('num-rapido').focus();
         };
         panel.appendChild(box);
@@ -112,9 +120,10 @@ async function registrarSorteo(num, animal, tipo, hora) {
     const fecha = document.getElementById('fecha-analisis').value;
     const nuevoRegistro = { fecha, hora, num, animal, tipo };
     try {
-        await _supabase.from('historial_sorteos').upsert(nuevoRegistro);
+        const { error } = await _supabase.from('historial_sorteos').upsert(nuevoRegistro);
+        if(error) throw error;
         await cargarHistorialRemoto();
-    } catch (err) { alert("Error de red"); }
+    } catch (err) { console.error("Error al guardar:", err); }
 }
 
 function registrarPorNumero() {
@@ -128,9 +137,14 @@ function registrarPorNumero() {
     inputNum.value = '';
 }
 
+// CARGA OPTIMIZADA (Límite de 100 para no poner lenta la web)
 async function cargarHistorialRemoto() {
     try {
-        const { data, error } = await _supabase.from('historial_sorteos').select('*');
+        const { data, error } = await _supabase
+            .from('historial_sorteos')
+            .select('*')
+            .order('fecha', { ascending: false })
+            .limit(100);
         if (data) {
             historial = data;
             actualizarInterfaz();
@@ -139,24 +153,26 @@ async function cargarHistorialRemoto() {
 }
 
 function actualizarInterfaz() {
+    generarPanelDiario();
     actualizarTabla();
     analizarGuacharo();
-    generarPanelDiario();
-    calcularBalanceElementos();
-    detectarDormidos();
-    if(historial.length > 0) {
-        const temp = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha) || horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
-        const ult = temp[temp.length-1];
-        document.getElementById('last-num').innerText = `${ult.num} - ${ult.animal}`;
-    }
 }
 
+// TABLA CON FILTRO DE FECHA PARA VELOCIDAD
 function actualizarTabla() {
     const cuerpo = document.getElementById('lista-historial');
+    const filtro = document.getElementById('filtro-fecha-historial').value;
     if(!cuerpo) return;
+    
     cuerpo.innerHTML = '';
-    [...historial].sort((a,b) => b.fecha.localeCompare(a.fecha) || horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora))
-    .slice(0, 20).forEach(r => {
+    const datosFiltrados = historial.filter(r => r.fecha === filtro);
+
+    if(datosFiltrados.length === 0) {
+        cuerpo.innerHTML = '<tr><td colspan="5">No hay datos para esta fecha</td></tr>';
+        return;
+    }
+
+    datosFiltrados.sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora)).forEach(r => {
         const isGuacharo = r.num === '75' ? 'class="row-guacharo"' : '';
         cuerpo.innerHTML += `<tr ${isGuacharo}><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
     });
@@ -169,30 +185,8 @@ function analizarGuacharo() {
         if(temp[i].num === '75') break;
         sin75++;
     }
-    document.getElementById('dias-sin-75').innerText = sin75;
-}
-
-function calcularBalanceElementos() {
-    const f = document.getElementById('fecha-analisis').value;
-    let counts = { TIERRA: 0, AIRE: 0, AGUA: 0 };
-    historial.filter(r => r.fecha === f).forEach(r => { if(counts[r.tipo] !== undefined) counts[r.tipo]++; });
-    document.getElementById('val-tierra').innerText = counts.TIERRA;
-    document.getElementById('val-aire').innerText = counts.AIRE;
-    document.getElementById('val-agua').innerText = counts.AGUA;
-}
-
-function detectarDormidos() {
-    let dormidos = [];
-    listaAnimales.forEach(ani => {
-        if(!historial.some(r => r.num === ani.n)) dormidos.push(ani.n);
-    });
-    document.getElementById('lista-dormidos').innerText = dormidos.slice(0,10).join(', ') + "...";
-}
-
-function llenarSelectEstudio() {
-    const sel = document.getElementById('select-animal-estudio');
-    if(!sel) return;
-    sel.innerHTML = listaAnimales.map(a => `<option value="${a.n}">${a.n} - ${a.a}</option>`).join('');
+    const display = document.getElementById('dias-sin-75');
+    if(display) display.innerText = sin75;
 }
 
 window.onload = inicializarSistema;
