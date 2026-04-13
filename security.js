@@ -9,8 +9,10 @@ function checkAccess() {
         loginScreen.style.display = 'none';
         mainApp.style.display = 'block';
         
-        // Esta es la conexión con logic.js
-        inicializarSistema(); 
+        // Arrancar el sistema de lógica
+        if (typeof inicializarSistema === 'function') {
+            inicializarSistema();
+        }
         
         setInterval(() => {
             const clock = document.getElementById('live-clock');
@@ -20,3 +22,7 @@ function checkAccess() {
         alert("ERROR: CLAVE INCORRECTA");
     }
 }
+
+document.getElementById('access-key')?.addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') checkAccess();
+});
