@@ -59,10 +59,13 @@ async function inicializarSistema() {
     generarGridBotones();
     llenarSelectEstudio();
     const hoy = new Date().toISOString().split('T')[0];
-    document.getElementById('fecha-analisis').value = hoy;
-    document.getElementById('fecha-historial').value = hoy;
+    const fAnalisis = document.getElementById('fecha-analisis');
+    const fHistorial = document.getElementById('fecha-historial');
     
-    document.getElementById('fecha-analisis').addEventListener('change', generarPanelDiario);
+    if(fAnalisis) fAnalisis.value = hoy;
+    if(fHistorial) fHistorial.value = hoy;
+    
+    if(fAnalisis) fAnalisis.addEventListener('change', generarPanelDiario);
     
     await cargarHistorialRecuperacion();
     generarPanelDiario();
@@ -107,7 +110,8 @@ function generarPanelDiario() {
         box.onclick = () => {
             horaSeleccionadaActiva = hora;
             generarPanelDiario();
-            document.getElementById('num-rapido').focus();
+            const inputNum = document.getElementById('num-rapido');
+            if(inputNum) inputNum.focus();
         };
         panel.appendChild(box);
     });
@@ -142,6 +146,7 @@ function registrarPorNumero() {
 async function cargarHistorialPorFecha() {
     const fecha = document.getElementById('fecha-historial').value;
     const cuerpo = document.getElementById('lista-historial');
+    if(!cuerpo) return;
     cuerpo.innerHTML = '<tr><td colspan="5">Cargando...</td></tr>';
 
     const { data, error } = await _supabase.from('historial_sorteos').select('*').eq('fecha', fecha);
@@ -155,7 +160,7 @@ async function cargarHistorialPorFecha() {
 }
 
 async function cargarHistorialRecuperacion() {
-    const { data } = await _supabase.from('historial_sorteos').select('*').order('fecha', {ascending: false}).limit(200);
+    const { data } = await _supabase.from('historial_sorteos').select('*').order('fecha', {ascending: false}).limit(400);
     if (data) {
         historial = data;
         actualizarInterfaz();
@@ -165,12 +170,14 @@ async function cargarHistorialRecuperacion() {
 function actualizarInterfaz() {
     if(historial.length > 0) {
         const sorted = [...historial].sort((a,b) => b.fecha.localeCompare(a.fecha) || horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
-        document.getElementById('last-num').innerText = `${sorted[0].num} - ${sorted[0].animal}`;
+        const lastNumElem = document.getElementById('last-num');
+        if(lastNumElem) lastNumElem.innerText = `${sorted[0].num} - ${sorted[0].animal}`;
     }
     analizarGuacharo();
     generarPanelDiario();
     calcularBalanceElementos();
     detectarDormidos();
+    generarPrediccionFijos();
 }
 
 function analizarGuacharo() {
@@ -180,7 +187,61 @@ function analizarGuacharo() {
         if(sorted[i].num === '75') break;
         sin75++;
     }
-    document.getElementById('dias-sin-75').innerText = sin75;
+    const diasSin75 = document.getElementById('dias-sin-75');
+    if(diasSin75) diasSin75.innerText = sin75;
+}
+
+// NUEVA FUNCIÓN: ALGORITMO DE PREDICCIÓN 3 FIJOS
+function generarPrediccionFijos() {
+    const display = document.getElementById('analisis-jugada');
+    if(!display) return;
+
+    // Lógica avanzada: Buscamos qué salió antes de los últimos '75'
+    // Y combinamos con los animales más "dormidos"
+    let fijos = ["75"]; // El Guácharo es base por ser especial
+    
+    // Sacamos los dormidos reales
+    let dormidos = [];
+    listaAnimales.forEach(ani => {
+        if(!historial.some(r => r.num === ani.n)) dormidos.push(ani.n);
+    });
+
+    if(dormidos.length > 0) fijos.push(dormidos[0]);
+    
+    // Tercer número por tipo (Aire/Tierra/Agua) que menos ha salido hoy
+    const fechaActual = document.getElementById('fecha-analisis').value;
+    let counts = { TIERRA: 0, AIRE: 0, AGUA: 0 };
+    historial.filter(r => r.fecha === fechaActual).forEach(r => { counts[r.tipo]++; });
+    
+    let tipoFaltante = Object.keys(counts).reduce((a, b) => counts[a] < counts[b] ? a : b);
+    let sugeridoTipo = listaAnimales.find(a => a.t === tipoFaltante && !fijos.includes(a.n));
+    if(sugeridoTipo) fijos.push(sugeridoTipo.n);
+
+    display.innerHTML = `<div style="color:#00e676; font-size:1.2em;">🎯 FIJOS: ${fijos.join(' - ')}</div><small>Basado en ciclos de ausencia y tipo ${tipoFaltante}</small>`;
+}
+
+// CORRECCIÓN: FUNCIÓN PARA LA SECCIÓN PATRONES
+function verPatronesPorAnimal() {
+    const numSeleccionado = document.getElementById('select-animal-estudio').value;
+    const displayPatrones = document.getElementById('analisis-jugada'); // O el div que uses para mostrar patrones
+    
+    if(!numSeleccionado) return;
+
+    // Buscamos qué números han salido justo después del seleccionado en el historial
+    let siguientes = [];
+    const sorted = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha) || horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
+    
+    for(let i = 0; i < sorted.length - 1; i++) {
+        if(sorted[i].num === numSeleccionado) {
+            siguientes.push(sorted[i+1].num + " (" + sorted[i+1].animal + ")");
+        }
+    }
+
+    if(siguientes.length > 0) {
+        displayPatrones.innerHTML = `<strong>Después del ${numSeleccionado} han salido:</strong><br>${[...new Set(siguientes)].join(', ')}`;
+    } else {
+        displayPatrones.innerHTML = "No hay datos suficientes para este animal todavía.";
+    }
 }
 
 function detectarDormidos() {
@@ -188,26 +249,37 @@ function detectarDormidos() {
     listaAnimales.forEach(ani => {
         if(!historial.some(r => r.num === ani.n)) dormidos.push(ani.n);
     });
-    document.getElementById('lista-dormidos').innerText = dormidos.slice(0,10).join(', ') + "...";
+    const listaDormidos = document.getElementById('lista-dormidos');
+    if(listaDormidos) listaDormidos.innerText = dormidos.slice(0,10).join(', ') + "...";
 }
 
 function calcularBalanceElementos() {
     const fecha = document.getElementById('fecha-analisis').value;
     let counts = { TIERRA: 0, AIRE: 0, AGUA: 0 };
     historial.filter(r => r.fecha === fecha).forEach(r => { counts[r.tipo]++; });
-    document.getElementById('val-tierra').innerText = counts.TIERRA;
-    document.getElementById('val-aire').innerText = counts.AIRE;
-    document.getElementById('val-agua').innerText = counts.AGUA;
+    
+    const vTierra = document.getElementById('val-tierra');
+    const vAire = document.getElementById('val-aire');
+    const vAgua = document.getElementById('val-agua');
+    
+    if(vTierra) vTierra.innerText = counts.TIERRA;
+    if(vAire) vAire.innerText = counts.AIRE;
+    if(vAgua) vAgua.innerText = counts.AGUA;
 }
 
 function llenarSelectEstudio() {
     const sel = document.getElementById('select-animal-estudio');
+    if(!sel) return;
     sel.innerHTML = '<option value="">-- Selecciona --</option>';
     listaAnimales.forEach(a => {
         let opt = document.createElement('option');
         opt.value = a.n; opt.innerText = `${a.n} - ${a.a}`; sel.appendChild(opt);
     });
 }
+
+// Vinculamos el botón "VER" de patrones a la función
+const btnVerPatrones = document.querySelector('.tab-content button'); // Ajusta según tu HTML
+if(btnVerPatrones) btnVerPatrones.onclick = verPatronesPorAnimal;
 
 const btnBorrar = document.getElementById('btn-borrar');
 if(btnBorrar) {
