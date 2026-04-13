@@ -1,55 +1,94 @@
 :root {
-    --bg-profundo: #0f172a;
-    --bg-acero: #1e293b;
-    --bg-interfaz: #334155;
-    --celeste: #38bdf8;
-    --oro: #fbbf24;
-    --rojo: #ef4444;
-    --blanco: #f8fafc;
+    --deep-bg: #020617;
+    --card-bg: #1e293b;
+    --accent-gold: #fbbf24;
+    --accent-glow: #22c55e;
+    --text-main: #f8fafc;
 }
 
 body {
-    background-color: var(--bg-profundo);
-    color: var(--blanco);
-    font-family: sans-serif;
-    margin: 0; padding: 15px;
+    background: var(--deep-bg);
+    color: var(--text-main);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    margin: 0; padding: 10px;
 }
 
-#login-screen, #main-app {
-    background: var(--bg-acero);
-    padding: 20px;
+.dashboard-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.header-pro {
+    text-align: center;
+    border-bottom: 2px solid var(--accent-gold);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.clock-digital {
+    font-size: 1.5rem;
+    color: var(--accent-gold);
+    font-weight: bold;
+}
+
+.intel-card {
+    background: var(--card-bg);
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid rgba(255,255,255,0.05);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
 }
 
-h1 { color: var(--celeste); text-align: center; font-size: 1.5rem; margin-top: 0; }
-#live-clock { text-align: center; color: var(--oro); font-size: 1.2rem; font-weight: bold; margin-bottom: 15px; }
+.prediction-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+}
 
-/* Pestañas */
-.tab-container { display: flex; gap: 5px; margin-bottom: 15px; }
-.tab-btn { flex: 1; padding: 10px; background: var(--bg-interfaz); border: none; color: white; border-radius: 5px; font-size: 0.7rem; cursor: pointer; }
-.tab-btn.active { background: var(--celeste); color: var(--bg-profundo); font-weight: bold; }
+.fixed-play {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid var(--accent-glow);
+    padding: 12px;
+    text-align: center;
+    border-radius: 8px;
+}
 
-.tab-content { display: none; }
-.tab-content.active { display: block; }
+.fixed-play span {
+    display: block;
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: var(--accent-glow);
+}
 
-/* Controles */
-.controls-row { display: flex; gap: 10px; margin-bottom: 15px; }
-input, select, button { border-radius: 5px; padding: 10px; border: none; width: 100%; }
-input, select { background: var(--bg-profundo); color: white; }
-button { background: var(--celeste); color: var(--bg-profundo); font-weight: bold; }
+.compact-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+}
 
-.display-reciente { background: var(--bg-profundo); padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-.btn-danger { background: var(--rojo); color: white; width: auto; padding: 5px 10px; }
+.compact-table th { color: var(--accent-gold); text-align: center; padding: 8px; border-bottom: 1px solid #475569; }
+.compact-table td { padding: 8px; text-align: center; border-bottom: 1px solid #1e293b; }
 
-/* Cuadrícula */
-.grid-animales { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; max-height: 350px; overflow-y: auto; padding: 5px; }
-.animal-item { background: var(--bg-interfaz); padding: 8px; text-align: center; border-radius: 4px; font-size: 0.7rem; border: 1px solid #475569; }
+input, select, button {
+    background: #0f172a;
+    border: 1px solid #334155;
+    color: white;
+    padding: 12px;
+    border-radius: 8px;
+    width: 100%;
+    margin-bottom: 8px;
+    box-sizing: border-box;
+}
 
-/* Tabla Historial */
-.tabla-contenedor { overflow-x: auto; margin-top: 10px; }
-table { width: 100%; border-collapse: collapse; font-size: 0.7rem; }
-th, td { border: 1px solid #475569; padding: 8px; text-align: center; }
-th { background: var(--bg-profundo); color: var(--celeste); }
+button.btn-save {
+    background: var(--accent-glow);
+    color: #020617;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
 
-.card-stats { background: var(--bg-profundo); padding: 15px; border-radius: 8px; border-left: 4px solid var(--oro); }
+button.btn-save:active { transform: scale(0.98); }
