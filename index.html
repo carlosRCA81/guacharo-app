@@ -40,14 +40,41 @@
                 <p>Último: <span id="last-num">--</span></p>
                 <button id="btn-borrar" class="btn-danger">BORRAR</button>
             </div>
-            <div class="grid-animales" id="grid-container"></div>
+            <div id="grid-container" class="grid-animales"></div>
+        </section>
+
+        <section id="estudio" class="tab-content">
+            <h3>INTELIGENCIA GUACHARO (75)</h3>
+            <div class="card-stats">
+                <p>ESTADO DEL GUACHARO</p>
+                <div style="font-size: 2rem;"><span id="dias-sin-75">0</span> <small>Días</small></div>
+            </div>
+            <div id="resultado-patrones-guacharo" class="alerta-algoritmo"></div>
+            <div id="balance-elementos">
+                <span>🌬️ AIRE: <strong id="val-aire">0</strong></span>
+                <span>🌱 TIERRA: <strong id="val-tierra">0</strong></span>
+                <span>💧 AGUA: <strong id="val-agua">0</strong></span>
+            </div>
+            <div class="stat-card-mini">
+                <h4>⚠️ DORMIDOS:</h4>
+                <div id="lista-dormidos">Analizando...</div>
+            </div>
+        </section>
+
+        <section id="stats-gen" class="tab-content">
+            <h3>PATRONES POR ANIMAL</h3>
+            <div class="search-box">
+                <select id="select-animal-estudio"></select>
+                <button onclick="estudiarAnimalEspecifico()">VER</button>
+            </div>
+            <div id="resultado-patrones"></div>
         </section>
 
         <section id="historial" class="tab-content">
             <h3>DATOS ACUMULADOS</h3>
-            <div class="search-box" style="background: #1e293b; padding: 10px; border-radius: 8px; margin-bottom: 10px; display: flex; gap: 5px;">
-                <input type="date" id="fecha-consulta-historial" style="flex: 2;">
-                <button onclick="consultarFechaEspecifica()" style="flex: 1;">ACEPTAR</button>
+            <div class="search-box" style="display:flex; gap:5px; background:#1e293b; padding:10px; border-radius:8px;">
+                <input type="date" id="fecha-consulta-historial">
+                <button onclick="consultarFechaEspecifica()">ACEPTAR</button>
             </div>
             <div class="tabla-contenedor">
                 <table>
@@ -58,9 +85,6 @@
                 </table>
             </div>
         </section>
-
-        <section id="estudio" class="tab-content">...</section>
-        <section id="stats-gen" class="tab-content">...</section>
     </div>
 
     <script src="security.js"></script>
