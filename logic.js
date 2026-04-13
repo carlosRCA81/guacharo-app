@@ -117,3 +117,69 @@ async function cargarHistorialRemoto() {
 }
 
 // (Otras funciones como analizarGuacharo y detectarDormidos irían aquí)
+function detectarDormidos() {
+    const listaDormidosCont = document.getElementById('lista-dormidos');
+    if(!listaDormidosCont) return;
+
+    let dormidos = [];
+    listaAnimales.forEach(ani => {
+        const encontrado = historial.some(r => r.num === ani.n);
+        if(!encontrado) {
+            dormidos.push(ani.n + " (" + ani.a + ")");
+        }
+    });
+
+    if(dormidos.length > 0) {
+        listaDormidosCont.innerHTML = dormidos.slice(0, 8).join(', ') + "...";
+    } else {
+        listaDormidosCont.innerText = "Todos han salido.";
+    }
+}
+
+function analizarGuacharo() {
+    let sin75 = 0;
+    const tempSorted = [...historial].sort((a,b) => {
+        if (a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
+        return horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora);
+    });
+
+    for(let i = tempSorted.length-1; i >= 0; i--) {
+        if(tempSorted[i].num === '75') break;
+        sin75++;
+    }
+    
+    const display = document.getElementById('dias-sin-75');
+    if(display) display.innerText = sin75;
+
+    const resEstudio = document.getElementById('resultado-patrones-guacharo');
+    const alertaProb = document.getElementById('alerta-probabilidad');
+
+    if (resEstudio && tempSorted.length > 0) {
+        let antesDel75 = [];
+        tempSorted.forEach((reg, idx) => {
+            if (reg.num === '75' && idx > 0) {
+                antesDel75.push(tempSorted[idx-1].num + " - " + tempSorted[idx-1].animal);
+            }
+        });
+        
+        if (antesDel75.length > 0) {
+            const counts = {};
+            antesDel75.forEach(x => counts[x] = (counts[x] || 0) + 1);
+            const masFrec = Object.keys(counts).reduce((a, b) => counts[a] > counts[counts[b]] ? a : b);
+            
+            resEstudio.innerHTML = `
+                <div class="stat-card-mini" style="border-left-color: #ffd700;">
+                    <h4>ANUNCIANTE CLAVE (75)</h4>
+                    <p>Suele salir antes del 75:<br><strong>${masFrec}</strong></p>
+                </div>`;
+
+            const ultimo = tempSorted[tempSorted.length - 1];
+            if (ultimo && (ultimo.num + " - " + ultimo.animal) === masFrec && alertaProb) {
+                alertaProb.innerHTML = '<span class="probabilidad-alta">🔥 ¡ALTA PROBABILIDAD! Salió el anunciante.</span>';
+            } else if (alertaProb) {
+                alertaProb.innerHTML = '<span style="color:#64748b">Esperando señal...</span>';
+            }
+        }
+    }
+}
+
