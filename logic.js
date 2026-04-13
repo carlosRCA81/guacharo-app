@@ -38,14 +38,13 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historial = [];
 let horaSeleccionadaActiva = null;
 
-// ==========================================
-// SISTEMA DE NAVEGACIÓN Y RELOJ
-// ==========================================
+// RELOJ
 setInterval(() => {
     const clock = document.getElementById('live-clock');
     if(clock) clock.innerText = new Date().toLocaleTimeString();
 }, 1000);
 
+// NAVEGACIÓN
 function openTab(evt, tabName) {
     let tabcontent = document.getElementsByClassName("tab-content");
     for (let i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
@@ -56,6 +55,7 @@ function openTab(evt, tabName) {
 }
 
 async function inicializarSistema() {
+    generarPanelDiario();
     generarGridBotones();
     llenarSelectEstudio();
     const fechaInput = document.getElementById('fecha-analisis');
@@ -66,19 +66,16 @@ async function inicializarSistema() {
     await cargarHistorialRemoto();
 }
 
-// ==========================================
-// INTERFAZ DE REGISTRO
-// ==========================================
 function generarGridBotones() {
     const container = document.getElementById('grid-container');
     if(!container) return;
     container.innerHTML = '';
     listaAnimales.forEach(animal => {
         const btn = document.createElement('div');
-        btn.className = 'animal-item';
+        btn.className = 'animal-item'; // Cambiado de animal-btn a animal-item según tu CSS
         btn.innerHTML = `<strong>${animal.n}</strong><br><small>${animal.a}</small>`;
         btn.onclick = () => {
-            if (!horaSeleccionadaActiva) return alert("Primero toca una HORA");
+            if (!horaSeleccionadaActiva) return alert("Toca una HORA primero");
             registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
         };
         container.appendChild(btn);
@@ -95,173 +92,107 @@ function generarPanelDiario() {
         const box = document.createElement('div');
         box.className = 'hora-box';
         const reg = historial.find(r => r.fecha === fechaActual && r.hora === hora);
-        
         if (reg) {
             box.classList.add('jugado');
             box.innerText = `${hora}\n(${reg.num})`;
         } else {
             box.innerText = hora;
         }
-
         box.onclick = () => {
             horaSeleccionadaActiva = hora;
             document.querySelectorAll('.hora-box').forEach(b => b.style.border = '1px solid #475569');
             box.style.border = '2px solid #38bdf8';
-            const inputRapido = document.getElementById('num-rapido');
-            if(inputRapido) inputRapido.focus();
+            document.getElementById('num-rapido').focus();
         };
         panel.appendChild(box);
     });
+}
+
+async function registrarSorteo(num, animal, tipo, hora) {
+    const fecha = document.getElementById('fecha-analisis').value;
+    const nuevoRegistro = { fecha, hora, num, animal, tipo };
+    try {
+        await _supabase.from('historial_sorteos').upsert(nuevoRegistro);
+        await cargarHistorialRemoto();
+    } catch (err) { alert("Error de red"); }
 }
 
 function registrarPorNumero() {
     if (!horaSeleccionadaActiva) return alert("Selecciona una HORA");
     const inputNum = document.getElementById('num-rapido');
     let val = inputNum.value.trim();
-    if (!val) return;
-
     if (val !== "0" && val !== "00" && val.length === 1) val = "0" + val;
     const animal = listaAnimales.find(a => a.n === val);
-    
     if (!animal) return alert("Número no existe");
     registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
     inputNum.value = '';
 }
 
-// ==========================================
-// GESTIÓN DE DATOS (SUPABASE)
-// ==========================================
-async function registrarSorteo(num, animal, tipo, hora) {
-    const fecha = document.getElementById('fecha-analisis').value;
-    const nuevoRegistro = { fecha, hora, num, animal, tipo };
-
-    try {
-        const { error } = await _supabase.from('historial_sorteos').upsert(nuevoRegistro);
-        if (error) throw error;
-        await cargarHistorialRemoto();
-    } catch (err) { 
-        console.error("Error al guardar:", err.message);
-        alert("Error de red al guardar datos");
-    }
-}
-
 async function cargarHistorialRemoto() {
     try {
         const { data, error } = await _supabase.from('historial_sorteos').select('*');
-        if (error) throw error;
         if (data) {
             historial = data;
             actualizarInterfaz();
         }
-    } catch (err) { 
-        console.log("⚠️ Error Supabase:", err.message);
-        const cuerpo = document.getElementById('lista-historial');
-        if(cuerpo) cuerpo.innerHTML = '<tr><td colspan="5">Error de red</td></tr>';
-    }
+    } catch (err) { console.log("Error Supabase"); }
 }
 
-async function consultarFechaEspecifica() {
-    const f = document.getElementById('fecha-consulta-historial').value;
-    const { data, error } = await _supabase.from('historial_sorteos').select('*').eq('fecha', f);
-    const cuerpo = document.getElementById('lista-historial');
-    if(!cuerpo) return;
-    cuerpo.innerHTML = '';
-    if(data) {
-        data.sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora)).forEach(r => {
-            const isGuacharo = r.num === '75' ? 'class="row-guacharo"' : '';
-            cuerpo.innerHTML += `<tr ${isGuacharo}><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
-        });
-    }
-}
-
-// ==========================================
-// ANÁLISIS Y ESTADÍSTICAS
-// ==========================================
 function actualizarInterfaz() {
-    if(historial.length > 0) {
-        const temp = [...historial].sort((a,b) => {
-             if (a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
-             return horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora);
-        });
-        const ult = temp[temp.length-1];
-        const lastNumDisp = document.getElementById('last-num');
-        if(lastNumDisp) lastNumDisp.innerText = `${ult.num} - ${ult.animal}`;
-    }
     actualizarTabla();
     analizarGuacharo();
     generarPanelDiario();
     calcularBalanceElementos();
     detectarDormidos();
-}
-
-function detectarDormidos() {
-    const cont = document.getElementById('lista-dormidos');
-    if(!cont) return;
-    let dormidos = [];
-    listaAnimales.forEach(ani => {
-        if(!historial.some(r => r.num === ani.n)) dormidos.push(ani.n);
-    });
-    cont.innerText = dormidos.length > 0 ? dormidos.slice(0, 15).join(', ') + "..." : "Ninguno";
-}
-
-function analizarGuacharo() {
-    const tempSorted = [...historial].sort((a,b) => {
-        if (a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
-        return horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora);
-    });
-
-    let sin75 = 0;
-    for(let i = tempSorted.length-1; i >= 0; i--) {
-        if(tempSorted[i].num === '75') break;
-        sin75++;
+    if(historial.length > 0) {
+        const temp = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha) || horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
+        const ult = temp[temp.length-1];
+        document.getElementById('last-num').innerText = `${ult.num} - ${ult.animal}`;
     }
-    const display = document.getElementById('dias-sin-75');
-    if(display) display.innerText = sin75;
-
-    const resEstudio = document.getElementById('resultado-patrones-guacharo');
-    if (resEstudio) {
-        let antesDel75 = [];
-        tempSorted.forEach((reg, idx) => {
-            if (reg.num === '75' && idx > 0) antesDel75.push(tempSorted[idx-1].num + " - " + tempSorted[idx-1].animal);
-        });
-        
-        if (antesDel75.length > 0) {
-            const counts = {};
-            antesDel75.forEach(x => counts[x] = (counts[x] || 0) + 1);
-            const masFrec = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
-            resEstudio.innerHTML = `<div class="card-stats"><h4>ANUNCIANTE:</h4><p><strong>${masFrec}</strong></p></div>`;
-        }
-    }
-}
-
-function calcularBalanceElementos() {
-    const f = document.getElementById('fecha-analisis').value;
-    let counts = { TIERRA: 0, AIRE: 0, AGUA: 0 };
-    historial.filter(r => r.fecha === f).forEach(r => { if(counts[r.tipo] !== undefined) counts[r.tipo]++; });
-    if(document.getElementById('val-tierra')) {
-        document.getElementById('val-tierra').innerText = counts.TIERRA;
-        document.getElementById('val-aire').innerText = counts.AIRE;
-        document.getElementById('val-agua').innerText = counts.AGUA;
-    }
-}
-
-function llenarSelectEstudio() {
-    const sel = document.getElementById('select-animal-estudio');
-    if(!sel) return;
-    sel.innerHTML = listaAnimales.map(a => `<option value="${a.n}">${a.n} - ${a.a}</option>`).join('');
 }
 
 function actualizarTabla() {
     const cuerpo = document.getElementById('lista-historial');
     if(!cuerpo) return;
     cuerpo.innerHTML = '';
-    [...historial].sort((a, b) => {
-        if (a.fecha !== b.fecha) return b.fecha.localeCompare(a.fecha);
-        return horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora);
-    }).slice(0, 30).forEach(r => {
+    [...historial].sort((a,b) => b.fecha.localeCompare(a.fecha) || horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora))
+    .slice(0, 20).forEach(r => {
         const isGuacharo = r.num === '75' ? 'class="row-guacharo"' : '';
         cuerpo.innerHTML += `<tr ${isGuacharo}><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
     });
+}
+
+function analizarGuacharo() {
+    let sin75 = 0;
+    const temp = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha) || horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
+    for(let i = temp.length-1; i >= 0; i--) {
+        if(temp[i].num === '75') break;
+        sin75++;
+    }
+    document.getElementById('dias-sin-75').innerText = sin75;
+}
+
+function calcularBalanceElementos() {
+    const f = document.getElementById('fecha-analisis').value;
+    let counts = { TIERRA: 0, AIRE: 0, AGUA: 0 };
+    historial.filter(r => r.fecha === f).forEach(r => { if(counts[r.tipo] !== undefined) counts[r.tipo]++; });
+    document.getElementById('val-tierra').innerText = counts.TIERRA;
+    document.getElementById('val-aire').innerText = counts.AIRE;
+    document.getElementById('val-agua').innerText = counts.AGUA;
+}
+
+function detectarDormidos() {
+    let dormidos = [];
+    listaAnimales.forEach(ani => {
+        if(!historial.some(r => r.num === ani.n)) dormidos.push(ani.n);
+    });
+    document.getElementById('lista-dormidos').innerText = dormidos.slice(0,10).join(', ') + "...";
+}
+
+function llenarSelectEstudio() {
+    const sel = document.getElementById('select-animal-estudio');
+    if(!sel) return;
+    sel.innerHTML = listaAnimales.map(a => `<option value="${a.n}">${a.n} - ${a.a}</option>`).join('');
 }
 
 window.onload = inicializarSistema;
