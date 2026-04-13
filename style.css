@@ -1,62 +1,55 @@
 :root {
-    --bg: #0f172a;
-    --card: #1e293b;
-    --blue: #38bdf8;
-    --green: #22c55e;
-    --text: #ffffff;
+    --bg-profundo: #0f172a;
+    --bg-acero: #1e293b;
+    --bg-interfaz: #334155;
+    --celeste: #38bdf8;
+    --oro: #fbbf24;
+    --rojo: #ef4444;
+    --blanco: #f8fafc;
 }
 
-body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding: 10px; }
-
-/* CUADROS DE HORA - 4 COLUMNAS FIJAS */
-.panel-diario {
-    display: grid !important;
-    grid-template-columns: repeat(4, 1fr) !important;
-    gap: 8px;
-    background: var(--card);
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 15px;
+body {
+    background-color: var(--bg-profundo);
+    color: var(--blanco);
+    font-family: sans-serif;
+    margin: 0; padding: 15px;
 }
 
-.hora-box {
-    background: #334155;
-    padding: 12px 2px;
-    text-align: center;
-    border-radius: 5px;
-    font-size: 0.75rem;
-    cursor: pointer;
-    border: 1px solid #475569;
-    min-height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+#login-screen, #main-app {
+    background: var(--bg-acero);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
 }
 
-.hora-box.jugado { background: var(--green) !important; color: #000; font-weight: bold; border: none; }
-.hora-box.active-select { border: 2px solid var(--blue) !important; }
+h1 { color: var(--celeste); text-align: center; font-size: 1.5rem; margin-top: 0; }
+#live-clock { text-align: center; color: var(--oro); font-size: 1.2rem; font-weight: bold; margin-bottom: 15px; }
 
-/* GRID DE ANIMALES */
-.grid-animales {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
-    max-height: 300px;
-    overflow-y: auto;
-    padding: 5px;
-}
-
-.animal-item { background: var(--card); padding: 10px; text-align: center; border-radius: 5px; border: 1px solid #475569; font-size: 0.8rem; }
-
-/* TABLA HISTORIAL */
-.tabla-scroll { max-height: 450px; overflow-y: auto; border: 1px solid #475569; }
-table { width: 100%; border-collapse: collapse; }
-th, td { padding: 10px; border: 1px solid #475569; text-align: center; font-size: 0.85rem; }
-th { background: #000; color: var(--blue); position: sticky; top: 0; }
-
-/* BOTONES Y INPUTS */
+/* Pestañas */
 .tab-container { display: flex; gap: 5px; margin-bottom: 15px; }
-.tab-btn { flex: 1; padding: 10px; background: var(--card); border: none; color: white; border-radius: 5px; cursor: pointer; }
-.tab-btn.active { background: var(--blue); color: black; font-weight: bold; }
-.input-full { width: 100%; padding: 12px; margin-bottom: 10px; background: var(--card); border: 1px solid #475569; color: white; border-radius: 5px; box-sizing: border-box; }
-.btn-ok { width: 100%; background: var(--blue); padding: 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+.tab-btn { flex: 1; padding: 10px; background: var(--bg-interfaz); border: none; color: white; border-radius: 5px; font-size: 0.7rem; cursor: pointer; }
+.tab-btn.active { background: var(--celeste); color: var(--bg-profundo); font-weight: bold; }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Controles */
+.controls-row { display: flex; gap: 10px; margin-bottom: 15px; }
+input, select, button { border-radius: 5px; padding: 10px; border: none; width: 100%; }
+input, select { background: var(--bg-profundo); color: white; }
+button { background: var(--celeste); color: var(--bg-profundo); font-weight: bold; }
+
+.display-reciente { background: var(--bg-profundo); padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+.btn-danger { background: var(--rojo); color: white; width: auto; padding: 5px 10px; }
+
+/* Cuadrícula */
+.grid-animales { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; max-height: 350px; overflow-y: auto; padding: 5px; }
+.animal-item { background: var(--bg-interfaz); padding: 8px; text-align: center; border-radius: 4px; font-size: 0.7rem; border: 1px solid #475569; }
+
+/* Tabla Historial */
+.tabla-contenedor { overflow-x: auto; margin-top: 10px; }
+table { width: 100%; border-collapse: collapse; font-size: 0.7rem; }
+th, td { border: 1px solid #475569; padding: 8px; text-align: center; }
+th { background: var(--bg-profundo); color: var(--celeste); }
+
+.card-stats { background: var(--bg-profundo); padding: 15px; border-radius: 8px; border-left: 4px solid var(--oro); }
