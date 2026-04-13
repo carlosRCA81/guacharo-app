@@ -9,7 +9,7 @@ function checkAccess() {
         loginScreen.style.display = 'none';
         mainApp.style.display = 'block';
         
-        // Arrancar el sistema de lógica
+        // Arranca la lógica de Ohio
         if (typeof inicializarSistema === 'function') {
             inicializarSistema();
         }
@@ -23,6 +23,6 @@ function checkAccess() {
     }
 }
 
-document.getElementById('access-key')?.addEventListener('keypress', function (e) {
+document.getElementById('access-key')?.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') checkAccess();
 });
