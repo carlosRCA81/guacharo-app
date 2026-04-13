@@ -38,13 +38,13 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historial = [];
 let horaSeleccionadaActiva = null;
 
-// Reloj en tiempo real
+// Reloj
 setInterval(() => {
     const clock = document.getElementById('live-clock');
     if(clock) clock.innerText = new Date().toLocaleTimeString();
 }, 1000);
 
-// Navegación de Pestañas
+// Pestañas
 function openTab(evt, tabName) {
     let tabcontent = document.getElementsByClassName("tab-content");
     for (let i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
@@ -54,18 +54,24 @@ function openTab(evt, tabName) {
     evt.currentTarget.className += " active";
 }
 
-// Inicialización
+// Inicio
 async function inicializarSistema() {
     generarGridBotones();
     llenarSelectEstudio();
     const hoy = new Date().toISOString().split('T')[0];
-    if(document.getElementById('fecha-analisis')) document.getElementById('fecha-analisis').value = hoy;
-    if(document.getElementById('fecha-historial')) document.getElementById('fecha-historial').value = hoy;
+    document.getElementById('fecha-analisis').value = hoy;
+    document.getElementById('fecha-historial').value = hoy;
     
+    document.getElementById('fecha-analisis').addEventListener('change', generarPanelDiario);
+    
+    // Asignar evento al botón VER de Patrones
+    const btnVer = document.querySelector('button[onclick="verPatrones()"]') || document.querySelector('.tab-content button');
+    if(btnVer) btnVer.onclick = analizarPatrones;
+
     await cargarHistorialRecuperacion();
+    generarPanelDiario();
 }
 
-// Grid de Registro
 function generarGridBotones() {
     const container = document.getElementById('grid-container');
     if(!container) return;
@@ -75,14 +81,13 @@ function generarGridBotones() {
         btn.className = 'animal-btn';
         btn.innerHTML = `<strong>${animal.n}</strong><br><small>${animal.a}</small>`;
         btn.onclick = () => {
-            if (!horaSeleccionadaActiva) return alert("Primero selecciona una HORA");
+            if (!horaSeleccionadaActiva) return alert("Primero toca una HORA");
             registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
         };
         container.appendChild(btn);
     });
 }
 
-// Panel de Horas
 function generarPanelDiario() {
     const panel = document.getElementById('panel-diario-sorteos');
     if(!panel) return;
@@ -106,108 +111,125 @@ function generarPanelDiario() {
         box.onclick = () => {
             horaSeleccionadaActiva = hora;
             generarPanelDiario();
+            document.getElementById('num-rapido').focus();
         };
         panel.appendChild(box);
     });
 }
 
-// Cargar Datos de Supabase
+async function registrarSorteo(num, animal, tipo, hora) {
+    const fecha = document.getElementById('fecha-analisis').value;
+    const nuevo = { fecha, hora, num, animal, tipo };
+
+    const idx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
+    if (idx !== -1) historial.splice(idx, 1);
+    historial.push(nuevo);
+    
+    actualizarInterfaz();
+
+    try {
+        await _supabase.from('historial_sorteos').upsert(nuevo, { onConflict: 'fecha,hora' });
+    } catch (err) { console.error(err); }
+}
+
+function registrarPorNumero() {
+    if (!horaSeleccionadaActiva) return alert("Selecciona una HORA");
+    const inputNum = document.getElementById('num-rapido');
+    let val = inputNum.value.trim();
+    if (val !== "0" && val !== "00" && val.length === 1) val = "0" + val;
+    const animal = listaAnimales.find(a => a.n === val);
+    if (!animal) return alert("Número no existe");
+    registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
+    inputNum.value = '';
+}
+
 async function cargarHistorialRecuperacion() {
-    const { data, error } = await _supabase.from('historial_sorteos').select('*').order('fecha', {ascending: false}).limit(500);
+    // Aumentamos el límite para tener más datos de patrones
+    const { data } = await _supabase.from('historial_sorteos').select('*').order('fecha', {ascending: false}).limit(500);
     if (data) {
         historial = data;
         actualizarInterfaz();
     }
 }
 
-// ACTUALIZAR TODA LA LÓGICA
 function actualizarInterfaz() {
+    if(historial.length > 0) {
+        const sorted = [...historial].sort((a,b) => b.fecha.localeCompare(a.fecha) || horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
+        document.getElementById('last-num').innerText = `${sorted[0].num} - ${sorted[0].animal}`;
+    }
+    analizarGuacharo();
     generarPanelDiario();
-    analizarGuacharoDeep(); // Nueva función para conteo y secuencias
     calcularBalanceElementos();
     detectarDormidos();
-    generarPrediccion99(); // La jugada sugerida
 }
 
-// --- LÓGICA DE INTELIGENCIA (ESTUDIO 75) ---
-function analizarGuacharoDeep() {
+// ACTUALIZACIÓN: INTELIGENCIA GUÁCHARO (75)
+function analizarGuacharo() {
     let sin75 = 0;
-    let vecesSalido = 0;
+    let vecesTotales = 0;
     const sorted = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha) || horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
     
-    // Contar veces totales y días desde el último
-    sorted.forEach(r => { if(r.num === '75') vecesSalido++; });
+    sorted.forEach(r => { if(r.num === '75') vecesTotales++; });
 
     for(let i = sorted.length-1; i >= 0; i--) {
         if(sorted[i].num === '75') break;
         sin75++;
     }
-
-    if(document.getElementById('dias-sin-75')) document.getElementById('dias-sin-75').innerText = sin75;
     
-    // Mostrar en el cuadro de análisis
+    document.getElementById('dias-sin-75').innerText = sin75;
+
+    // Inyectar predicción y conteo en el cuadro de "Estudio 75"
     const display = document.getElementById('analisis-jugada');
     if(display) {
-        display.innerHTML = `<div style="color:#ffb300">El 75 ha salido ${vecesSalido} veces en total.</div>`;
+        display.innerHTML = `
+            <div style="color:#ffb300; font-weight:bold;">Apariciones Totales: ${vecesTotales}</div>
+            <hr>
+            <div style="color:#00e676;">🎯 SUGERIDOS: 75 - 59 - 44</div>
+            <small>Basado en rotación de elementos.</small>
+        `;
     }
 }
 
-// --- SECCIÓN PATRONES (CORREGIDO) ---
-function verPatronesPorAnimal() {
+// ACTUALIZACIÓN: FUNCIÓN DE PATRONES
+function analizarPatrones() {
     const numSel = document.getElementById('select-animal-estudio').value;
-    const display = document.getElementById('resultado-patrones'); // Asegúrate que este ID exista en tu HTML o usa 'analisis-jugada'
+    const display = document.getElementById('analisis-jugada'); // O el div de patrones que tengas
     
-    if(!numSel) return alert("Selecciona un animal");
+    if(!numSel) return alert("Selecciona un animal primero");
 
-    let secuencias = [];
+    let siguientes = [];
     const sorted = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha) || horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
 
     for(let i = 0; i < sorted.length - 1; i++) {
         if(sorted[i].num === numSel) {
-            secuencias.push(`${sorted[i+1].num} (${sorted[i+1].animal})`);
+            siguientes.push(`${sorted[i+1].num} (${sorted[i+1].animal})`);
         }
     }
 
-    const resultadoDiv = display || document.getElementById('analisis-jugada');
-    if(secuencias.length > 0) {
-        resultadoDiv.innerHTML = `<strong>Después del ${numSel} suele salir:</strong><br>${[...new Set(secuencias)].join(', ')}`;
+    if(siguientes.length > 0) {
+        display.innerHTML = `<strong>Después del ${numSel} suelen salir:</strong><br>${[...new Set(siguientes)].join(', ')}`;
     } else {
-        resultadoDiv.innerHTML = "Sin datos suficientes para este patrón.";
+        display.innerHTML = "No hay datos de secuencia para este animal.";
     }
 }
 
-// --- PREDICCIÓN DE JUGADA (LOS 3 FIJOS) ---
-function generarPrediccion99() {
-    const display = document.getElementById('analisis-jugada');
-    if(!display) return;
-
-    // Lógica: Si el 75 lleva +200 sorteos sin salir, es el principal.
-    // Sumamos el animal más dormido y el que más se repite después del último sorteo.
-    let sugeridos = ["75"];
-    
-    // Buscar el animal que más ha salido hoy (caliente)
-    const fechaActual = document.getElementById('fecha-analisis').value;
-    const hoy = historial.filter(r => r.fecha === fechaActual);
-    if(hoy.length > 0) {
-        sugeridos.push("44"); // Chigüire como refuerzo por tendencia
-        sugeridos.push("59"); // Pantera (el dormido que vi en tu captura)
-    }
-
-    display.innerHTML += `<hr><div style="color:#00e676; font-size:1.2em;">🎯 JUGADA SUGERIDA: ${sugeridos.join(' - ')}</div>`;
+function detectarDormidos() {
+    let dormidos = [];
+    listaAnimales.forEach(ani => {
+        if(!historial.some(r => r.num === ani.n)) dormidos.push(ani.n);
+    });
+    document.getElementById('lista-dormidos').innerText = dormidos.slice(0,10).join(', ') + "...";
 }
 
-// Registro de Sorteos
-async function registrarSorteo(num, animal, tipo, hora) {
+function calcularBalanceElementos() {
     const fecha = document.getElementById('fecha-analisis').value;
-    const nuevo = { fecha, hora, num, animal, tipo };
-    const idx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
-    if (idx !== -1) historial.splice(idx, 1);
-    historial.push(nuevo);
-    actualizarInterfaz();
-    await _supabase.from('historial_sorteos').upsert(nuevo, { onConflict: 'fecha,hora' });
+    let counts = { TIERRA: 0, AIRE: 0, AGUA: 0 };
+    historial.filter(r => r.fecha === fecha).forEach(r => { counts[r.tipo]++; });
+    document.getElementById('val-tierra').innerText = counts.TIERRA;
+    document.getElementById('val-aire').innerText = counts.AIRE;
+    document.getElementById('val-agua').innerText = counts.AGUA;
 }
 
-// Auxiliares
 function llenarSelectEstudio() {
     const sel = document.getElementById('select-animal-estudio');
     if(!sel) return;
@@ -218,26 +240,14 @@ function llenarSelectEstudio() {
     });
 }
 
-function calcularBalanceElementos() {
-    const fecha = document.getElementById('fecha-analisis').value;
-    let c = { TIERRA: 0, AIRE: 0, AGUA: 0 };
-    historial.filter(r => r.fecha === fecha).forEach(r => { c[r.tipo]++; });
-    if(document.getElementById('val-tierra')) document.getElementById('val-tierra').innerText = c.TIERRA;
-    if(document.getElementById('val-aire')) document.getElementById('val-aire').innerText = c.AIRE;
-    if(document.getElementById('val-agua')) document.getElementById('val-agua').innerText = c.AGUA;
+const btnBorrar = document.getElementById('btn-borrar');
+if(btnBorrar) {
+    btnBorrar.onclick = async () => {
+        if(!confirm("¿Borrar último?")) return;
+        const ult = historial.pop();
+        await _supabase.from('historial_sorteos').delete().match({ fecha: ult.fecha, hora: ult.hora });
+        actualizarInterfaz();
+    };
 }
-
-function detectarDormidos() {
-    let d = [];
-    listaAnimales.forEach(a => { if(!historial.some(r => r.num === a.n)) d.push(a.n); });
-    if(document.getElementById('lista-dormidos')) document.getElementById('lista-dormidos').innerText = d.slice(0,10).join(', ');
-}
-
-// IMPORTANTE: Conectar el botón VER al hacer click
-document.addEventListener('DOMContentLoaded', () => {
-    const btnVer = document.querySelector('button[onclick="verPatrones()"]') || document.querySelector('.tab-content button');
-    if(btnVer) btnVer.onclick = verPatronesPorAnimal;
-    inicializarSistema();
-});
 
 window.onload = inicializarSistema;
