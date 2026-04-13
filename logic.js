@@ -1,10 +1,9 @@
-// ==========================================
-// CONFIGURACIÓN SUPABASE - ANALIZADOR CRCA
-// ==========================================
+// CONFIGURACIÓN SUPABASE
 const SUPABASE_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+const CLAVE_MAESTRA = '1234';
 const listaAnimales = [
     {n:'0', a:'DELFIN', t:'AGUA'}, {n:'00', a:'BALLENA', t:'AGUA'}, {n:'01', a:'CARNERO', t:'TIERRA'},
     {n:'02', a:'TORO', t:'TIERRA'}, {n:'03', a:'CIEMPIES', t:'TIERRA'}, {n:'04', a:'ALACRAN', t:'TIERRA'},
@@ -38,148 +37,136 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historial = [];
 let horaSeleccionadaActiva = null;
 
-// Funciones de navegación
-function openTab(evt, tabName) {
-    let tabcontent = document.getElementsByClassName("tab-content");
-    for (let i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
-    let tablinks = document.getElementsByClassName("tab-btn");
-    for (let i = 0; i < tablinks.length; i++) { tablinks[i].className = tablinks[i].className.replace(" active", ""); }
-    document.getElementById(tabName).style.display = "block";
-    evt.currentTarget.className += " active";
+// SEGURIDAD
+function checkAccess() {
+    const pass = document.getElementById('access-key').value;
+    if (pass === CLAVE_MAESTRA) {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('main-app').style.display = 'block';
+        inicializarSistema();
+    } else {
+        alert("CLAVE INCORRECTA");
+    }
 }
 
-// Inicialización
+// INICIALIZACIÓN
 async function inicializarSistema() {
     generarPanelDiario();
     generarGridBotones();
     llenarSelectEstudio();
-    const fechaInput = document.getElementById('fecha-analisis');
-    if(fechaInput) {
-        fechaInput.value = new Date().toISOString().split('T')[0];
-        fechaInput.addEventListener('change', generarPanelDiario);
-    }
+    const fInput = document.getElementById('fecha-analisis');
+    fInput.value = new Date().toISOString().split('T')[0];
+    fInput.addEventListener('change', generarPanelDiario);
+    
+    // Iniciar Reloj
+    setInterval(() => {
+        document.getElementById('live-clock').innerText = new Date().toLocaleTimeString();
+    }, 1000);
+
     await cargarHistorialRemoto();
 }
 
-// Lógica de Registro
+// REGISTRO Y UI
+function generarPanelDiario() {
+    const panel = document.getElementById('panel-diario-sorteos');
+    panel.innerHTML = '';
+    const fecha = document.getElementById('fecha-analisis').value;
+
+    horasSorteo.forEach(hora => {
+        const box = document.createElement('div');
+        box.className = 'hora-box';
+        const reg = historial.find(r => r.fecha === fecha && r.hora === hora);
+        if(reg) {
+            box.classList.add('jugado');
+            box.innerText = `${hora}\n(${reg.num})`;
+        } else {
+            box.innerText = hora;
+        }
+        box.onclick = () => {
+            horaSeleccionadaActiva = hora;
+            document.querySelectorAll('.hora-box').forEach(b => b.classList.remove('active-select'));
+            box.classList.add('active-select');
+        };
+        panel.appendChild(box);
+    });
+}
+
 function generarGridBotones() {
     const container = document.getElementById('grid-container');
-    if(!container) return;
     container.innerHTML = '';
-    listaAnimales.forEach(animal => {
+    listaAnimales.forEach(ani => {
         const btn = document.createElement('div');
         btn.className = 'animal-btn';
-        btn.innerHTML = `<strong>${animal.n}</strong><br><small>${animal.a}</small>`;
-        btn.onclick = () => {
-            if (!horaSeleccionadaActiva) return alert("Primero selecciona una HORA");
-            registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
-        };
+        btn.innerHTML = `<strong>${ani.n}</strong><small>${ani.a}</small>`;
+        btn.onclick = () => registrarSorteo(ani.n, ani.a, ani.t, horaSeleccionadaActiva);
         container.appendChild(btn);
     });
 }
 
 async function registrarSorteo(num, animal, tipo, hora) {
+    if(!hora) return alert("Selecciona una hora primero");
     const fecha = document.getElementById('fecha-analisis').value;
-    const nuevoRegistro = { fecha, hora, num, animal, tipo };
+    const nuevo = { fecha, hora, num, animal, tipo };
 
-    const existeIdx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
-    if (existeIdx !== -1) historial.splice(existeIdx, 1);
-    historial.push(nuevoRegistro);
+    // Optimismo UI
+    const idx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
+    if(idx !== -1) historial.splice(idx, 1);
+    historial.push(nuevo);
     actualizarInterfaz();
 
-    try {
-        await _supabase.from('historial_sorteos').upsert(nuevoRegistro, { onConflict: 'fecha,hora' });
-    } catch (err) { console.error("Error Supabase:", err.message); }
+    // Guardar en Supabase
+    await _supabase.from('historial_sorteos').upsert(nuevo, { onConflict: 'fecha,hora' });
+}
+
+function registrarPorNumero() {
+    const n = document.getElementById('num-rapido').value.padStart(2, '0').replace('000', '00');
+    const ani = listaAnimales.find(a => a.n === n || (n === '0' && a.n === '0'));
+    if(ani) registrarSorteo(ani.n, ani.a, ani.t, horaSeleccionadaActiva);
+    document.getElementById('num-rapido').value = '';
 }
 
 function actualizarInterfaz() {
     actualizarTabla();
     analizarGuacharo();
     generarPanelDiario();
-    calcularBalanceElementos();
-    detectarDormidos();
-    
-    if(historial.length > 0) {
-        const temp = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha) || horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
-        const ult = temp[temp.length-1];
-        document.getElementById('last-num').innerText = `${ult.num} - ${ult.animal}`;
-    }
+}
+
+function actualizarTabla() {
+    const tabla = document.getElementById('lista-historial');
+    tabla.innerHTML = '';
+    [...historial].reverse().forEach(r => {
+        const row = `<tr><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
+        tabla.innerHTML += row;
+    });
 }
 
 async function cargarHistorialRemoto() {
-    try {
-        const { data, error } = await _supabase.from('historial_sorteos').select('*');
-        if (data) {
-            historial = data;
-            actualizarInterfaz();
-        }
-    } catch (err) { console.log("Modo local activo"); }
-}
-
-// (Otras funciones como analizarGuacharo y detectarDormidos irían aquí)
-function detectarDormidos() {
-    const listaDormidosCont = document.getElementById('lista-dormidos');
-    if(!listaDormidosCont) return;
-
-    let dormidos = [];
-    listaAnimales.forEach(ani => {
-        const encontrado = historial.some(r => r.num === ani.n);
-        if(!encontrado) {
-            dormidos.push(ani.n + " (" + ani.a + ")");
-        }
-    });
-
-    if(dormidos.length > 0) {
-        listaDormidosCont.innerHTML = dormidos.slice(0, 8).join(', ') + "...";
-    } else {
-        listaDormidosCont.innerText = "Todos han salido.";
+    const { data } = await _supabase.from('historial_sorteos').select('*');
+    if(data) {
+        historial = data;
+        actualizarInterfaz();
     }
 }
 
+// LÓGICA GUACHARO Y PATRONES
 function analizarGuacharo() {
     let sin75 = 0;
-    const tempSorted = [...historial].sort((a,b) => {
-        if (a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
-        return horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora);
-    });
-
-    for(let i = tempSorted.length-1; i >= 0; i--) {
-        if(tempSorted[i].num === '75') break;
+    const sorted = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha) || horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
+    for(let i = sorted.length-1; i >= 0; i--) {
+        if(sorted[i].num === '75') break;
         sin75++;
     }
-    
-    const display = document.getElementById('dias-sin-75');
-    if(display) display.innerText = sin75;
-
-    const resEstudio = document.getElementById('resultado-patrones-guacharo');
-    const alertaProb = document.getElementById('alerta-probabilidad');
-
-    if (resEstudio && tempSorted.length > 0) {
-        let antesDel75 = [];
-        tempSorted.forEach((reg, idx) => {
-            if (reg.num === '75' && idx > 0) {
-                antesDel75.push(tempSorted[idx-1].num + " - " + tempSorted[idx-1].animal);
-            }
-        });
-        
-        if (antesDel75.length > 0) {
-            const counts = {};
-            antesDel75.forEach(x => counts[x] = (counts[x] || 0) + 1);
-            const masFrec = Object.keys(counts).reduce((a, b) => counts[a] > counts[counts[b]] ? a : b);
-            
-            resEstudio.innerHTML = `
-                <div class="stat-card-mini" style="border-left-color: #ffd700;">
-                    <h4>ANUNCIANTE CLAVE (75)</h4>
-                    <p>Suele salir antes del 75:<br><strong>${masFrec}</strong></p>
-                </div>`;
-
-            const ultimo = tempSorted[tempSorted.length - 1];
-            if (ultimo && (ultimo.num + " - " + ultimo.animal) === masFrec && alertaProb) {
-                alertaProb.innerHTML = '<span class="probabilidad-alta">🔥 ¡ALTA PROBABILIDAD! Salió el anunciante.</span>';
-            } else if (alertaProb) {
-                alertaProb.innerHTML = '<span style="color:#64748b">Esperando señal...</span>';
-            }
-        }
-    }
+    document.getElementById('dias-sin-75').innerText = sin75;
 }
 
+function openTab(evt, name) {
+    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(name).style.display = 'block';
+    evt.currentTarget.classList.add('active');
+}
+
+function llenarSelectEstudio() {
+    const sel = document.getElementById('select-animal-estudio');
+    sel.innerHTML = listaAnimales.map(a => `<option value="${a.n}">${a.n} - ${a.a}</option>`).join('');
+}
