@@ -1,11 +1,22 @@
 const CLAVE_MAESTRA = '7575'; 
 
-function verificarAcceso() {
-    const p = prompt("Sistema Blindado CRCA. Ingrese Clave:");
-    if (p !== CLAVE_MAESTRA) {
-        document.body.innerHTML = "<h1 style='color:white;text-align:center;'>ACCESO DENEGADO</h1>";
+function checkAccess() {
+    const inputPass = document.getElementById('access-key').value;
+    const loginScreen = document.getElementById('login-screen');
+    const mainApp = document.getElementById('main-app');
+
+    if (inputPass === CLAVE_MAESTRA) {
+        loginScreen.style.display = 'none';
+        mainApp.style.display = 'block';
+        
+        // Esta es la conexión con logic.js
+        inicializarSistema(); 
+        
+        setInterval(() => {
+            const clock = document.getElementById('live-clock');
+            if(clock) clock.innerText = new Date().toLocaleTimeString();
+        }, 1000);
     } else {
-        cargarDatos();
+        alert("ERROR: CLAVE INCORRECTA");
     }
 }
-window.onload = verificarAcceso;
