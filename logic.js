@@ -1,6 +1,3 @@
-// ==========================================
-// CONFIGURACIÓN SUPABASE - ANALIZADOR CRCA
-// ==========================================
 const SUPABASE_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -35,33 +32,25 @@ const listaAnimales = [
 ];
 
 const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
-let historial = [];
+let historial = []; // Historial filtrado/actual
 let horaSeleccionadaActiva = null;
-
-setInterval(() => {
-    const clock = document.getElementById('live-clock');
-    if(clock) clock.innerText = new Date().toLocaleTimeString();
-}, 1000);
-
-function openTab(evt, tabName) {
-    let tabcontent = document.getElementsByClassName("tab-content");
-    for (let i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
-    let tablinks = document.getElementsByClassName("tab-btn");
-    for (let i = 0; i < tablinks.length; i++) { tablinks[i].className = tablinks[i].className.replace(" active", ""); }
-    document.getElementById(tabName).style.display = "block";
-    evt.currentTarget.className += " active";
-}
 
 async function inicializarSistema() {
     generarPanelDiario();
     generarGridBotones();
     llenarSelectEstudio();
+    
     const fechaInput = document.getElementById('fecha-analisis');
+    const hoy = new Date();
     if(fechaInput) {
-        fechaInput.value = new Date().toISOString().split('T')[0];
+        fechaInput.value = hoy.toISOString().split('T')[0];
         fechaInput.addEventListener('change', generarPanelDiario);
     }
-    await cargarHistorialRemoto();
+
+    // Ajustar filtros de historial al mes actual
+    document.getElementById('filtro-mes').value = String(hoy.getMonth() + 1).padStart(2, '0');
+    
+    await cargarHistorialRemoto(); // Carga inicial
 }
 
 function generarGridBotones() {
@@ -71,173 +60,69 @@ function generarGridBotones() {
     listaAnimales.forEach(animal => {
         const btn = document.createElement('div');
         btn.className = 'animal-btn';
-        btn.innerHTML = `<strong>${animal.n}</strong><br><small>${animal.a}</small>`;
+        btn.innerHTML = `<strong>${animal.n}</strong><br><small style="font-size:0.6rem;">${animal.a}</small>`;
         btn.onclick = () => {
-            if (!horaSeleccionadaActiva) return alert("Primero toca una HORA");
+            if (!horaSeleccionadaActiva) return alert("Selecciona una HORA arriba");
             registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
         };
         container.appendChild(btn);
     });
 }
 
-function llenarSelectEstudio() {
-    const sel = document.getElementById('select-animal-estudio');
-    if(!sel) return;
-    sel.innerHTML = '<option value="">-- Elige Animal --</option>';
-    listaAnimales.forEach(a => {
-        let opt = document.createElement('option');
-        opt.value = a.n;
-        opt.innerText = `${a.n} - ${a.a}`;
-        sel.appendChild(opt);
-    });
-}
-
-function estudiarAnimalEspecifico() {
-    const numBuscado = document.getElementById('select-animal-estudio').value;
-    const resDiv = document.getElementById('resultado-patrones');
-    if(!numBuscado) return;
-    
-    let despues = {};
-    let antes = {};
-    let conteoTotal = 0;
-
-    const tempSorted = [...historial].sort((a,b) => {
-        if (a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
-        return horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora);
-    });
-
-    tempSorted.forEach((reg, idx) => {
-        if(reg.num === numBuscado) {
-            conteoTotal++;
-            if(idx < tempSorted.length - 1) {
-                let sig = tempSorted[idx+1].num + " - " + tempSorted[idx+1].animal;
-                despues[sig] = (despues[sig] || 0) + 1;
-            }
-            if(idx > 0) {
-                let ant = tempSorted[idx-1].num + " - " + tempSorted[idx-1].animal;
-                antes[ant] = (antes[ant] || 0) + 1;
-            }
-        }
-    });
-
-    if(conteoTotal === 0) {
-        resDiv.innerHTML = `<p style="color:#ef4444; padding:10px;">Sin datos.</p>`;
-        return;
-    }
-
-    const masFrec = (obj) => {
-        const entries = Object.entries(obj);
-        if (entries.length === 0) return "Sin datos";
-        return entries.sort((a, b) => b[1] - a[1])[0][0];
-    };
-
-    resDiv.innerHTML = `
-        <div class="stat-card-mini" style="background: rgba(56, 189, 248, 0.1);">
-            <h4>RESUMEN: ${numBuscado}</h4>
-            <p>Veces detectado: <strong>${conteoTotal}</strong></p>
-        </div>
-        <div class="stat-card-mini" style="border-left-color: #f87171;">
-            <h4>SUELE SALIR ANTES:</h4>
-            <p>🎯 ${masFrec(antes)}</p>
-        </div>
-        <div class="stat-card-mini" style="border-left-color: #4ade80;">
-            <h4>SUELE SALIR DESPUÉS:</h4>
-            <p>🚀 ${masFrec(despues)}</p>
-        </div>
-    `;
-}
-
-function generarPanelDiario() {
-    const panel = document.getElementById('panel-diario-sorteos');
-    if(!panel) return;
-    panel.innerHTML = '';
-    const fechaActual = document.getElementById('fecha-analisis').value;
-
-    horasSorteo.forEach(hora => {
-        const box = document.createElement('div');
-        box.className = 'hora-box';
-        const registroExistente = historial.find(r => r.fecha === fechaActual && r.hora === hora);
-        
-        if (registroExistente) {
-            box.classList.add('jugado');
-            box.innerText = `${hora}\n(${registroExistente.num})`;
-        } else {
-            box.innerText = hora;
-        }
-
-        box.onclick = () => {
-            horaSeleccionadaActiva = hora;
-            document.querySelectorAll('.hora-box').forEach(b => b.classList.remove('active-select'));
-            box.classList.add('active-select');
-            document.querySelectorAll('.hora-box').forEach(b => b.style.border = '1px solid #475569');
-            box.style.border = '2px solid #38bdf8';
-            document.getElementById('num-rapido').focus();
-        };
-        panel.appendChild(box);
-    });
-}
-
-function registrarPorNumero() {
-    if (!horaSeleccionadaActiva) return alert("Selecciona una HORA");
-    const inputNum = document.getElementById('num-rapido');
-    let val = inputNum.value.trim();
-
-    if (val !== "0" && val !== "00" && val.length === 1) val = "0" + val;
-
-    const animal = listaAnimales.find(a => a.n === val);
-    if (!animal) return alert("Número no existe");
-
-    registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
-    inputNum.value = '';
-}
-
 async function registrarSorteo(num, animal, tipo, hora) {
     const fecha = document.getElementById('fecha-analisis').value;
     const nuevoRegistro = { fecha, hora, num, animal, tipo };
 
-    const existeIdx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
-    if (existeIdx !== -1) historial.splice(existeIdx, 1);
-    historial.push(nuevoRegistro);
-    actualizarInterfaz();
+    // Optimización: Solo insertamos en la nube
+    try {
+        const { error } = await _supabase.from('historial_sorteos').upsert(nuevoRegistro, { onConflict: 'fecha,hora' });
+        if(error) throw error;
+        
+        // Actualizamos lista local para ver el cambio
+        const idx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
+        if(idx !== -1) historial[idx] = nuevoRegistro;
+        else historial.push(nuevoRegistro);
+        
+        actualizarInterfaz();
+    } catch (err) { alert("Error al guardar: " + err.message); }
+}
+
+async function cargarHistorialRemoto() {
+    const mes = document.getElementById('filtro-mes').value;
+    const anio = document.getElementById('filtro-anio').value;
+    const inicio = `${anio}-${mes}-01`;
+    const fin = `${anio}-${mes}-31`;
 
     try {
-        await _supabase.from('historial_sorteos').upsert(nuevoRegistro, { onConflict: 'fecha,hora' });
-    } catch (err) { console.error(err.message); }
+        const { data, error } = await _supabase
+            .from('historial_sorteos')
+            .select('*')
+            .gte('fecha', inicio)
+            .lte('fecha', fin)
+            .order('fecha', { ascending: false });
+
+        if (error) throw error;
+        historial = data || [];
+        actualizarInterfaz();
+    } catch (err) { console.error("Error cargando datos"); }
+}
+
+function cargarHistorialFiltrado() {
+    cargarHistorialRemoto();
 }
 
 function actualizarInterfaz() {
-    if(historial.length > 0) {
-        const temp = [...historial].sort((a,b) => {
-             if (a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
-             return horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora);
-        });
-        const ult = temp[temp.length-1];
+    // Ordenar para cálculos (de más viejo a más nuevo)
+    const sorted = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha) || horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
+    
+    if(sorted.length > 0) {
+        const ult = sorted[sorted.length-1];
         document.getElementById('last-num').innerText = `${ult.num} - ${ult.animal}`;
     }
+
     actualizarTabla();
-    analizarGuacharo();
+    analizarGuacharo(sorted);
     generarPanelDiario();
-    calcularBalanceElementos();
-    detectarDormidos(); // <-- ¡NUEVA!
-}
-
-function detectarDormidos() {
-    const listaDormidosCont = document.getElementById('lista-dormidos');
-    if(!listaDormidosCont) return;
-
-    let dormidos = [];
-    listaAnimales.forEach(ani => {
-        const encontrado = historial.some(r => r.num === ani.n);
-        if(!encontrado) {
-            dormidos.push(ani.n + " (" + ani.a + ")");
-        }
-    });
-
-    if(dormidos.length > 0) {
-        listaDormidosCont.innerHTML = dormidos.slice(0, 8).join(', ') + "...";
-    } else {
-        listaDormidosCont.innerText = "Todos los animales han salido.";
-    }
 }
 
 function actualizarTabla() {
@@ -245,97 +130,98 @@ function actualizarTabla() {
     if(!cuerpo) return;
     cuerpo.innerHTML = '';
     
-    [...historial].sort((a, b) => {
-        if (a.fecha !== b.fecha) return b.fecha.localeCompare(a.fecha);
-        return horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora);
-    }).forEach(r => {
-        const isGuacharo = r.num === '75' ? 'class="row-guacharo"' : '';
-        cuerpo.innerHTML += `<tr ${isGuacharo}><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
+    // En la tabla queremos lo más reciente arriba
+    [...historial].sort((a, b) => b.fecha.localeCompare(a.fecha) || horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora))
+    .forEach(r => {
+        const rowClass = r.num === '75' ? 'class="row-guacharo"' : '';
+        cuerpo.innerHTML += `<tr ${rowClass}><td>${r.fecha.split('-').slice(1).join('/')}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td></tr>`;
     });
 }
 
-function analizarGuacharo() {
-    let sin75 = 0;
-    const tempSorted = [...historial].sort((a,b) => {
-        if (a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
-        return horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora);
-    });
+function generarPanelDiario() {
+    const panel = document.getElementById('panel-diario-sorteos');
+    const fechaSel = document.getElementById('fecha-analisis').value;
+    if(!panel) return;
+    panel.innerHTML = '';
 
-    for(let i = tempSorted.length-1; i >= 0; i--) {
-        if(tempSorted[i].num === '75') break;
+    horasSorteo.forEach(hora => {
+        const box = document.createElement('div');
+        box.className = 'hora-box';
+        const reg = historial.find(r => r.fecha === fechaSel && r.hora === hora);
+        
+        if (reg) {
+            box.classList.add('jugado');
+            box.innerText = `${hora}\n(${reg.num})`;
+        } else {
+            box.innerText = hora;
+        }
+
+        if(hora === horaSeleccionadaActiva) box.classList.add('active-select');
+
+        box.onclick = () => {
+            horaSeleccionadaActiva = hora;
+            generarPanelDiario(); // Refrescar selección visual
+            document.getElementById('num-rapido').focus();
+        };
+        panel.appendChild(box);
+    });
+}
+
+function analizarGuacharo(sortedData) {
+    let sin75 = 0;
+    for(let i = sortedData.length-1; i >= 0; i--) {
+        if(sortedData[i].num === '75') break;
         sin75++;
     }
-    const display = document.getElementById('dias-sin-75');
-    if(display) display.innerText = sin75;
+    document.getElementById('dias-sin-75').innerText = sin75;
 
     const resEstudio = document.getElementById('resultado-patrones-guacharo');
-    const alertaProb = document.getElementById('alerta-probabilidad'); // <-- ¡NUEVO!
+    const alertaProb = document.getElementById('alerta-probabilidad');
 
-    if (resEstudio) {
-        let antesDel75 = [];
-        tempSorted.forEach((reg, idx) => {
-            if (reg.num === '75' && idx > 0) {
-                antesDel75.push(tempSorted[idx-1].num + " - " + tempSorted[idx-1].animal);
-            }
-        });
+    let anunciantes = {};
+    sortedData.forEach((reg, idx) => {
+        if (reg.num === '75' && idx > 0) {
+            const ant = sortedData[idx-1].num + " - " + sortedData[idx-1].animal;
+            anunciantes[ant] = (anunciantes[ant] || 0) + 1;
+        }
+    });
+
+    const keys = Object.keys(anunciantes);
+    if(keys.length > 0) {
+        const masFrec = keys.reduce((a, b) => anunciantes[a] > anunciantes[b] ? a : b);
+        resEstudio.innerHTML = `<div class="stat-card-mini" style="border-left:4px solid #fbbf24; background:#1e293b; padding:10px; border-radius:8px;">
+            <h4 style="color:#fbbf24; margin:0;">ANUNCIANTE (75)</h4>
+            <p style="margin:5px 0; font-size:0.8rem;">Suele avisar al Guácharo: <strong>${masFrec}</strong></p>
+        </div>`;
         
-        if (antesDel75.length > 0) {
-            const counts = {};
-            antesDel75.forEach(x => counts[x] = (counts[x] || 0) + 1);
-            const masFrec = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
-            
-            resEstudio.innerHTML = `
-                <div class="stat-card-mini" style="border-left-color: #ffd700;">
-                    <h4>ANUNCIANTE CLAVE (75)</h4>
-                    <p>Este animal suele salir antes del Guácharo:<br><strong>${masFrec}</strong></p>
-                    <small>Frecuencia: ${counts[masFrec]} veces detectado</small>
-                </div>`;
-
-            // Lógica de alerta parpadeante
-            const ultimoSorteo = tempSorted[tempSorted.length - 1];
-            if (ultimoSorteo && (ultimoSorteo.num + " - " + ultimoSorteo.animal) === masFrec && alertaProb) {
-                alertaProb.innerHTML = '<span class="probabilidad-alta">🔥 ¡ALTA PROBABILIDAD! Salió el anunciante.</span>';
-            } else if (alertaProb) {
-                alertaProb.innerHTML = '<span style="color:#64748b">Esperando señal del anunciante...</span>';
-            }
+        const ultimo = sortedData[sortedData.length-1];
+        if(ultimo && (ultimo.num + " - " + ultimo.animal) === masFrec) {
+            alertaProb.innerHTML = '<span class="probabilidad-alta">🔥 ¡SEÑAL DETECTADA! Guácharo cerca.</span>';
+        } else {
+            alertaProb.innerText = "Esperando anunciante...";
         }
     }
 }
 
-function calcularBalanceElementos() {
-    const fechaActual = document.getElementById('fecha-analisis').value;
-    let counts = { TIERRA: 0, AIRE: 0, AGUA: 0 };
-    
-    const delDia = historial.filter(r => r.fecha === fechaActual);
-    delDia.forEach(r => { if(counts[r.tipo] !== undefined) counts[r.tipo]++; });
-    
-    if(document.getElementById('val-tierra')) {
-        document.getElementById('val-tierra').innerText = counts.TIERRA;
-        document.getElementById('val-aire').innerText = counts.AIRE;
-        document.getElementById('val-agua').innerText = counts.AGUA;
-    }
+function registrarPorNumero() {
+    const val = document.getElementById('num-rapido').value.trim();
+    if(!val) return;
+    let num = val;
+    if(num !== "0" && num !== "00" && num.length === 1) num = "0" + num;
+    const ani = listaAnimales.find(a => a.n === num);
+    if(ani) registrarSorteo(ani.n, ani.a, ani.t, horaSeleccionadaActiva);
+    else alert("Número no existe");
+    document.getElementById('num-rapido').value = '';
 }
 
-async function cargarHistorialRemoto() {
-    try {
-        const { data, error } = await _supabase.from('historial_sorteos').select('*');
-        if (error) throw error;
-        if (data) {
-            historial = data;
-            actualizarInterfaz();
-        }
-    } catch (err) { console.log("⚠️ Error Supabase"); }
-}
-
-const btnBorrar = document.getElementById('btn-borrar');
-if(btnBorrar) {
-    btnBorrar.onclick = async () => {
-        if(historial.length === 0) return;
-        if(!confirm("¿Borrar último?")) return;
-        const ult = historial.pop();
-        await _supabase.from('historial_sorteos').delete().match({ fecha: ult.fecha, hora: ult.hora });
-        actualizarInterfaz();
-    };
+function openTab(evt, tabName) {
+    let i, tabcontent, tablinks;
+    tabcontent = document.getElementsByClassName("tab-content");
+    for (i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
+    tablinks = document.getElementsByClassName("tab-btn");
+    for (i = 0; i < tablinks.length; i++) { tablinks[i].className = tablinks[i].className.replace(" active", ""); }
+    document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.className += " active";
 }
 
 window.onload = inicializarSistema;
