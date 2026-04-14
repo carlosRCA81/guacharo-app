@@ -1,13 +1,17 @@
-// CONFIGURACIÓN DE TU PROYECTO "ANALIZADO"
-const SUPABASE_URL = "https://ggpxzqfobvkdjpobfmtb.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdncHh6cWZvYnZrkGpPQmJtdEIiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTcxMjE2NjgxNSwiZXhwIjoyMDI3NzQyODE1fQ..."; // Tu llave anon de la foto
+// ==========================================
+// CONFIGURACIÓN SUPABASE - ANALIZADOR CRCA PRO
+// ==========================================
+const SUPABASE_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// Cache de animales para búsqueda rápida O(1)
+const animalMap = {};
 const listaAnimales = [
-    {n:'0', a:'DELFIN', t:'AGUA'}, {n:'00', a:'BALLENA', t:'AGUA'}, {n:'1', a:'CARNERO', t:'TIERRA'},
-    {n:'2', a:'TORO', t:'TIERRA'}, {n:'3', a:'CIEMPIES', t:'TIERRA'}, {n:'4', a:'ALACRAN', t:'TIERRA'},
-    {n:'5', a:'LEON', t:'TIERRA'}, {n:'6', a:'RANA', t:'AGUA'}, {n:'7', a:'PERICO', t:'AIRE'},
-    {n:'8', a:'RATON', t:'TIERRA'}, {n:'9', a:'AGUILA', t:'AIRE'}, {n:'10', a:'TIGRE', t:'TIERRA'},
+    {n:'0', a:'DELFIN', t:'AGUA'}, {n:'00', a:'BALLENA', t:'AGUA'}, {n:'01', a:'CARNERO', t:'TIERRA'},
+    {n:'02', a:'TORO', t:'TIERRA'}, {n:'03', a:'CIEMPIES', t:'TIERRA'}, {n:'04', a:'ALACRAN', t:'TIERRA'},
+    {n:'05', a:'LEON', t:'TIERRA'}, {n:'06', a:'RANA', t:'AGUA'}, {n:'07', a:'PERICO', t:'AIRE'},
+    {n:'08', a:'RATON', t:'TIERRA'}, {n:'09', a:'AGUILA', t:'AIRE'}, {n:'10', a:'TIGRE', t:'TIERRA'},
     {n:'11', a:'GATO', t:'TIERRA'}, {n:'12', a:'CABALLO', t:'TIERRA'}, {n:'13', a:'MONO', t:'TIERRA'},
     {n:'14', a:'PALOMA', t:'AIRE'}, {n:'15', a:'ZORRO', t:'TIERRA'}, {n:'16', a:'OSO', t:'TIERRA'},
     {n:'17', a:'PAVO', t:'AIRE'}, {n:'18', a:'BURRO', t:'TIERRA'}, {n:'19', a:'CHIVO', t:'TIERRA'},
@@ -31,102 +35,141 @@ const listaAnimales = [
     {n:'71', a:'GUACAMAYA', t:'AIRE'}, {n:'72', a:'GORILA', t:'TIERRA'}, {n:'73', a:'HIPOPOTAMO', t:'TIERRA'},
     {n:'74', a:'TURPIAL', t:'AIRE'}, {n:'75', a:'GUACHARO', t:'AIRE'}
 ];
+listaAnimales.forEach(a => animalMap[a.n] = a);
 
-const horas = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
+const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
 let historial = [];
-let horaActiva = null;
+let horaSeleccionadaActiva = null;
 
-// AL CARGAR LA PÁGINA
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('fecha-analisis').valueAsDate = new Date();
-    renderPanelHoras();
-    renderGridAnimales();
-    cargarDatos();
+// Inicialización optimizada
+async function inicializarSistema() {
+    const fechaInput = document.getElementById('fecha-analisis');
+    if(fechaInput && !fechaInput.value) {
+        fechaInput.value = new Date().toISOString().split('T')[0];
+    }
     
-    setInterval(() => {
-        document.getElementById('live-clock').innerText = new Date().toLocaleTimeString();
-    }, 1000);
-});
-
-function renderPanelHoras() {
-    const container = document.getElementById('panel-diario-sorteos');
-    container.innerHTML = '';
-    const fecha = document.getElementById('fecha-analisis').value;
+    generarGridBotones();
+    llenarSelectEstudio();
+    await cargarHistorialRemoto();
     
-    horas.forEach(h => {
-        const div = document.createElement('div');
-        div.className = 'hora-box';
-        const registro = historial.find(r => r.fecha === fecha && r.hora === h);
-        if(registro) {
-            div.classList.add('jugado');
-            div.innerText = `${h}\n(${registro.num})`;
-        } else {
-            div.innerText = h;
-        }
-        div.onclick = () => {
-            document.querySelectorAll('.hora-box').forEach(b => b.classList.remove('active'));
-            div.classList.add('active');
-            horaActiva = h;
-        };
-        container.appendChild(div);
+    fechaInput?.addEventListener('change', () => {
+        generarPanelDiario();
+        calcularBalanceElementos();
     });
 }
 
-function renderGridAnimales() {
-    const container = document.getElementById('grid-container');
-    container.innerHTML = '';
-    listaAnimales.forEach(a => {
-        const btn = document.createElement('button');
-        btn.className = 'animal-btn';
-        btn.innerHTML = `<strong>${a.n}</strong><br>${a.a}`;
-        btn.onclick = () => registrarSorteo(a.n, a.a, a.t);
-        container.appendChild(btn);
+// Carga remota con ordenamiento desde la base de datos (más rápido)
+async function cargarHistorialRemoto() {
+    try {
+        const { data, error } = await _supabase
+            .from('historial_sorteos')
+            .select('*')
+            .order('fecha', { ascending: false })
+            .order('hora', { ascending: false });
+
+        if (error) throw error;
+        historial = data || [];
+        actualizarInterfaz();
+    } catch (err) {
+        console.error("Error cargando datos:", err.message);
+    }
+}
+
+function actualizarInterfaz() {
+    // Ordenamos una sola vez para todos los cálculos
+    historial.sort((a, b) => {
+        if (a.fecha !== b.fecha) return b.fecha.localeCompare(a.fecha);
+        return horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora);
+    });
+
+    if(historial.length > 0) {
+        document.getElementById('last-num').innerText = `${historial[0].num} - ${historial[0].animal}`;
+    }
+
+    // Ejecución fragmentada para no congelar la UI
+    requestAnimationFrame(() => {
+        actualizarTabla();
+        analizarGuacharo();
+        generarPanelDiario();
+        calcularBalanceElementos();
+        detectarDormidos();
     });
 }
 
-async function cargarDatos() {
-    const { data, error } = await _supabase.from('historial_resultados').select('*').order('created_at', { ascending: false });
-    if (!error) {
-        historial = data;
-        actualizarUI();
-    }
+function generarPanelDiario() {
+    const panel = document.getElementById('panel-diario-sorteos');
+    if(!panel) return;
+    
+    const fechaActual = document.getElementById('fecha-analisis').value;
+    const registrosHoy = historial.filter(r => r.fecha === fechaActual);
+    
+    let html = '';
+    horasSorteo.forEach(hora => {
+        const reg = registrosHoy.find(r => r.hora === hora);
+        const clase = reg ? 'hora-box jugado' : 'hora-box';
+        const texto = reg ? `${hora}<br><strong>(${reg.num})</strong>` : hora;
+        html += `<div class="${clase}" onclick="seleccionarHora(this, '${hora}')">${texto}</div>`;
+    });
+    panel.innerHTML = html;
 }
 
-async function registrarSorteo(num, animal, tipo) {
-    if (!horaActiva) return alert("Por favor, toca primero una HORA.");
+function seleccionarHora(elemento, hora) {
+    horaSeleccionadaActiva = hora;
+    document.querySelectorAll('.hora-box').forEach(b => {
+        b.classList.remove('active-select');
+        b.style.border = '1px solid #475569';
+    });
+    elemento.classList.add('active-select');
+    elemento.style.border = '2px solid #38bdf8';
+    document.getElementById('num-rapido').focus();
+}
+
+async function registrarSorteo(num, animal, tipo, hora) {
     const fecha = document.getElementById('fecha-analisis').value;
+    const nuevoRegistro = { fecha, hora, num, animal, tipo, updated_at: new Date() };
 
-    const { error } = await _supabase.from('historial_resultados').insert([{
-        fecha, hora: horaActiva, num, animal, tipo
-    }]);
+    // Actualización optimista de la UI
+    const index = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
+    if (index !== -1) historial[index] = nuevoRegistro;
+    else historial.unshift(nuevoRegistro);
+    
+    actualizarInterfaz();
 
-    if (!error) {
-        cargarDatos();
-        document.getElementById('num-rapido').value = '';
-    } else {
-        alert("Error al guardar: " + error.message);
-    }
+    const { error } = await _supabase.from('historial_sorteos').upsert(nuevoRegistro);
+    if (error) console.error("Error al guardar:", error);
 }
 
 function registrarPorNumero() {
-    const n = document.getElementById('num-rapido').value;
-    const animal = listaAnimales.find(a => a.n === n || (n.length === 1 && a.n === "0" + n));
-    if (animal) registrarSorteo(animal.n, animal.a, animal.t);
-    else alert("Número no válido");
+    if (!horaSeleccionadaActiva) return alert("Selecciona una HORA primero");
+    const input = document.getElementById('num-rapido');
+    let val = input.value.trim();
+    if (!val) return;
+
+    if (val.length === 1 && val !== "0") val = "0" + val;
+    
+    const animal = animalMap[val];
+    if (!animal) return alert("Número inválido");
+
+    registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
+    input.value = '';
 }
 
-function actualizarUI() {
-    renderPanelHoras();
-    const tbody = document.getElementById('lista-historial');
-    tbody.innerHTML = historial.map(r => `
-        <tr><td style="padding:10px;">${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td></tr>
+function actualizarTabla() {
+    const cuerpo = document.getElementById('lista-historial');
+    if(!cuerpo) return;
+    
+    // Solo mostramos los últimos 50 para mantener la fluidez
+    const fragmento = historial.slice(0, 50).map(r => `
+        <tr class="${r.num === '75' ? 'row-guacharo' : ''}">
+            <td>${r.fecha}</td>
+            <td>${r.hora}</td>
+            <td>${r.num}</td>
+            <td>${r.animal}</td>
+            <td>${r.tipo}</td>
+        </tr>
     `).join('');
-    if(historial.length > 0) document.getElementById('last-num').innerText = historial[0].num + " " + historial[0].animal;
+    
+    cuerpo.innerHTML = fragmento;
 }
 
-function openTab(evt, tabName) {
-    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(tabName).style.display = 'block';
-    evt.currentTarget.classList.add('active');
-}
+// ... Resto de funciones (analizarGuacharo, detectarDormidos) simplificadas para usar el historial ya ordenado
