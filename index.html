@@ -3,20 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRCA ELITE v3 - Pro</title>
+    <title>ANALIZADOR CRCA ELITE</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Optimizaciones de velocidad y diseño */
-        .panel-diario { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 15px; background: #0f172a; padding: 10px; border-radius: 8px; font-size: 0.7rem;}
-        .hora-box { background: #334155; padding: 8px; text-align: center; border-radius: 4px; border: 1px solid #475569; color: #f8fafc; cursor: pointer;}
-        .hora-box.jugado { background: #22c55e !important; color: #0f172a; font-weight: bold;}
-        .entrada-rapida-container { background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #38bdf8; display: flex; gap: 10px; align-items: center;}
-        #num-rapido { background: #1e293b; color: #fbbf24; border: 1px solid #38bdf8; padding: 8px; border-radius: 4px; font-size: 1rem; font-weight: bold; width: 60px; text-align: center;}
-        .tabla-contenedor { max-height: 400px; overflow-y: auto; background: #1e293b; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; color: white; font-size: 0.8rem; }
-        th { background: #0f172a; position: sticky; top: 0; padding: 10px; }
-        td { padding: 8px; border-bottom: 1px solid #334155; text-align: center; }
-        .row-guacharo { background: rgba(251, 191, 36, 0.2) !important; color: #fbbf24; }
+        /* Estilos críticos para evitar que se desordene */
+        .panel-diario { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; padding: 10px; background: #1e293b; border-radius: 8px; }
+        .hora-box { background: #334155; padding: 12px 5px; text-align: center; border-radius: 6px; border: 2px solid transparent; color: white; cursor: pointer; font-size: 0.8rem; }
+        .hora-box.active { border-color: #fbbf24; background: #475569; }
+        .hora-box.jugado { background: #22c55e !important; color: #0f172a; font-weight: bold; }
+        .grid-animales { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 15px; }
+        .animal-btn { background: #334155; color: white; padding: 10px; border-radius: 4px; border: none; font-size: 0.7rem; text-align: center; }
+        #num-rapido { background: #0f172a; color: #fbbf24; border: 2px solid #38bdf8; padding: 10px; border-radius: 8px; width: 60px; text-align: center; font-size: 1.2rem; }
     </style>
 </head>
 <body>
@@ -34,50 +31,40 @@
 
         <section id="registro" class="tab-content" style="display: block;">
             <div class="panel-diario" id="panel-diario-sorteos"></div>
-            <div class="controls-row" style="margin-bottom:10px;">
-                <input type="date" id="fecha-analisis" style="padding:10px; width:100%; border-radius:5px;">
+            
+            <div style="margin: 15px 0;">
+                <input type="date" id="fecha-analisis" style="width: 100%; padding: 12px; border-radius: 8px; border: none; background: #1e293b; color: white;">
             </div>
-            <div class="entrada-rapida-container">
+
+            <div style="display: flex; gap: 10px; align-items: center; background: #0f172a; padding: 10px; border-radius: 10px; border: 1px solid #38bdf8;">
                 <input type="text" id="num-rapido" maxlength="2" placeholder="00">
-                <button onclick="registrarPorNumero()" style="flex-grow:1; background:#fbbf24; color:#000; font-weight:bold; padding:10px; border-radius:5px;">REGISTRAR</button>
+                <button onclick="registrarPorNumero()" style="flex-grow: 1; padding: 12px; background: #fbbf24; border: none; border-radius: 8px; font-weight: bold; color: #000;">REGISTRAR</button>
             </div>
-            <div class="display-reciente" style="display:flex; justify-content:space-between; align-items:center; padding:10px;">
-                <p>Último: <span id="last-num" style="color:#22c55e; font-weight:bold;">--</span></p>
-                <button id="btn-borrar" class="btn-danger" style="background:#ef4444; color:white; border:none; padding:5px 10px; border-radius:4px;">BORRAR</button>
+
+            <div style="display: flex; justify-content: space-between; margin: 15px 0; color: white;">
+                <span>Último: <strong id="last-num" style="color: #22c55e;">--</strong></span>
+                <button onclick="borrarUltimo()" style="background: #ef4444; color: white; border: none; padding: 5px 15px; border-radius: 5px;">BORRAR</button>
             </div>
-            <div class="grid-animales" id="grid-container" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:5px;"></div>
+
+            <div class="grid-animales" id="grid-container"></div>
         </section>
 
         <section id="historial" class="tab-content" style="display: none;">
-            <h3>DATOS ACUMULADOS</h3>
-            <div class="tabla-contenedor">
-                <table>
-                    <thead>
-                        <tr><th>Fecha</th><th>Hora</th><th>Nro</th><th>Animal</th></tr>
+            <div style="background: #1e293b; border-radius: 8px; overflow: hidden;">
+                <table style="width: 100%; color: white; border-collapse: collapse;">
+                    <thead style="background: #0f172a;">
+                        <tr><th style="padding: 10px;">Fecha</th><th>Hora</th><th>Nro</th><th>Animal</th></tr>
                     </thead>
-                    <tbody id="lista-historial">
-                        <tr><td colspan="4">Cargando datos...</td></tr>
+                    <tbody id="lista-historial" style="text-align: center;">
+                        <tr><td colspan="4" style="padding: 20px;">Cargando datos...</td></tr>
                     </tbody>
                 </table>
             </div>
         </section>
-
-        <section id="estudio" class="tab-content" style="display: none;">
-            <h3>INTELIGENCIA GUACHARO (75)</h3>
-            <div style="background: #0f172a; padding: 20px; border-radius: 8px; text-align: center;">
-                <div style="font-size: 2rem; color: #fbbf24;"><span id="dias-sin-75">0</span> Días Ausente</div>
-            </div>
-        </section>
-
-        <section id="stats-gen" class="tab-content" style="display: none;">
-            <h3>PATRONES</h3>
-            <select id="select-animal-estudio" style="width:100%; padding:10px; margin-bottom:10px;"></select>
-            <button onclick="estudiarAnimalEspecifico()" style="width:100%; padding:10px;">ANALIZAR</button>
-            <div id="resultado-patrones"></div>
-        </section>
-    </div>
+        
+        </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js"></script>
+    <script src="logic.js"></script>
 </body>
 </html>
