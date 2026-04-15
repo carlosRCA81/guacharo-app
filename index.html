@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador CRCA - Pro Integral</title>
+    <title>Analizador CRCA - Sistema Profesional</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -17,7 +17,7 @@
         <div id="live-clock">00:00:00</div>
         
         <section class="entrada-rapida-container">
-            <h4>ENTRADA RÁPIDA:</h4>
+            <h4>REGISTRO RÁPIDO:</h4>
             <input type="text" id="num-rapido" placeholder="Nro" maxlength="2">
             <button onclick="registrarRapido()">GUARDAR</button>
         </section>
@@ -31,27 +31,23 @@
         <section id="panel" class="tab-content active">
             <div class="display-reciente">
                 <span>ÚLTIMO: <strong id="last-num">--</strong></span>
-                <button class="btn-danger" id="btn-borrar">BORRAR ÚLTIMO</button>
+                <button class="btn-danger" onclick="borrarUltimo()">BORRAR</button>
             </div>
             <div class="stat-card-mini">
                 <h4>DÍAS SIN EL ESPECIAL (75):</h4>
-                <div id="dias-sin-75" style="font-size: 1.5rem; color: var(--oro);">0</div>
+                <div id="dias-sin-75" style="font-size: 1.5rem; color: #fbbf24;">0</div>
             </div>
         </section>
 
         <section id="stats-gen" class="tab-content">
             <h3>ESTUDIO DE MOVIMIENTOS</h3>
-            <div class="search-box">
-                <select id="select-animal-estudio"></select>
-                <button onclick="estudiarAnimalEspecifico()">VER</button>
-            </div>
             <div id="resultado-patrones"></div>
         </section>
 
         <section id="historial" class="tab-content">
             <div class="controls-row">
                 <input type="date" id="filtro-fecha-almanaque">
-                <button onclick="filtrarPorFecha()">FILTRAR FECHA</button>
+                <button onclick="filtrarPorFecha()">BUSCAR FECHA</button>
                 <button onclick="cargarHistorialRemoto()">VER TODO</button>
             </div>
             <div class="tabla-contenedor">
