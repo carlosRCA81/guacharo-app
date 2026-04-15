@@ -3,68 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANALIZADOR CRCA ELITE</title>
+    <title>Panel de Análisis - Sorteos en Vivo</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        /* Estilos críticos para evitar que se desordene */
-        .panel-diario { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; padding: 10px; background: #1e293b; border-radius: 8px; }
-        .hora-box { background: #334155; padding: 12px 5px; text-align: center; border-radius: 6px; border: 2px solid transparent; color: white; cursor: pointer; font-size: 0.8rem; }
-        .hora-box.active { border-color: #fbbf24; background: #475569; }
-        .hora-box.jugado { background: #22c55e !important; color: #0f172a; font-weight: bold; }
-        .grid-animales { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 15px; }
-        .animal-btn { background: #334155; color: white; padding: 10px; border-radius: 4px; border: none; font-size: 0.7rem; text-align: center; }
-        #num-rapido { background: #0f172a; color: #fbbf24; border: 2px solid #38bdf8; padding: 10px; border-radius: 8px; width: 60px; text-align: center; font-size: 1.2rem; }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-client@2"></script>
 </head>
 <body>
-    <div id="main-app">
+    <div class="container">
         <header>
-            <h1>ANALIZADOR CRCA <span style="color:#fbbf24">ELITE</span></h1>
-            <div id="live-clock">00:00:00</div>
-            <div class="tab-container">
-                <button class="tab-btn active" onclick="openTab(event, 'registro')">REGISTRO</button>
-                <button class="tab-btn" onclick="openTab(event, 'estudio')">ESTUDIO 75</button>
-                <button class="tab-btn" onclick="openTab(event, 'stats-gen')">PATRONES</button>
-                <button class="tab-btn" onclick="openTab(event, 'historial')">HISTORIAL</button>
-            </div>
+            <h1>Sistema de Análisis de Sorteos</h1>
+            <p>Monitoreo en vivo y estudio del Número Especial (75)</p>
         </header>
 
-        <section id="registro" class="tab-content" style="display: block;">
-            <div class="panel-diario" id="panel-diario-sorteos"></div>
-            
-            <div style="margin: 15px 0;">
-                <input type="date" id="fecha-analisis" style="width: 100%; padding: 12px; border-radius: 8px; border: none; background: #1e293b; color: white;">
-            </div>
+        <main>
+            <section class="filtro-seccion">
+                <div class="card">
+                    <h3>Selección de Fecha</h3>
+                    <div class="controles">
+                        <input type="date" id="fecha-sorteo" class="input-fecha">
+                        <button id="btn-consultar" class="btn-ejecutar">Consultar y Analizar</button>
+                    </div>
+                </div>
+            </section>
 
-            <div style="display: flex; gap: 10px; align-items: center; background: #0f172a; padding: 10px; border-radius: 10px; border: 1px solid #38bdf8;">
-                <input type="text" id="num-rapido" maxlength="2" placeholder="00">
-                <button onclick="registrarPorNumero()" style="flex-grow: 1; padding: 12px; background: #fbbf24; border: none; border-radius: 8px; font-weight: bold; color: #000;">REGISTRAR</button>
-            </div>
+            <section class="resultados-seccion">
+                <div id="pantalla-datos">
+                    <div class="mensaje-bienvenida">
+                        Seleccione una fecha en el almanaque para ver los resultados ordenados.
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
 
-            <div style="display: flex; justify-content: space-between; margin: 15px 0; color: white;">
-                <span>Último: <strong id="last-num" style="color: #22c55e;">--</strong></span>
-                <button onclick="borrarUltimo()" style="background: #ef4444; color: white; border: none; padding: 5px 15px; border-radius: 5px;">BORRAR</button>
-            </div>
-
-            <div class="grid-animales" id="grid-container"></div>
-        </section>
-
-        <section id="historial" class="tab-content" style="display: none;">
-            <div style="background: #1e293b; border-radius: 8px; overflow: hidden;">
-                <table style="width: 100%; color: white; border-collapse: collapse;">
-                    <thead style="background: #0f172a;">
-                        <tr><th style="padding: 10px;">Fecha</th><th>Hora</th><th>Nro</th><th>Animal</th></tr>
-                    </thead>
-                    <tbody id="lista-historial" style="text-align: center;">
-                        <tr><td colspan="4" style="padding: 20px;">Cargando datos...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-        
-        </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="logic.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
