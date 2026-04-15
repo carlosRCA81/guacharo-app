@@ -1,55 +1,91 @@
 :root {
-    --bg-profundo: #0f172a;
-    --bg-acero: #1e293b;
-    --bg-interfaz: #334155;
-    --celeste: #38bdf8;
-    --oro: #fbbf24;
-    --rojo: #ef4444;
-    --blanco: #f8fafc;
+    --primary: #3ecf8e; /* Color Supabase */
+    --special: #ffd700; /* Dorado para el 75 */
+    --dark: #1c1c1c;
+    --light: #f4f4f4;
 }
 
 body {
-    background-color: var(--bg-profundo);
-    color: var(--blanco);
-    font-family: sans-serif;
-    margin: 0; padding: 15px;
-}
-
-#login-screen, #main-app {
-    background: var(--bg-acero);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--light);
+    margin: 0;
     padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
 }
 
-h1 { color: var(--celeste); text-align: center; font-size: 1.5rem; margin-top: 0; }
-#live-clock { text-align: center; color: var(--oro); font-size: 1.2rem; font-weight: bold; margin-bottom: 15px; }
+.container {
+    max-width: 900px;
+    margin: auto;
+}
 
-/* Pestañas */
-.tab-container { display: flex; gap: 5px; margin-bottom: 15px; }
-.tab-btn { flex: 1; padding: 10px; background: var(--bg-interfaz); border: none; color: white; border-radius: 5px; font-size: 0.7rem; cursor: pointer; }
-.tab-btn.active { background: var(--celeste); color: var(--bg-profundo); font-weight: bold; }
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
 
-.tab-content { display: none; }
-.tab-content.active { display: block; }
+.controles {
+    display: flex;
+    gap: 10px;
+}
 
-/* Controles */
-.controls-row { display: flex; gap: 10px; margin-bottom: 15px; }
-input, select, button { border-radius: 5px; padding: 10px; border: none; width: 100%; }
-input, select { background: var(--bg-profundo); color: white; }
-button { background: var(--celeste); color: var(--bg-profundo); font-weight: bold; }
+.input-fecha {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    flex-grow: 1;
+}
 
-.display-reciente { background: var(--bg-profundo); padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-.btn-danger { background: var(--rojo); color: white; width: auto; padding: 5px 10px; }
+.btn-ejecutar {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
 
-/* Cuadrícula */
-.grid-animales { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; max-height: 350px; overflow-y: auto; padding: 5px; }
-.animal-item { background: var(--bg-interfaz); padding: 8px; text-align: center; border-radius: 4px; font-size: 0.7rem; border: 1px solid #475569; }
+.btn-ejecutar:hover {
+    background-color: #34b27b;
+}
 
-/* Tabla Historial */
-.tabla-contenedor { overflow-x: auto; margin-top: 10px; }
-table { width: 100%; border-collapse: collapse; font-size: 0.7rem; }
-th, td { border: 1px solid #475569; padding: 8px; text-align: center; }
-th { background: var(--bg-profundo); color: var(--celeste); }
+/* TABLA DE RESULTADOS */
+.tabla-ingenieria {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
 
-.card-stats { background: var(--bg-profundo); padding: 15px; border-radius: 8px; border-left: 4px solid var(--oro); }
+.tabla-ingenieria th {
+    background-color: var(--dark);
+    color: white;
+    padding: 15px;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+}
+
+.tabla-ingenieria td {
+    padding: 12px;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+}
+
+/* RESALTADO DEL NÚMERO ESPECIAL 75 */
+.especial-75 {
+    background-color: rgba(255, 215, 0, 0.3) !important;
+    border-left: 6px solid var(--special);
+}
+
+.especial-75 .col-num {
+    color: #d4af37;
+    font-size: 1.2rem;
+    transform: scale(1.1);
+}
+
+.cargando { color: var(--primary); font-weight: bold; text-align: center; }
+.error { color: red; background: #fee; padding: 10px; border-radius: 5px; }
