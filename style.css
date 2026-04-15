@@ -1,18 +1,32 @@
-body { font-family: sans-serif; background: #eceff1; padding: 15px; margin: 0; }
-.container { max-width: 1000px; margin: auto; }
-.card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+:root {
+    --bg-profundo: #0f172a;
+    --bg-acero: #1e293b;
+    --celeste: #38bdf8;
+    --oro: #fbbf24;
+    --blanco: #f8fafc;
+}
 
-.grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
-input, select, button { padding: 12px; border: 1px solid #ccc; border-radius: 6px; }
+body { background: var(--bg-profundo); color: var(--blanco); font-family: sans-serif; padding: 15px; }
 
-button { background: #3ecf8e; color: white; border: none; font-weight: bold; cursor: pointer; }
-button:hover { background: #34b27b; }
+#login-screen, #main-app { background: var(--bg-acero); padding: 20px; border-radius: 12px; }
 
-.tabla-profesional { width: 100%; border-collapse: collapse; margin-top: 15px; }
-.tabla-profesional th { background: #263238; color: white; padding: 12px; text-align: left; }
-.tabla-profesional td { padding: 10px; border-bottom: 1px solid #eee; }
+.tab-btn { background: #334155; color: white; padding: 10px; border: none; cursor: pointer; flex: 1; }
+.tab-btn.active { background: var(--celeste); color: var(--bg-profundo); font-weight: bold; }
 
-/* RESALTADO DEL 75 */
-.especial-75 { background-color: #fff9c4 !important; border-left: 8px solid #fbc02d; font-weight: bold; color: #f57f17; }
+.tab-container { display: flex; gap: 5px; margin-bottom: 15px; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
 
-.error { color: red; font-weight: bold; }
+/* RESALTADO ESPECIAL GUACHARO 75 */
+.row-guacharo {
+    background: rgba(251, 191, 36, 0.2) !important;
+    color: var(--oro) !important;
+    border-left: 4px solid var(--oro);
+}
+
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; color: var(--celeste); border-bottom: 1px solid var(--bg-profundo); padding: 10px; }
+td { padding: 10px; border-bottom: 1px solid #334155; }
+
+input { background: var(--bg-profundo); color: white; border: 1px solid var(--celeste); padding: 10px; border-radius: 5px; }
+button { background: var(--celeste); color: var(--bg-profundo); font-weight: bold; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
