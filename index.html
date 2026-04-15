@@ -3,44 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Profesional de Sorteos</title>
+    <title>Analizador CRCA - Pro Integral</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-client@2"></script>
 </head>
 <body>
-    <div class="container">
-        <header class="card">
-            <h2>Registrar Nuevo Sorteo</h2>
-            <form id="formulario-registro" class="grid-form">
-                <input type="date" id="reg-fecha" required>
-                <input type="text" id="reg-hora" placeholder="Ej: 10:00 AM" required>
-                <input type="text" id="reg-num" placeholder="Número (75 es especial)" required>
-                <input type="text" id="reg-animal" placeholder="Animal" required>
-                <select id="reg-tipo">
-                    <option value="AIRE">AIRE</option>
-                    <option value="TIERRA">TIERRA</option>
-                    <option value="AGUA">AGUA</option>
-                </select>
-                <button type="submit" id="btn-guardar">Guardar en Supabase</button>
-            </form>
-        </header>
+    <div id="login-screen">
+        <h1>SISTEMA CRCA</h1>
+        <input type="password" id="access-key" placeholder="Clave Maestra">
+        <button onclick="checkAccess()">ENTRAR</button>
+    </div>
 
-        <section class="card filtro-area">
-            <h3>Historial y Estudio de Resultados</h3>
-            <div class="controles">
-                <input type="date" id="filtro-fecha">
-                <button id="btn-buscar">Consultar Fecha</button>
-                <button id="btn-ver-todo">Ver Todo el Historial</button>
+    <div id="main-app" style="display:none;">
+        <div id="live-clock">00:00:00</div>
+        
+        <section class="entrada-rapida-container">
+            <h4>ENTRADA RÁPIDA:</h4>
+            <input type="text" id="num-rapido" placeholder="Nro" maxlength="2">
+            <button onclick="registrarRapido()">GUARDAR</button>
+        </section>
+
+        <div class="tab-container">
+            <button class="tab-btn active" onclick="openTab(event, 'panel')">PANEL</button>
+            <button class="tab-btn" onclick="openTab(event, 'stats-gen')">PATRONES</button>
+            <button class="tab-btn" onclick="openTab(event, 'historial')">HISTORIAL</button>
+        </div>
+
+        <section id="panel" class="tab-content active">
+            <div class="display-reciente">
+                <span>ÚLTIMO: <strong id="last-num">--</strong></span>
+                <button class="btn-danger" id="btn-borrar">BORRAR ÚLTIMO</button>
+            </div>
+            <div class="stat-card-mini">
+                <h4>DÍAS SIN EL ESPECIAL (75):</h4>
+                <div id="dias-sin-75" style="font-size: 1.5rem; color: var(--oro);">0</div>
             </div>
         </section>
 
-        <section id="pantalla-estudio" class="card">
-            <div id="tabla-contenedor">
-                <p class="mensaje-espera">Cargando base de datos...</p>
+        <section id="stats-gen" class="tab-content">
+            <h3>ESTUDIO DE MOVIMIENTOS</h3>
+            <div class="search-box">
+                <select id="select-animal-estudio"></select>
+                <button onclick="estudiarAnimalEspecifico()">VER</button>
+            </div>
+            <div id="resultado-patrones"></div>
+        </section>
+
+        <section id="historial" class="tab-content">
+            <div class="controls-row">
+                <input type="date" id="filtro-fecha-almanaque">
+                <button onclick="filtrarPorFecha()">FILTRAR FECHA</button>
+                <button onclick="cargarHistorialRemoto()">VER TODO</button>
+            </div>
+            <div class="tabla-contenedor">
+                <table>
+                    <thead>
+                        <tr><th>Fecha</th><th>Hora</th><th>Nro</th><th>Animal</th></tr>
+                    </thead>
+                    <tbody id="lista-historial"></tbody>
+                </table>
             </div>
         </section>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="app.js"></script>
 </body>
 </html>
