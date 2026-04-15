@@ -8,25 +8,22 @@
 
 body { background: var(--bg-profundo); color: var(--blanco); font-family: sans-serif; padding: 15px; }
 
-#login-screen, #main-app { background: var(--bg-acero); padding: 20px; border-radius: 12px; }
-
-.tab-btn { background: #334155; color: white; padding: 10px; border: none; cursor: pointer; flex: 1; }
-.tab-btn.active { background: var(--celeste); color: var(--bg-profundo); font-weight: bold; }
+#login-screen, #main-app { background: var(--bg-acero); padding: 20px; border-radius: 12px; max-width: 600px; margin: auto; }
 
 .tab-container { display: flex; gap: 5px; margin-bottom: 15px; }
+.tab-btn { background: #334155; color: white; padding: 10px; border: none; flex: 1; cursor: pointer; border-radius: 5px; }
+.tab-btn.active { background: var(--celeste); color: var(--bg-profundo); font-weight: bold; }
+
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 
-/* RESALTADO ESPECIAL GUACHARO 75 */
-.row-guacharo {
-    background: rgba(251, 191, 36, 0.2) !important;
-    color: var(--oro) !important;
-    border-left: 4px solid var(--oro);
-}
+/* RESALTADO DEL 75 */
+.row-guacharo { background: rgba(251, 191, 36, 0.2) !important; color: var(--oro) !important; border-left: 4px solid var(--oro); }
 
-table { width: 100%; border-collapse: collapse; }
-th { text-align: left; color: var(--celeste); border-bottom: 1px solid var(--bg-profundo); padding: 10px; }
+table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
+th { text-align: left; color: var(--celeste); padding: 10px; border-bottom: 1px solid #334155; }
 td { padding: 10px; border-bottom: 1px solid #334155; }
 
-input { background: var(--bg-profundo); color: white; border: 1px solid var(--celeste); padding: 10px; border-radius: 5px; }
+.controls-row { display: flex; gap: 10px; margin-bottom: 15px; }
+input { background: var(--bg-profundo); color: white; border: 1px solid var(--celeste); padding: 10px; border-radius: 5px; width: 100%; }
 button { background: var(--celeste); color: var(--bg-profundo); font-weight: bold; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
