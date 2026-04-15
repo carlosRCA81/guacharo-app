@@ -176,4 +176,4 @@ function actualizarTabla() {
     });
 }
 
-// (Mantén tus funciones generarPanelDiario, generarGridBotones y checkAccess igual que las tienes)
+// (Mantén tus funciones generarPanelDiario, generarGridBotones y checkAccess igual que las tienes
