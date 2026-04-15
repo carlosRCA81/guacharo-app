@@ -1,25 +1,17 @@
-// CONFIGURACIÓN MAESTRA
+// CREDENCIALES EXTRAÍDAS DE TUS CÓDIGOS ORIGINALES
 const SUPABASE_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
-const SUPABASE_KEY = 'TU_KEY_COMPLETA_AQUI'; // Usa la key larga de tu archivo .env
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const CLAVE_MAESTRA = '1234';
 let historial = [];
 
-const listaAnimales = [
-    {n:'0', a:'DELFIN', t:'AGUA'}, {n:'00', a:'BALLENA', t:'AGUA'}, {n:'01', a:'CARNERO', t:'TIERRA'},
-    {n:'75', a:'GUACHARO', t:'AIRE'}, // Aseguramos que el 75 esté en tu lista
-    // ... (El resto de tu lista original de animales aquí)
-];
-
-// SEGURIDAD
 function checkAccess() {
     const pass = document.getElementById('access-key').value;
-    if (pass === CLAVE_MAESTRA) {
+    if (pass === '1234') {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('main-app').style.display = 'block';
         inicializarSistema();
-    } else { alert("ERROR: CLAVE INCORRECTA"); }
+    } else { alert("CLAVE INCORRECTA"); }
 }
 
 function inicializarSistema() {
@@ -29,26 +21,33 @@ function inicializarSistema() {
     }, 1000);
 }
 
-// GESTIÓN DE DATOS
+// CARGA INICIAL: Asegura que el historial se vea al entrar
 async function cargarHistorialRemoto() {
-    const { data, error } = await _supabase.from('historial_sorteos')
+    console.log("Conectando a Supabase...");
+    const { data, error } = await _supabase
+        .from('historial_sorteos')
         .select('*')
         .order('fecha', { ascending: false })
         .order('hora', { ascending: false });
     
-    if (!error && data) {
-        historial = data;
-        actualizarInterfaz();
+    if (error) {
+        console.error("Error en conexión:", error.message);
+        return;
     }
+    
+    historial = data;
+    actualizarInterfaz();
 }
 
+// FILTRO POR ALMANAQUE
 async function filtrarPorFecha() {
-    const fecha = document.getElementById('filtro-fecha-almanaque').value;
-    if(!fecha) return;
+    const fechaBusqueda = document.getElementById('filtro-fecha-almanaque').value;
+    if (!fechaBusqueda) return;
 
-    const { data, error } = await _supabase.from('historial_sorteos')
+    const { data, error } = await _supabase
+        .from('historial_sorteos')
         .select('*')
-        .eq('fecha', fecha)
+        .eq('fecha', fechaBusqueda)
         .order('hora', { ascending: true });
 
     if (!error) {
@@ -65,10 +64,11 @@ function actualizarInterfaz() {
     let encontrado75 = false;
 
     historial.forEach(r => {
-        // Lógica de Ingeniería: Resaltado del 75
+        // RESALTADO PROFESIONAL DEL 75 (GUACHARO)
         const esEspecial = r.num === '75' ? 'class="row-guacharo"' : '';
-        if(r.num === '75') encontrado75 = true;
-        if(!encontrado75) sin75++;
+        
+        if (r.num === '75') encontrado75 = true;
+        if (!encontrado75) sin75++;
 
         cuerpo.innerHTML += `
             <tr ${esEspecial}>
@@ -80,12 +80,11 @@ function actualizarInterfaz() {
     });
 
     document.getElementById('dias-sin-75').innerText = sin75;
-    if(historial.length > 0) {
+    if (historial.length > 0) {
         document.getElementById('last-num').innerText = `${historial[0].num} - ${historial[0].animal}`;
     }
 }
 
-// PESTAÑAS
 function openTab(evt, tabName) {
     const contents = document.getElementsByClassName("tab-content");
     for (let c of contents) c.style.display = "none";
