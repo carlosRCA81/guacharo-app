@@ -1,5 +1,5 @@
 // ==========================================
-// CONFIGURACIÓN Y LÓGICA DE DATOS (logic.js)
+// CONFIGURACIÓN SUPABASE - ANALIZADOR CRCA
 // ==========================================
 const SUPABASE_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
@@ -23,7 +23,6 @@ const listaAnimales = [
     {n:'35', a:'PAJARO', t:'AIRE'}, {n:'36', a:'CULEBRA', t:'TIERRA'}, {n:'75', a:'GUACHARO', t:'AIRE'}
 ];
 
-// Cargar datos desde Supabase
 async function cargarHistorialRemoto() {
     try {
         const { data, error } = await _supabase
@@ -34,49 +33,40 @@ async function cargarHistorialRemoto() {
         
         if (error) throw error;
         historial = data || [];
-        if (typeof actualizarInterfaz === 'function') actualizarInterfaz();
+        actualizarInterfaz();
     } catch (err) {
-        console.error("Error cargando historial:", err.message);
+        console.error("Error en Supabase:", err.message);
     }
 }
 
-// Guardar en Supabase
 async function guardarEnSupabase(registro) {
     try {
-        const { error } = await _supabase
-            .from('historial_sorteos')
-            .insert([registro]);
-        
+        const { error } = await _supabase.from('historial_sorteos').insert([registro]);
         if (error) throw error;
         return true;
     } catch (err) {
-        alert("Error al guardar: " + err.message);
+        console.error("Error al guardar:", err.message);
         return false;
     }
 }
 
-// Cálculo de elementos (Tierra, Aire, Agua)
 function calcularBalanceElementos() {
-    const fechaActual = document.getElementById('fecha-analisis')?.value;
+    const fechaActual = document.getElementById('fecha-analisis').value;
     let counts = { TIERRA: 0, AIRE: 0, AGUA: 0 };
     
-    const delDia = historial.filter(r => r.fecha === fechaActual);
-    delDia.forEach(r => {
+    historial.filter(r => r.fecha === fechaActual).forEach(r => {
         if (counts[r.tipo] !== undefined) counts[r.tipo]++;
     });
     
-    if (document.getElementById('val-tierra')) document.getElementById('val-tierra').innerText = counts.TIERRA;
-    if (document.getElementById('val-aire')) document.getElementById('val-aire').innerText = counts.AIRE;
-    if (document.getElementById('val-agua')) document.getElementById('val-agua').innerText = counts.AGUA;
+    document.getElementById('val-tierra').innerText = counts.TIERRA;
+    document.getElementById('val-aire').innerText = counts.AIRE;
+    document.getElementById('val-agua').innerText = counts.AGUA;
 }
 
-// Analizar animales que no han salido
 function analizarDormidos() {
     const listaDormidosDiv = document.getElementById('lista-dormidos');
-    if (!listaDormidosDiv) return;
-
-    const salieron = new Set(historial.slice(0, 20).map(r => r.num));
-    const dormidos = listaAnimales.filter(a => !salieron.has(a.n)).slice(0, 5);
+    const salieron = new Set(historial.slice(0, 25).map(r => r.num));
+    const dormidos = listaAnimales.filter(a => !salieron.has(a.n)).slice(0, 6);
     
-    listaDormidosDiv.innerHTML = dormidos.map(a => `<span>${a.n} ${a.a}</span>`).join(' | ');
+    listaDormidosDiv.innerHTML = dormidos.map(a => `<span>${a.n}-${a.a}</span>`).join(' | ');
 }
