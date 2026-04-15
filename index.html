@@ -3,36 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Análisis - Sorteos en Vivo</title>
+    <title>Panel Profesional de Sorteos</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-client@2"></script>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>Sistema de Análisis de Sorteos</h1>
-            <p>Monitoreo en vivo y estudio del Número Especial (75)</p>
+        <header class="card">
+            <h2>Registrar Nuevo Sorteo</h2>
+            <form id="formulario-registro" class="grid-form">
+                <input type="date" id="reg-fecha" required>
+                <input type="text" id="reg-hora" placeholder="Ej: 10:00 AM" required>
+                <input type="text" id="reg-num" placeholder="Número (75 es especial)" required>
+                <input type="text" id="reg-animal" placeholder="Animal" required>
+                <select id="reg-tipo">
+                    <option value="AIRE">AIRE</option>
+                    <option value="TIERRA">TIERRA</option>
+                    <option value="AGUA">AGUA</option>
+                </select>
+                <button type="submit" id="btn-guardar">Guardar en Supabase</button>
+            </form>
         </header>
 
-        <main>
-            <section class="filtro-seccion">
-                <div class="card">
-                    <h3>Selección de Fecha</h3>
-                    <div class="controles">
-                        <input type="date" id="fecha-sorteo" class="input-fecha">
-                        <button id="btn-consultar" class="btn-ejecutar">Consultar y Analizar</button>
-                    </div>
-                </div>
-            </section>
+        <section class="card filtro-area">
+            <h3>Historial y Estudio de Resultados</h3>
+            <div class="controles">
+                <input type="date" id="filtro-fecha">
+                <button id="btn-buscar">Consultar Fecha</button>
+                <button id="btn-ver-todo">Ver Todo el Historial</button>
+            </div>
+        </section>
 
-            <section class="resultados-seccion">
-                <div id="pantalla-datos">
-                    <div class="mensaje-bienvenida">
-                        Seleccione una fecha en el almanaque para ver los resultados ordenados.
-                    </div>
-                </div>
-            </section>
-        </main>
+        <section id="pantalla-estudio" class="card">
+            <div id="tabla-contenedor">
+                <p class="mensaje-espera">Cargando base de datos...</p>
+            </div>
+        </section>
     </div>
 
     <script src="app.js"></script>
