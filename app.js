@@ -1,45 +1,38 @@
-// CONFIGURACIÓN DE CONEXIÓN (Datos obtenidos de tus archivos .env y capturas)
 const SUPABASE_URL = 'https://yhiohwoutkmzkcengev.supabase.co';
-const SUPABASE_KEY = 'TU_SUPABASE_KEY_AQUÍ'; // Pega aquí la clave larga que tienes en tu archivo .env
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // He tomado la key de tu archivo .env
 
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Función Principal de Consulta
-async function consultarSorteos() {
-    const fechaInput = document.getElementById('fecha-sorteo').value;
-    const visor = document.getElementById('pantalla-datos');
+// 1. FUNCIÓN PARA CARGAR DATOS (CON FILTRO O TODO)
+async function cargarDatos(fechaBusqueda = null) {
+    const contenedor = document.getElementById('tabla-contenedor');
+    contenedor.innerHTML = '<p>Analizando...</p>';
 
-    if (!fechaInput) {
-        alert("Ingeniería: Por favor seleccione una fecha para filtrar la base de datos.");
-        return;
+    let query = _supabase.from('historial_sorteos').select('*').order('fecha', { ascending: false }).order('hora', { ascending: true });
+
+    if (fechaBusqueda) {
+        query = query.eq('fecha', fechaBusqueda);
     }
 
-    visor.innerHTML = '<p class="cargando">Analizando base de datos en tiempo real...</p>';
-
-    // Consulta exacta: Filtra por la fecha del selector y ordena por hora de forma ascendente
-    const { data, error } = await _supabase
-        .from('historial_sorteos')
-        .select('*')
-        .eq('fecha', fechaInput)
-        .order('hora', { ascending: true });
+    const { data, error } = await query;
 
     if (error) {
-        visor.innerHTML = `<div class="error">Error de Conexión: ${error.message}</div>`;
+        contenedor.innerHTML = `<p class="error">Error: ${error.message}</p>`;
         return;
     }
 
     if (data.length === 0) {
-        visor.innerHTML = `<div class="sin-datos">No se encontraron resultados para el día ${fechaInput}.</div>`;
+        contenedor.innerHTML = '<p>No hay datos para esta selección.</p>';
         return;
     }
 
-    // CONSTRUCCIÓN DE LA TABLA ORGANIZADA
     let html = `
-        <table class="tabla-ingenieria">
+        <table class="tabla-profesional">
             <thead>
                 <tr>
+                    <th>FECHA</th>
                     <th>HORA</th>
-                    <th>NÚMERO</th>
+                    <th>NUM</th>
                     <th>ANIMAL</th>
                     <th>TIPO</th>
                 </tr>
@@ -47,23 +40,59 @@ async function consultarSorteos() {
             <tbody>
     `;
 
-    data.forEach(fila => {
-        // Lógica de estudio: Si el número es 75, aplicamos clase especial
-        const esEspecial = (fila.num === "75") ? 'class="especial-75"' : '';
-        
+    data.forEach(item => {
+        // RESALTADO DE INGENIERÍA PARA EL 75
+        const es75 = (item.num === "75") ? 'class="especial-75"' : '';
         html += `
-            <tr ${esEspecial}>
-                <td>${fila.hora}</td>
-                <td class="col-num"><strong>${fila.num}</strong></td>
-                <td>${fila.animal}</td>
-                <td class="col-tipo">${fila.tipo}</td>
+            <tr ${es75}>
+                <td>${item.fecha}</td>
+                <td>${item.hora}</td>
+                <td><strong>${item.num}</strong></td>
+                <td>${item.animal}</td>
+                <td>${item.tipo}</td>
             </tr>
         `;
     });
 
     html += `</tbody></table>`;
-    visor.innerHTML = html;
+    contenedor.innerHTML = html;
 }
 
-// Escuchador del botón
-document.getElementById('btn-consultar').addEventListener('click', consultarSorteos);
+// 2. FUNCIÓN PARA GUARDAR NUEVOS DATOS
+document.getElementById('formulario-registro').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('btn-guardar');
+    btn.disabled = true;
+
+    const nuevoSorteo = {
+        fecha: document.getElementById('reg-fecha').value,
+        hora: document.getElementById('reg-hora').value,
+        num: document.getElementById('reg-num').value,
+        animal: document.getElementById('reg-animal').value,
+        tipo: document.getElementById('reg-tipo').value
+    };
+
+    const { error } = await _supabase.from('historial_sorteos').insert([nuevoSorteo]);
+
+    if (error) {
+        alert("Error al guardar: " + error.message);
+    } else {
+        alert("¡Resultado guardado exitosamente!");
+        document.getElementById('formulario-registro').reset();
+        cargarDatos(); // Recargar tabla
+    }
+    btn.disabled = false;
+});
+
+// 3. EVENTOS DE BOTONES
+document.getElementById('btn-buscar').addEventListener('click', () => {
+    const f = document.getElementById('filtro-fecha').value;
+    cargarDatos(f);
+});
+
+document.getElementById('btn-ver-todo').addEventListener('click', () => {
+    cargarDatos();
+});
+
+// CARGA INICIAL
+window.onload = cargarDatos;
