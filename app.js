@@ -1,26 +1,14 @@
 // ==========================================
-// COORDINACIÓN DE INTERFAZ - ANALIZADOR CRCA
+// CONTROLADOR DE INTERFAZ (app.js)
 // ==========================================
 
-let historial = [];
-
-// 1. Inicialización al cargar
-document.addEventListener('DOMContentLoaded', () => {
-    // Si el usuario ya pasó la seguridad, cargamos datos
-    const mainApp = document.getElementById('main-app');
-    if (mainApp && mainApp.style.display !== 'none') {
-        inicializarSistema();
-    }
-});
-
 async function inicializarSistema() {
-    console.log("Iniciando componentes de la App...");
+    console.log("App Iniciada...");
     await cargarHistorialRemoto();
     generarBotonesAnimales();
     actualizarInterfaz();
 }
 
-// 2. Generar la cuadrícula de animales para click rápido
 function generarBotonesAnimales() {
     const grid = document.getElementById('grid-animales');
     if (!grid) return;
@@ -35,69 +23,50 @@ function generarBotonesAnimales() {
     });
 }
 
-// 3. Registrar un nuevo sorteo
 async function registrarSorteo(numero) {
-    const animalEncontrado = listaAnimales.find(a => a.n === numero);
-    if (!animalEncontrado) {
-        alert("Número no válido");
-        return;
-    }
+    const animal = listaAnimales.find(a => a.n === numero);
+    const fecha = document.getElementById('fecha-analisis').value;
+    const hora = document.getElementById('hora-sorteo').value;
 
-    const nuevoRegistro = {
-        fecha: document.getElementById('fecha-analisis').value,
-        hora: document.getElementById('hora-sorteo').value,
-        num: animalEncontrado.n,
-        animal: animalEncontrado.a,
-        tipo: animalEncontrado.t
+    const nuevo = {
+        fecha: fecha,
+        hora: hora,
+        num: animal.n,
+        animal: animal.a,
+        tipo: animal.t
     };
 
-    // Guardar en Supabase (Función en logic.js)
-    const exito = await guardarEnSupabase(nuevoRegistro);
-
+    const exito = await guardarEnSupabase(nuevo);
     if (exito) {
-        // Actualizar localmente para no recargar todo
-        historial.unshift(nuevoRegistro);
+        historial.unshift(nuevo);
         actualizarInterfaz();
-        console.log("Registrado con éxito:", nuevoRegistro.animal);
     }
 }
 
-// 4. Actualizar toda la UI
 function actualizarInterfaz() {
     actualizarTabla();
-    calcularBalanceElementos(); // En logic.js
-    analizarDormidos();        // En logic.js
+    calcularBalanceElementos();
+    analizarDormidos();
     
-    // Mostrar el último resultado en el banner
-    if (historial.length > 0) {
-        const last = historial[0];
-        const display = document.getElementById('last-num');
-        if (display) display.innerText = `${last.num} - ${last.animal}`;
+    const display = document.getElementById('last-num');
+    if (display && historial.length > 0) {
+        display.innerText = `${historial[0].num} - ${historial[0].animal}`;
     }
 }
 
-// 5. Renderizar la tabla de historial
 function actualizarTabla() {
     const cuerpo = document.getElementById('lista-historial');
     if (!cuerpo) return;
     
     cuerpo.innerHTML = '';
-    historial.slice(0, 50).forEach(r => { // Mostramos los últimos 50
+    historial.forEach(r => {
         const fila = document.createElement('tr');
         if (r.num === '75') fila.className = 'row-guacharo';
-        
-        fila.innerHTML = `
-            <td>${r.fecha}</td>
-            <td>${r.hora}</td>
-            <td>${r.num}</td>
-            <td>${r.animal}</td>
-            <td><small>${r.tipo}</small></td>
-        `;
+        fila.innerHTML = `<td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td>`;
         cuerpo.appendChild(fila);
     });
 }
 
-// 6. Navegación de pestañas
 function openTab(evt, tabName) {
     const contents = document.getElementsByClassName("tab-content");
     for (let c of contents) c.classList.remove("active");
