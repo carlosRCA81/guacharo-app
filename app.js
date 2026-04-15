@@ -1,98 +1,96 @@
-const SUPABASE_URL = 'https://yhiohwoutkmzkcengev.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // He tomado la key de tu archivo .env
-
+// CONFIGURACIÓN MAESTRA
+const SUPABASE_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
+const SUPABASE_KEY = 'TU_KEY_COMPLETA_AQUI'; // Usa la key larga de tu archivo .env
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// 1. FUNCIÓN PARA CARGAR DATOS (CON FILTRO O TODO)
-async function cargarDatos(fechaBusqueda = null) {
-    const contenedor = document.getElementById('tabla-contenedor');
-    contenedor.innerHTML = '<p>Analizando...</p>';
+const CLAVE_MAESTRA = '1234';
+let historial = [];
 
-    let query = _supabase.from('historial_sorteos').select('*').order('fecha', { ascending: false }).order('hora', { ascending: true });
+const listaAnimales = [
+    {n:'0', a:'DELFIN', t:'AGUA'}, {n:'00', a:'BALLENA', t:'AGUA'}, {n:'01', a:'CARNERO', t:'TIERRA'},
+    {n:'75', a:'GUACHARO', t:'AIRE'}, // Aseguramos que el 75 esté en tu lista
+    // ... (El resto de tu lista original de animales aquí)
+];
 
-    if (fechaBusqueda) {
-        query = query.eq('fecha', fechaBusqueda);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-        contenedor.innerHTML = `<p class="error">Error: ${error.message}</p>`;
-        return;
-    }
-
-    if (data.length === 0) {
-        contenedor.innerHTML = '<p>No hay datos para esta selección.</p>';
-        return;
-    }
-
-    let html = `
-        <table class="tabla-profesional">
-            <thead>
-                <tr>
-                    <th>FECHA</th>
-                    <th>HORA</th>
-                    <th>NUM</th>
-                    <th>ANIMAL</th>
-                    <th>TIPO</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-
-    data.forEach(item => {
-        // RESALTADO DE INGENIERÍA PARA EL 75
-        const es75 = (item.num === "75") ? 'class="especial-75"' : '';
-        html += `
-            <tr ${es75}>
-                <td>${item.fecha}</td>
-                <td>${item.hora}</td>
-                <td><strong>${item.num}</strong></td>
-                <td>${item.animal}</td>
-                <td>${item.tipo}</td>
-            </tr>
-        `;
-    });
-
-    html += `</tbody></table>`;
-    contenedor.innerHTML = html;
+// SEGURIDAD
+function checkAccess() {
+    const pass = document.getElementById('access-key').value;
+    if (pass === CLAVE_MAESTRA) {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('main-app').style.display = 'block';
+        inicializarSistema();
+    } else { alert("ERROR: CLAVE INCORRECTA"); }
 }
 
-// 2. FUNCIÓN PARA GUARDAR NUEVOS DATOS
-document.getElementById('formulario-registro').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('btn-guardar');
-    btn.disabled = true;
+function inicializarSistema() {
+    cargarHistorialRemoto();
+    setInterval(() => {
+        document.getElementById('live-clock').innerText = new Date().toLocaleTimeString();
+    }, 1000);
+}
 
-    const nuevoSorteo = {
-        fecha: document.getElementById('reg-fecha').value,
-        hora: document.getElementById('reg-hora').value,
-        num: document.getElementById('reg-num').value,
-        animal: document.getElementById('reg-animal').value,
-        tipo: document.getElementById('reg-tipo').value
-    };
-
-    const { error } = await _supabase.from('historial_sorteos').insert([nuevoSorteo]);
-
-    if (error) {
-        alert("Error al guardar: " + error.message);
-    } else {
-        alert("¡Resultado guardado exitosamente!");
-        document.getElementById('formulario-registro').reset();
-        cargarDatos(); // Recargar tabla
+// GESTIÓN DE DATOS
+async function cargarHistorialRemoto() {
+    const { data, error } = await _supabase.from('historial_sorteos')
+        .select('*')
+        .order('fecha', { ascending: false })
+        .order('hora', { ascending: false });
+    
+    if (!error && data) {
+        historial = data;
+        actualizarInterfaz();
     }
-    btn.disabled = false;
-});
+}
 
-// 3. EVENTOS DE BOTONES
-document.getElementById('btn-buscar').addEventListener('click', () => {
-    const f = document.getElementById('filtro-fecha').value;
-    cargarDatos(f);
-});
+async function filtrarPorFecha() {
+    const fecha = document.getElementById('filtro-fecha-almanaque').value;
+    if(!fecha) return;
 
-document.getElementById('btn-ver-todo').addEventListener('click', () => {
-    cargarDatos();
-});
+    const { data, error } = await _supabase.from('historial_sorteos')
+        .select('*')
+        .eq('fecha', fecha)
+        .order('hora', { ascending: true });
 
-// CARGA INICIAL
-window.onload = cargarDatos;
+    if (!error) {
+        historial = data;
+        actualizarInterfaz();
+    }
+}
+
+function actualizarInterfaz() {
+    const cuerpo = document.getElementById('lista-historial');
+    cuerpo.innerHTML = '';
+    
+    let sin75 = 0;
+    let encontrado75 = false;
+
+    historial.forEach(r => {
+        // Lógica de Ingeniería: Resaltado del 75
+        const esEspecial = r.num === '75' ? 'class="row-guacharo"' : '';
+        if(r.num === '75') encontrado75 = true;
+        if(!encontrado75) sin75++;
+
+        cuerpo.innerHTML += `
+            <tr ${esEspecial}>
+                <td>${r.fecha}</td>
+                <td>${r.hora}</td>
+                <td><strong>${r.num}</strong></td>
+                <td>${r.animal}</td>
+            </tr>`;
+    });
+
+    document.getElementById('dias-sin-75').innerText = sin75;
+    if(historial.length > 0) {
+        document.getElementById('last-num').innerText = `${historial[0].num} - ${historial[0].animal}`;
+    }
+}
+
+// PESTAÑAS
+function openTab(evt, tabName) {
+    const contents = document.getElementsByClassName("tab-content");
+    for (let c of contents) c.style.display = "none";
+    const btns = document.getElementsByClassName("tab-btn");
+    for (let b of btns) b.classList.remove("active");
+    document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.classList.add("active");
+}
