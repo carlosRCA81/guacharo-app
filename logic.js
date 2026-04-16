@@ -1,5 +1,5 @@
 // ==========================================
-// CONFIGURACIÓN SUPABASE - ANALIZADOR CRCA
+// CONFIGURACIÓN SUPABASE (SE MANTIENE INTACTA)
 // ==========================================
 const SUPABASE_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
@@ -38,217 +38,204 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historial = [];
 let horaSeleccionadaActiva = null;
 
-// Reloj en vivo
-setInterval(() => {
-    const clock = document.getElementById('live-clock');
-    if(clock) clock.innerText = new Date().toLocaleTimeString();
-}, 1000);
-
-// Navegación de pestañas
-function openTab(evt, tabName) {
-    let tabcontent = document.getElementsByClassName("tab-content");
-    for (let i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
-    let tablinks = document.getElementsByClassName("tab-btn");
-    for (let i = 0; i < tablinks.length; i++) { tablinks[i].className = tablinks[i].className.replace(" active", ""); }
-    document.getElementById(tabName).style.display = "block";
-    if(evt) evt.currentTarget.className += " active";
-}
-
-// Inicialización
+// Inicialización profesional
 async function inicializarSistema() {
-    const fechaInput = document.getElementById('fecha-analisis');
-    if(fechaInput) {
-        fechaInput.value = new Date().toISOString().split('T')[0];
-        fechaInput.addEventListener('change', generarPanelDiario);
-    }
-    generarGridBotones();
-    llenarSelectEstudio();
-    await cargarHistorialRemoto(); // Esto carga los datos de Supabase al inicio
-}
-
-function generarGridBotones() {
-    const container = document.getElementById('grid-container');
-    if(!container) return;
-    container.innerHTML = '';
-    listaAnimales.forEach(animal => {
-        const btn = document.createElement('div');
-        btn.className = 'animal-btn';
-        btn.innerHTML = `<strong>${animal.n}</strong><br><small>${animal.a}</small>`;
-        btn.onclick = () => {
-            if (!horaSeleccionadaActiva) return alert("Primero toca una HORA en el panel superior");
-            registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
-        };
-        container.appendChild(btn);
-    });
-}
-
-function llenarSelectEstudio() {
-    const sel = document.getElementById('select-animal-estudio');
-    if(!sel) return;
-    sel.innerHTML = '<option value="">-- Elige Animal --</option>';
-    listaAnimales.forEach(a => {
-        let opt = document.createElement('option');
-        opt.value = a.n;
-        opt.innerText = `${a.n} - ${a.a}`;
-        sel.appendChild(opt);
-    });
-}
-
-function generarPanelDiario() {
-    const panel = document.getElementById('panel-diario-sorteos');
-    if(!panel) return;
-    panel.innerHTML = '';
-    const fechaActual = document.getElementById('fecha-analisis').value;
-
-    horasSorteo.forEach(hora => {
-        const box = document.createElement('div');
-        box.className = 'hora-box';
-        const registroExistente = historial.find(r => r.fecha === fechaActual && r.hora === hora);
-        
-        if (registroExistente) {
-            box.classList.add('jugado');
-            box.innerHTML = `<span>${hora}</span><br><strong>${registroExistente.num}</strong>`;
-        } else {
-            box.innerText = hora;
-        }
-
-        if (hora === horaSeleccionadaActiva) box.classList.add('active-select');
-
-        box.onclick = () => {
-            horaSeleccionadaActiva = hora;
-            generarPanelDiario();
-            document.getElementById('num-rapido').focus();
-        };
-        panel.appendChild(box);
-    });
-}
-
-// Función corregida para Guardar
-async function registrarSorteo(num, animal, tipo, hora) {
-    const fecha = document.getElementById('fecha-analisis').value;
-    const nuevoRegistro = { fecha, hora, num: num.toString(), animal, tipo };
-
-    // Actualizar localmente primero
-    const existeIdx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
-    if (existeIdx !== -1) {
-        historial[existeIdx] = nuevoRegistro;
-    } else {
-        historial.push(nuevoRegistro);
-    }
+    const fAnalisis = document.getElementById('fecha-analisis');
+    const fHistorial = document.getElementById('fecha-busqueda-historial');
+    const hoy = new Date().toISOString().split('T')[0];
     
-    actualizarInterfaz();
+    if(fAnalisis) fAnalisis.value = hoy;
+    if(fHistorial) fHistorial.value = hoy;
 
-    // Guardar en Supabase
-    try {
-        const { error } = await _supabase
-            .from('historial_sorteos')
-            .upsert(nuevoRegistro, { onConflict: 'fecha,hora' }); 
-            // Si el upsert falla, asegúrate que en Supabase 'fecha' y 'hora' sean únicos juntos.
-
-        if (error) throw error;
-        console.log("Guardado exitoso");
-    } catch (err) {
-        console.error("Error al guardar:", err.message);
-        alert("Error de conexión: " + err.message);
-    }
+    generarGridBotones();
+    llenarSelectorEstudio();
+    await cargarHistorialRemoto();
 }
 
-function registrarPorNumero() {
-    if (!horaSeleccionadaActiva) return alert("Selecciona una HORA");
-    const inputNum = document.getElementById('num-rapido');
-    let val = inputNum.value.trim();
-    if (val !== "0" && val !== "00" && val.length === 1) val = "0" + val;
-
-    const animal = listaAnimales.find(a => a.n === val);
-    if (!animal) return alert("Número no existe");
-
-    registrarSorteo(animal.n, animal.a, animal.t, horaSeleccionadaActiva);
-    inputNum.value = '';
-}
-
+// Carga optimizada
 async function cargarHistorialRemoto() {
     try {
-        const { data, error } = await _supabase
-            .from('historial_sorteos')
-            .select('*')
-            .order('fecha', { ascending: false });
-        if (error) throw error;
+        const { data, error } = await _supabase.from('historial_sorteos').select('*').order('fecha', { ascending: false });
         if (data) {
             historial = data;
             actualizarInterfaz();
         }
-    } catch (err) { 
-        console.log("⚠️ Error cargando datos"); 
-    }
+    } catch (err) { console.log("Error de red"); }
 }
 
-function actualizarInterfaz() {
-    actualizarTabla();
-    analizarGuacharo();
-    generarPanelDiario();
-    calcularBalanceElementos();
-    detectarDormidos();
-    
-    if(historial.length > 0) {
-        const temp = [...historial].sort((a,b) => {
-             if (a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
-             return horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora);
-        });
-        const ult = temp[temp.length-1];
-        const lastNumDisplay = document.getElementById('last-num');
-        if(lastNumDisplay) lastNumDisplay.innerText = `${ult.num} - ${ult.animal}`;
-    }
-}
+// ESTUDIO DEL ALGORITMO (Antes y Después)
+function estudiarAnimalPatron() {
+    const numBuscado = document.getElementById('select-estudio-animal').value;
+    const resDiv = document.getElementById('resultado-patron-avanzado');
+    if(!numBuscado) return;
 
-// ... (El resto de tus funciones de análisis se mantienen igual)
-function detectarDormidos() {
-    const listaDormidosCont = document.getElementById('lista-dormidos');
-    if(!listaDormidosCont) return;
-    let dormidos = [];
-    listaAnimales.forEach(ani => {
-        const encontrado = historial.some(r => r.num === ani.n);
-        if(!encontrado) dormidos.push(ani.n);
+    let antes = {};
+    let despues = {};
+
+    // Ordenar historial cronológicamente para el estudio
+    const hOrdenado = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha) || horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
+
+    hOrdenado.forEach((reg, idx) => {
+        if(reg.num === numBuscado) {
+            if(idx > 0) {
+                let ant = hOrdenado[idx-1].num + " - " + hOrdenado[idx-1].animal;
+                antes[ant] = (antes[ant] || 0) + 1;
+            }
+            if(idx < hOrdenado.length - 1) {
+                let sig = hOrdenado[idx+1].num + " - " + hOrdenado[idx+1].animal;
+                despues[sig] = (despues[sig] || 0) + 1;
+            }
+        }
     });
-    listaDormidosCont.innerText = dormidos.length > 0 ? dormidos.slice(0, 15).join(', ') + "..." : "Ninguno";
+
+    const obtenerTop = (obj) => Object.entries(obj).sort((a,b) => b[1]-a[1])[0] || ["N/A", 0];
+    const topAntes = obtenerTop(antes);
+    const topDespues = obtenerTop(despues);
+
+    resDiv.innerHTML = `
+        <div class="card-estudio">
+            <p>💡 Cuando sale el <b>${numBuscado}</b>:</p>
+            <p>Suele salir ANTES: <b>${topAntes[0]}</b> (${topAntes[1]} veces)</p>
+            <p>Suele salir DESPUÉS: <b>${topDespues[0]}</b> (${topDespues[1]} veces)</p>
+        </div>
+    `;
 }
 
+// DETECTOR DE JUGADAS ESPECIALES (Algoritmo en tiempo real)
+function detectarJugadasEspeciales() {
+    const alertCont = document.getElementById('alertas-algoritmo');
+    if(!alertCont) return;
+    alertCont.innerHTML = '';
+
+    const fechaHoy = document.getElementById('fecha-analisis').value;
+    const sorteosHoy = historial.filter(r => r.fecha === fechaHoy).sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
+
+    if(sorteosHoy.length < 2) return;
+
+    const ult = sorteosHoy[sorteosHoy.length - 1];
+    const penult = sorteosHoy[sorteosHoy.length - 2];
+
+    // 1. Detectar Espejo (ej. 12 y 21)
+    const revUlt = ult.num.split('').reverse().join('');
+    if(revUlt === penult.num && ult.num !== penult.num) {
+        alertCont.innerHTML += `<span class="badge bg-espejo">🔄 ESPEJO DETECTADO (${penult.num} -> ${ult.num})</span>`;
+    }
+
+    // 2. Detectar Escalera (ej. 05 y 06)
+    const n1 = parseInt(ult.num);
+    const n2 = parseInt(penult.num);
+    if(Math.abs(n1 - n2) === 1) {
+        alertCont.innerHTML += `<span class="badge bg-escalera">📈 POSIBLE ESCALERA</span>`;
+    }
+
+    // 3. Detectar Repetición de Elemento
+    if(ult.tipo === penult.tipo) {
+        alertCont.innerHTML += `<span class="badge bg-repetido">🔥 SEGUIDILLA DE ${ult.tipo}</span>`;
+    }
+}
+
+// REGISTRO (CON TU CONEXIÓN SUPABASE ORIGINAL)
+async function registrarSorteo(num, animal, tipo, hora) {
+    const fecha = document.getElementById('fecha-analisis').value;
+    const nuevoRegistro = { fecha, hora, num: num.toString(), animal, tipo };
+
+    // Update local
+    const idx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
+    if(idx !== -1) historial[idx] = nuevoRegistro; else historial.push(nuevoRegistro);
+    
+    actualizarInterfaz();
+
+    try {
+        await _supabase.from('historial_sorteos').upsert(nuevoRegistro, { onConflict: 'fecha,hora' });
+    } catch (e) { console.error("Error nube"); }
+}
+
+// TABLA CON FILTRO DE FECHA (Para velocidad)
 function actualizarTabla() {
     const cuerpo = document.getElementById('lista-historial');
+    const filtroFecha = document.getElementById('fecha-busqueda-historial').value;
     if(!cuerpo) return;
     cuerpo.innerHTML = '';
-    [...historial].sort((a, b) => {
-        if (a.fecha !== b.fecha) return b.fecha.localeCompare(a.fecha);
-        return horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora);
-    }).forEach(r => {
-        const isGuacharo = r.num === '75' ? 'class="row-guacharo"' : '';
-        cuerpo.innerHTML += `<tr ${isGuacharo}><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
+
+    historial
+        .filter(r => r.fecha === filtroFecha) // AQUÍ ESTÁ EL FILTRO QUE LA HACE RÁPIDA
+        .sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora))
+        .forEach(r => {
+            const guacharoClass = r.num === '75' ? 'class="row-guacharo"' : '';
+            cuerpo.innerHTML += `<tr ${guacharoClass}><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td></tr>`;
+        });
+}
+
+// FUNCIONES AUXILIARES
+function generarPanelDiario() {
+    const panel = document.getElementById('panel-diario-sorteos');
+    const fechaActual = document.getElementById('fecha-analisis').value;
+    if(!panel) return;
+    panel.innerHTML = '';
+
+    horasSorteo.forEach(hora => {
+        const reg = historial.find(r => r.fecha === fechaActual && r.hora === hora);
+        const box = document.createElement('div');
+        box.className = `hora-box ${reg ? 'jugado' : ''} ${hora === horaSeleccionadaActiva ? 'active-select' : ''}`;
+        box.innerHTML = reg ? `${hora}<br><b>${reg.num}</b>` : hora;
+        box.onclick = () => { horaSeleccionadaActiva = hora; generarPanelDiario(); };
+        panel.appendChild(box);
+    });
+}
+
+function registrarPorNumero() {
+    if(!horaSeleccionadaActiva) return alert("Elige una HORA");
+    const val = document.getElementById('num-rapido').value.padStart(2, '0').replace('000', '00');
+    const ani = listaAnimales.find(a => a.n === val || (val === '0' && a.n === '0'));
+    if(ani) registrarSorteo(ani.n, ani.a, ani.t, horaSeleccionadaActiva);
+    document.getElementById('num-rapido').value = '';
+}
+
+function llenarSelectorEstudio() {
+    const sel = document.getElementById('select-estudio-animal');
+    if(!sel) return;
+    listaAnimales.forEach(a => {
+        sel.innerHTML += `<option value="${a.n}">${a.n} - ${a.a}</option>`;
     });
 }
 
 function analizarGuacharo() {
     let sin75 = 0;
-    const tempSorted = [...historial].sort((a,b) => {
-        if (a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
-        return horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora);
-    });
-    for(let i = tempSorted.length-1; i >= 0; i--) {
-        if(tempSorted[i].num === '75') break;
-        sin75++;
-    }
-    const display = document.getElementById('dias-sin-75');
-    if(display) display.innerText = sin75;
+    const hO = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha) || horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
+    for(let i = hO.length-1; i >= 0; i--) { if(hO[i].num === '75') break; sin75++; }
+    document.getElementById('dias-sin-75').innerText = sin75;
 }
 
-function calcularBalanceElementos() {
-    const fechaActual = document.getElementById('fecha-analisis').value;
-    let counts = { TIERRA: 0, AIRE: 0, AGUA: 0 };
-    const delDia = historial.filter(r => r.fecha === fechaActual);
-    delDia.forEach(r => { if(counts[r.tipo] !== undefined) counts[r.tipo]++; });
-    if(document.getElementById('val-tierra')) {
-        document.getElementById('val-tierra').innerText = counts.TIERRA;
-        document.getElementById('val-aire').innerText = counts.AIRE;
-        document.getElementById('val-agua').innerText = counts.AGUA;
-    }
+function actualizarInterfaz() {
+    generarPanelDiario();
+    actualizarTabla();
+    analizarGuacharo();
+    detectarJugadasEspeciales();
 }
+
+function openTab(evt, tabName) {
+    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabName).style.display = 'block';
+    evt.currentTarget.classList.add('active');
+}
+
+function generarGridBotones() {
+    const cont = document.getElementById('grid-container');
+    if(!cont) return;
+    cont.innerHTML = '';
+    listaAnimales.forEach(a => {
+        const d = document.createElement('div');
+        d.className = 'animal-btn';
+        d.innerHTML = `<b>${a.n}</b><br>${a.a}`;
+        d.onclick = () => { if(horaSeleccionadaActiva) registrarSorteo(a.n, a.a, a.t, horaSeleccionadaActiva); };
+        cont.appendChild(d);
+    });
+}
+
+setInterval(() => {
+    const c = document.getElementById('live-clock');
+    if(c) c.innerText = new Date().toLocaleTimeString();
+}, 1000);
 
 window.onload = inicializarSistema;
