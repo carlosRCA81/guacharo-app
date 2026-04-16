@@ -7,23 +7,23 @@
     <link rel="stylesheet" href="style.css">
     <style>
         .panel-diario { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 15px; background: #0f172a; padding: 10px; border-radius: 8px; font-size: 0.7rem;}
-        .hora-box { background: #334155; padding: 8px; text-align: center; border-radius: 4px; border: 1px solid #475569; color: #f8fafc; cursor: pointer;}
-        .hora-box.jugado { background: #22c55e !important; color: #0f172a; font-weight: bold;}
+        .hora-box { background: #334155; padding: 8px; text-align: center; border-radius: 4px; border: 1px solid #475569; color: #f8fafc; cursor: pointer; transition: 0.3s;}
+        .hora-box.jugado { background: #22c55e !important; color: #0f172a; font-weight: bold; border: 2px solid #fff;}
+        .hora-box.active-select { border: 2px solid #38bdf8; background: #1e293b; }
         .entrada-rapida-container { background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #38bdf8; display: flex; gap: 10px; align-items: center;}
         #num-rapido { background: #1e293b; color: #fbbf24; border: none; padding: 8px; border-radius: 4px; font-size: 1rem; font-weight: bold; width: 60px; text-align: center;}
-        .row-guacharo { background: rgba(251, 191, 36, 0.2) !important; color: #fbbf24; font-weight: bold; border-left: 4px solid #fbbf24; }
-        
-        /* Estilo para los controles de búsqueda */
-        .seccion-busqueda { background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #1e293b; }
-        .control-grupo { margin-bottom: 10px; display: flex; gap: 5px; align-items: center; }
-        label { color: #94a3b8; font-size: 0.7rem; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; margin-right: 5px; display: inline-block; margin-top: 5px;}
+        .espejito { background: #a855f7; color: white; }
+        .escalera { background: #3b82f6; color: white; }
+        .seguidilla { background: #ec4899; color: white; }
+        #alerta-probabilidad { background: #1e293b; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #fbbf24; min-height: 40px; }
     </style>
 </head>
 <body>
     <div id="main-app">
         <header>
             <h1>ANALIZADOR CRCA</h1>
-            <div id="live-clock">00:00:00</div>
+            <div id="live-clock">Cargando...</div>
             <div class="tab-container">
                 <button class="tab-btn active" onclick="openTab(event, 'registro')">REGISTRO</button>
                 <button class="tab-btn" onclick="openTab(event, 'estudio')">ESTUDIO 75</button>
@@ -36,54 +36,40 @@
             <div class="controls-row">
                 <input type="date" id="fecha-analisis">
             </div>
+            
+            <div id="alerta-probabilidad"></div>
+
             <div class="entrada-rapida-container">
-                <h4 style="color:#38bdf8; font-size:0.7rem;">ENTRADA RÁPIDA:</h4>
                 <input type="text" id="num-rapido" maxlength="2" placeholder="00">
-                <button onclick="registrarPorNumero()">OK</button>
+                <button onclick="registrarPorNumero()" style="width: auto; padding: 10px 20px;">ANOTAR</button>
             </div>
-            <div class="display-reciente"><p>Último: <span id="last-num">--</span></p></div>
             <div class="grid-animales" id="grid-container" style="display:grid; grid-template-columns: repeat(5, 1fr); gap:5px;"></div>
         </section>
 
         <section id="estudio" class="tab-content" style="display:none;">
             <h3>INTELIGENCIA GUACHARO</h3>
-            <div class="card-stats" style="background:#0f172a; border:1px solid #fbbf24; text-align:center; padding:15px; border-radius:8px;">
+            <div class="card-stats">
                 <p style="color:#fbbf24;">DÍAS AUSENTE</p>
-                <div style="font-size:2rem; color:#fff;" id="dias-sin-75">0</div>
+                <div style="font-size:3rem; color:#fff;" id="dias-sin-75">0</div>
             </div>
         </section>
 
         <section id="historial" class="tab-content" style="display:none;">
             <h3>DATOS ACUMULADOS</h3>
-
-            <div class="seccion-busqueda">
-                <div class="control-grupo">
-                    <label>BUSCAR DÍA:</label>
-                    <input type="date" id="fecha-busqueda-historial" style="flex:2; background:#1e293b; color:#fff; border:1px solid #38bdf8; border-radius:4px; padding:5px;">
-                    <button onclick="buscarHistorialPorFecha()" style="flex:1;">FILTRAR</button>
-                </div>
-
-                <div class="control-grupo">
-                    <label>VER MES:</label>
-                    <select id="selector-mes" style="flex:2; background:#1e293b; color:white; border:1px solid #475569; padding:5px; border-radius:4px;">
-                        <option value="01">Enero</option>
-                        <option value="02">Febrero</option>
-                        <option value="03">Marzo</option>
-                        <option value="04" selected>Abril</option>
-                    </select>
-                    <button onclick="filtrarPorMes()" style="flex:1;">CARGAR</button>
-                </div>
+            <div style="background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                <input type="date" id="fecha-busqueda-historial" style="margin-bottom:10px;">
+                <button onclick="buscarHistorialPorFecha()">FILTRAR DÍA</button>
             </div>
 
-            <div class="tabla-contenedor" style="max-height: 400px; overflow-y: auto;">
-                <table id="tabla-registros" style="width:100%; border-collapse:collapse; font-size:0.75rem;">
-                    <thead style="background:#1e293b; position: sticky; top: 0;">
+            <div class="tabla-contenedor">
+                <table>
+                    <thead>
                         <tr><th>Fecha</th><th>Hora</th><th>Nro</th><th>Animal</th><th>Tipo</th></tr>
                     </thead>
-                    <tbody id="lista-historial" style="text-align:center;"></tbody>
+                    <tbody id="lista-historial"></tbody>
                 </table>
             </div>
-            <button onclick="cargarTodoElHistorial()" style="margin-top:10px; width:100%; background:#334155;">VER TODO (RESET)</button>
+            <button onclick="cargarHistorialRemoto()" style="margin-top:10px; background:#475569;">REFRESCAR TODO</button>
         </section>
     </div>
 
