@@ -1,3 +1,6 @@
+// ==========================================
+// CONFIGURACIÓN SUPABASE - ANALIZADOR CRCA PRO
+// ==========================================
 const SUPABASE_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -35,7 +38,7 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historial = [];
 let horaSeleccionadaActiva = null;
 
-// RELOJ EN VIVO
+// RELOJ
 setInterval(() => {
     const clock = document.getElementById('live-clock');
     if(clock) clock.innerText = new Date().toLocaleTimeString();
@@ -43,23 +46,23 @@ setInterval(() => {
 
 async function inicializarSistema() {
     const hoy = new Date().toISOString().split('T')[0];
-    const fechaInput = document.getElementById('fecha-analisis');
-    if(fechaInput) {
-        fechaInput.value = hoy;
-        fechaInput.addEventListener('change', () => { generarPanelDiario(); ejecutarEstudio(); });
+    const fAnalisis = document.getElementById('fecha-analisis');
+    if(fAnalisis) {
+        fAnalisis.value = hoy;
+        fAnalisis.addEventListener('change', () => { generarPanelDiario(); ejecutarEstudio(); });
     }
-    document.getElementById('fecha-busqueda-historial').value = hoy;
-
     generarGridBotones();
     await cargarHistorialRemoto();
 }
 
 async function cargarHistorialRemoto() {
-    const { data, error } = await _supabase.from('historial_sorteos').select('*');
-    if (data) {
-        historial = data;
-        actualizarInterfaz();
-    }
+    try {
+        const { data, error } = await _supabase.from('historial_sorteos').select('*');
+        if (data) {
+            historial = data;
+            actualizarInterfaz();
+        }
+    } catch (e) { console.error("Error carga:", e); }
 }
 
 function actualizarInterfaz() {
@@ -71,6 +74,7 @@ function actualizarInterfaz() {
 
 function generarPanelDiario() {
     const panel = document.getElementById('panel-diario-sorteos');
+    if(!panel) return;
     panel.innerHTML = '';
     const fechaActual = document.getElementById('fecha-analisis').value;
 
@@ -90,49 +94,69 @@ function generarPanelDiario() {
             horaSeleccionadaActiva = hora;
             document.querySelectorAll('.hora-box').forEach(b => b.classList.remove('active-select'));
             box.classList.add('active-select');
+            document.getElementById('num-rapido').focus();
         };
         panel.appendChild(box);
     });
 }
 
+// PANEL INTELIGENTE: Secuencias y Predicción
 function ejecutarEstudio() {
     const alertaDiv = document.getElementById('alerta-probabilidad');
     const hoy = document.getElementById('fecha-analisis').value;
+    
+    // Sorteos de hoy ordenados
     const sorteosHoy = historial.filter(r => r.fecha === hoy)
                                 .sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
 
     let html = "";
-    
-    // Sugerencia basada en frecuencia
-    const conteo = {};
-    historial.forEach(r => conteo[r.num] = (conteo[r.num] || 0) + 1);
-    const top3 = Object.entries(conteo).sort((a,b) => b[1] - a[1]).slice(0,3).map(e => e[0]);
-    html += `<div style="color:#fbbf24; font-size:0.75rem; margin-bottom:5px;">📊 SUGERIDOS: ${top3.join(' - ')}</div>`;
 
     if(sorteosHoy.length > 0) {
         const ult = sorteosHoy[sorteosHoy.length - 1];
-        // Espejo
+        
+        // --- MOTOR DE SECUENCIAS (ESTUDIO INTELIGENTE) ---
+        let siguientes = {};
+        const crono = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha) || horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
+        
+        crono.forEach((reg, i) => {
+            if(reg.num === ult.num && i < crono.length - 1) {
+                let sig = crono[i+1].num;
+                siguientes[sig] = (siguientes[sig] || 0) + 1;
+            }
+        });
+
+        const prediccion = Object.entries(siguientes).sort((a,b) => b[1] - a[1]).slice(0, 2).map(p => p[0]);
+
+        html += `<div style="margin-bottom:8px; border-bottom:1px solid #334155; padding-bottom:5px;">
+                    <span style="color:#38bdf8; font-size:0.7rem;">EL ÚLTIMO FUE <strong>${ult.num}</strong>. SUELE VENIR:</span><br>
+                    <strong style="color:#22c55e; font-size:1.1rem;">${prediccion.length > 0 ? prediccion.join(' o ') : 'Buscando patrón...'}</strong>
+                 </div>`;
+
+        // Espejos y Escaleras
         let esp = ult.num.split('').reverse().join('').padStart(2, '0');
-        if(parseInt(esp) <= 75) html += `<span class="badge espejito">ESPEJO: ${esp}</span>`;
-        // Escalera
+        if(parseInt(esp) <= 75) html += `<span class="badge espejito">ESPEJO: ${esp}</span> `;
         let esc = (parseInt(ult.num) + 1).toString().padStart(2, '0');
         if(parseInt(esc) <= 75) html += `<span class="badge escalera">ESCALERA: ${esc}</span>`;
     }
-    alertaDiv.innerHTML = html || "Esperando datos del día...";
+
+    alertaDiv.innerHTML = html || "Anota el primer sorteo para iniciar el estudio inteligente...";
 }
 
 async function registrarSorteo(num, animal, tipo, hora) {
     const fecha = document.getElementById('fecha-analisis').value;
     const nuevoRegistro = { fecha, hora, num, animal, tipo };
 
-    // Actualización local rápida
-    historial = historial.filter(r => !(r.fecha === fecha && r.hora === hora));
-    historial.push(nuevoRegistro);
-    actualizarInterfaz();
-
-    // Guardar en Supabase con el comando correcto
+    // 1. Guardar en Base de Datos (Seguro anti-actualización)
     const { error } = await _supabase.from('historial_sorteos').upsert(nuevoRegistro, { onConflict: 'fecha,hora' });
-    if(error) alert("Error al guardar: " + error.message);
+    
+    if(!error) {
+        // 2. Actualizar localmente solo si se guardó bien
+        historial = historial.filter(r => !(r.fecha === fecha && r.hora === hora));
+        historial.push(nuevoRegistro);
+        actualizarInterfaz();
+    } else {
+        alert("Error de conexión: No se pudo guardar el dato.");
+    }
 }
 
 function registrarPorNumero() {
@@ -143,8 +167,6 @@ function registrarPorNumero() {
     if(ani) {
         registrarSorteo(ani.n, ani.a, ani.t, horaSeleccionadaActiva);
         document.getElementById('num-rapido').value = '';
-    } else {
-        alert("Número no válido (0-75)");
     }
 }
 
@@ -153,35 +175,39 @@ function generarGridBotones() {
     c.innerHTML = '';
     listaAnimales.forEach(a => {
         const b = document.createElement('div');
-        b.style = "background:#334155; padding:5px; text-align:center; border-radius:4px; cursor:pointer; font-size:0.65rem; color:white;";
+        b.className = 'animal-btn';
         b.innerHTML = `<strong>${a.n}</strong><br>${a.a}`;
         b.onclick = () => {
-            if (!horaSeleccionadaActiva) return alert("Selecciona HORA primero");
+            if (!horaSeleccionadaActiva) return alert("Selecciona HORA");
             registrarSorteo(a.n, a.a, a.t, horaSeleccionadaActiva);
         };
         c.appendChild(b);
     });
 }
 
-function actualizarTabla(datos = null) {
+// FILTRO SEMANAL (La idea que querías: solo ver la semana actual)
+function actualizarTabla() {
     const cuerpo = document.getElementById('lista-historial');
     cuerpo.innerHTML = '';
     
-    // Ordenar: fecha más reciente primero, y hora más tarde primero
-    const lista = datos || [...historial].sort((a, b) => b.fecha.localeCompare(a.fecha) || horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora)).slice(0, 30);
+    // Obtener fecha del lunes de esta semana
+    const hoy = new Date();
+    const diaSem = hoy.getDay(); 
+    const diff = hoy.getDate() - diaSem + (diaSem === 0 ? -6 : 1);
+    const lunes = new Date(hoy.setDate(diff)).toISOString().split('T')[0];
 
-    lista.forEach(r => {
+    const listaSemana = historial.filter(r => r.fecha >= lunes)
+        .sort((a, b) => b.fecha.localeCompare(a.fecha) || horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
+
+    listaSemana.forEach(r => {
         const rowCls = r.num === '75' ? 'class="row-guacharo"' : '';
         cuerpo.innerHTML += `<tr ${rowCls}>
-            <td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td>
+            <td>${r.fecha.split('-').slice(1).join('/')}</td>
+            <td>${r.hora}</td>
+            <td><strong>${r.num}</strong></td>
+            <td>${r.animal}</td>
         </tr>`;
     });
-}
-
-function buscarHistorialPorFecha() {
-    const f = document.getElementById('fecha-busqueda-historial').value;
-    const filtrados = historial.filter(r => r.fecha === f);
-    actualizarTabla(filtrados);
 }
 
 function actualizarContadorGuacharo() {
@@ -191,7 +217,8 @@ function actualizarContadorGuacharo() {
         if(ord[i].num === '75') break;
         sin75++;
     }
-    document.getElementById('dias-sin-75').innerText = sin75;
+    const d75 = document.getElementById('dias-sin-75');
+    if(d75) d75.innerText = sin75;
 }
 
 function openTab(evt, name) {
