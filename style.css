@@ -1,29 +1,55 @@
 :root {
     --bg-profundo: #0f172a;
     --bg-acero: #1e293b;
+    --bg-interfaz: #334155;
     --celeste: #38bdf8;
     --oro: #fbbf24;
+    --rojo: #ef4444;
     --blanco: #f8fafc;
 }
 
-body { background: var(--bg-profundo); color: var(--blanco); font-family: sans-serif; padding: 15px; }
+body {
+    background-color: var(--bg-profundo);
+    color: var(--blanco);
+    font-family: sans-serif;
+    margin: 0; padding: 15px;
+}
 
-#login-screen, #main-app { background: var(--bg-acero); padding: 20px; border-radius: 12px; max-width: 600px; margin: auto; }
+#login-screen, #main-app {
+    background: var(--bg-acero);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
 
+h1 { color: var(--celeste); text-align: center; font-size: 1.5rem; margin-top: 0; }
+#live-clock { text-align: center; color: var(--oro); font-size: 1.2rem; font-weight: bold; margin-bottom: 15px; }
+
+/* Pestañas */
 .tab-container { display: flex; gap: 5px; margin-bottom: 15px; }
-.tab-btn { background: #334155; color: white; padding: 10px; border: none; flex: 1; cursor: pointer; border-radius: 5px; }
+.tab-btn { flex: 1; padding: 10px; background: var(--bg-interfaz); border: none; color: white; border-radius: 5px; font-size: 0.7rem; cursor: pointer; }
 .tab-btn.active { background: var(--celeste); color: var(--bg-profundo); font-weight: bold; }
 
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 
-/* RESALTADO DEL 75 */
-.row-guacharo { background: rgba(251, 191, 36, 0.2) !important; color: var(--oro) !important; border-left: 4px solid var(--oro); }
-
-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
-th { text-align: left; color: var(--celeste); padding: 10px; border-bottom: 1px solid #334155; }
-td { padding: 10px; border-bottom: 1px solid #334155; }
-
+/* Controles */
 .controls-row { display: flex; gap: 10px; margin-bottom: 15px; }
-input { background: var(--bg-profundo); color: white; border: 1px solid var(--celeste); padding: 10px; border-radius: 5px; width: 100%; }
-button { background: var(--celeste); color: var(--bg-profundo); font-weight: bold; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
+input, select, button { border-radius: 5px; padding: 10px; border: none; width: 100%; }
+input, select { background: var(--bg-profundo); color: white; }
+button { background: var(--celeste); color: var(--bg-profundo); font-weight: bold; }
+
+.display-reciente { background: var(--bg-profundo); padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+.btn-danger { background: var(--rojo); color: white; width: auto; padding: 5px 10px; }
+
+/* Cuadrícula */
+.grid-animales { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; max-height: 350px; overflow-y: auto; padding: 5px; }
+.animal-item { background: var(--bg-interfaz); padding: 8px; text-align: center; border-radius: 4px; font-size: 0.7rem; border: 1px solid #475569; }
+
+/* Tabla Historial */
+.tabla-contenedor { overflow-x: auto; margin-top: 10px; }
+table { width: 100%; border-collapse: collapse; font-size: 0.7rem; }
+th, td { border: 1px solid #475569; padding: 8px; text-align: center; }
+th { background: var(--bg-profundo); color: var(--celeste); }
+
+.card-stats { background: var(--bg-profundo); padding: 15px; border-radius: 8px; border-left: 4px solid var(--oro); }
