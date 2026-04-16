@@ -38,6 +38,9 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historial = [];
 let horaSeleccionadaActiva = null;
 
+// ==========================================
+// INICIALIZACIÓN Y CARGA
+// ==========================================
 async function inicializarSistema() {
     document.getElementById('fecha-analisis').value = new Date().toISOString().split('T')[0];
     document.getElementById('fecha-busqueda-historial').value = new Date().toISOString().split('T')[0];
@@ -47,65 +50,107 @@ async function inicializarSistema() {
 }
 
 async function cargarHistorialRemoto() {
-    const { data } = await _supabase.from('historial_sorteos').select('*').order('fecha', { ascending: false });
-    if (data) { historial = data; actualizarInterfaz(); }
+    try {
+        const { data } = await _supabase.from('historial_sorteos').select('*').order('fecha', { ascending: false });
+        if (data) { 
+            historial = data; 
+            actualizarInterfaz(); 
+        }
+    } catch (e) { console.error("Error cargando Supabase"); }
 }
 
-// ALGORITMO: 3 DATOS FIJOS DEL DÍA
+// ==========================================
+// ALGORITMO AVANZADO DEL GUACHARO (75)
+// ==========================================
+function analizarGuacharo() {
+    // 1. Conteo de sorteos sin salir
+    const hO = [...historial].sort((a,b) => b.fecha.localeCompare(a.fecha) || horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
+    let index75 = hO.findIndex(r => r.num === '75');
+    let sorteosSin75 = index75 === -1 ? hO.length : index75;
+    
+    const display = document.getElementById('dias-sin-75');
+    if(display) display.innerText = sorteosSin75;
+
+    // 2. Análisis de Ciclos (Basado en los datos de Lara: Ene-Abr)
+    const apariciones = hO.filter(r => r.num === '75');
+    let alertaDiv = document.getElementById('alertas-algoritmo');
+
+    if(apariciones.length >= 2) {
+        // Calculamos promedio de espera en días
+        let fechasUnicas = [...new Set(apariciones.map(a => a.fecha))].sort();
+        let diffDias = 0;
+        for(let i=1; i<fechasUnicas.length; i++) {
+            diffDias += (new Date(fechasUnicas[i]) - new Date(fechasUnicas[i-1])) / (1000*60*60*24);
+        }
+        let promedioDias = diffDias / (fechasUnicas.length - 1);
+        
+        // 3. Notificación de Momento de Juego
+        let hoy = new Date();
+        let ultimaFecha = new Date(fechasUnicas[fechasUnicas.length - 1]);
+        let diasDesdeUltimo = (hoy - ultimaFecha) / (1000*60*60*24);
+
+        if(diasDesdeUltimo >= 11 && diasDesdeUltimo <= 15) {
+            alertaDiv.innerHTML += `<div class="badge" style="background: #ef4444; display: block; margin-top: 10px; font-size: 0.8rem; animation: pulse 2s infinite;">⚠️ GUACHARO EN MADURACIÓN (Ciclo ${Math.floor(diasDesdeUltimo)} días). ¡JUGAR AHORA!</div>`;
+        }
+    }
+}
+
+// ==========================================
+// PREDICCIONES Y 3 DATOS FIJOS
+// ==========================================
 function calcularTresDatosFijos() {
     const cont = document.getElementById('contenedor-fijos');
-    if(!cont || historial.length < 5) return;
+    if(!cont || historial.length < 10) return;
 
-    // Lógica: 1. El más frío, 2. El que más sale después del último, 3. Random del elemento dominante
     const frecuencias = {};
     historial.forEach(r => frecuencias[r.num] = (frecuencias[r.num] || 0) + 1);
     
-    // 1. Frío (que menos ha salido)
+    // Dato 1: El más frío (el que más debe)
     const frio = listaAnimales.sort((a,b) => (frecuencias[a.n] || 0) - (frecuencias[b.n] || 0))[0].n;
     
-    // 2. Caliente (el que más sale)
+    // Dato 2: El que más sale por racha (Caliente)
     const caliente = Object.entries(frecuencias).sort((a,b) => b[1] - a[1])[0][0];
 
-    // 3. El 75 si está cerca de salir, sino el 00
-    const dato3 = (parseInt(document.getElementById('dias-sin-75').innerText) > 40) ? '75' : '00';
+    // Dato 3: El Guácharo (75) o el 00 por ciclo
+    const dato3 = (parseInt(document.getElementById('dias-sin-75').innerText) > 15) ? '75' : '00';
 
     const fijos = [frio, caliente, dato3];
     cont.innerHTML = fijos.map(f => `<div class="dato-fijo">${f}</div>`).join('');
 }
 
-// CORRECCIÓN GUACHARO 75
-function analizarGuacharo() {
-    const hO = [...historial].sort((a,b) => b.fecha.localeCompare(a.fecha) || horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
-    let index75 = hO.findIndex(r => r.num === '75');
-    
-    const display = document.getElementById('dias-sin-75');
-    if(display) {
-        // Si no se encuentra, son todos los registros. Si se encuentra, son los sorteos desde el último.
-        display.innerText = index75 === -1 ? hO.length : index75;
-    }
-}
-
-// SUGERENCIAS POR ELEMENTO
 function sugerirPorElemento() {
     const res = document.getElementById('sugerencias-elemento');
     const hoy = document.getElementById('fecha-analisis').value;
-    const sorteosHoy = historial.filter(r => r.fecha === hoy);
-    if(sorteosHoy.length === 0) return;
+    const sorteosHoy = historial.filter(r => r.fecha === hoy).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
+    
+    if(sorteosHoy.length > 0 && res) {
+        const ultimoTipo = sorteosHoy[0].tipo;
+        // Sugerir 3 del mismo elemento que NO hayan salido hoy
+        const sugeridos = listaAnimales
+            .filter(a => a.t === ultimoTipo && !sorteosHoy.some(s => s.num === a.n))
+            .slice(0, 3).map(a => a.n).join(', ');
 
-    const ultimoTipo = sorteosHoy[0].tipo;
-    const sugeridos = listaAnimales.filter(a => a.t === ultimoTipo).slice(0, 3).map(a => a.n).join(', ');
-
-    res.innerHTML = `<div class="card-estudio">🔥 Dominio <b>${ultimoTipo}</b> detectado. Sugeridos a salir: <b>${sugeridos}</b></div>`;
+        res.innerHTML = `<div class="card-estudio">🔥 Racha <b>${ultimoTipo}</b>. Próximos sugeridos: <b>${sugeridos}</b></div>`;
+    }
 }
 
-// EL RESTO DE FUNCIONES SE MANTIENEN PARA NO ROMPER NADA
+// ==========================================
+// REGISTRO Y TABLAS (SINCRO SUPABASE)
+// ==========================================
 async function registrarSorteo(num, animal, tipo, hora) {
     const fecha = document.getElementById('fecha-analisis').value;
     const nuevo = { fecha, hora, num: num.toString(), animal, tipo };
+    
+    // Update local rápido
     const idx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
-    if(idx !== -1) historial[idx] = nuevo; else historial.push(nuevo);
+    if(idx !== -1) historial[idx] = nuevo; else historial.unshift(nuevo);
+    
     actualizarInterfaz();
-    await _supabase.from('historial_sorteos').upsert(nuevo, { onConflict: 'fecha,hora' });
+
+    // Sincro Nube (On Conflict para no duplicar horas)
+    try {
+        await _supabase.from('historial_sorteos').upsert(nuevo, { onConflict: 'fecha,hora' });
+    } catch (e) { console.error("Error de conexión"); }
 }
 
 function actualizarInterfaz() {
@@ -117,27 +162,23 @@ function actualizarInterfaz() {
     detectarJugadasEspeciales();
 }
 
-function registrarPorNumero() {
-    if(!horaSeleccionadaActiva) return alert("Elige hora");
-    let v = document.getElementById('num-rapido').value.padStart(2, '0').replace('000','00');
-    if(v === '0') v = '0';
-    const ani = listaAnimales.find(a => a.n === v);
-    if(ani) registrarSorteo(ani.n, ani.a, ani.t, horaSeleccionadaActiva);
-    document.getElementById('num-rapido').value = '';
-}
-
 function actualizarTabla() {
     const c = document.getElementById('lista-historial');
     const f = document.getElementById('fecha-busqueda-historial').value;
+    if(!c) return;
     c.innerHTML = '';
     historial.filter(r => r.fecha === f).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora)).forEach(r => {
         c.innerHTML += `<tr ${r.num==='75'?'class="row-guacharo"':''}><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td></tr>`;
     });
 }
 
+// ==========================================
+// UTILIDADES DE INTERFAZ
+// ==========================================
 function generarPanelDiario() {
     const p = document.getElementById('panel-diario-sorteos');
     const f = document.getElementById('fecha-analisis').value;
+    if(!p) return;
     p.innerHTML = '';
     horasSorteo.forEach(h => {
         const r = historial.find(x => x.fecha === f && x.hora === h);
@@ -149,6 +190,15 @@ function generarPanelDiario() {
     });
 }
 
+function registrarPorNumero() {
+    if(!horaSeleccionadaActiva) return alert("Selecciona una hora primero");
+    let v = document.getElementById('num-rapido').value.padStart(2, '0').replace('000','00');
+    if(v === '0') v = '0';
+    const ani = listaAnimales.find(a => a.n === v);
+    if(ani) registrarSorteo(ani.n, ani.a, ani.t, horaSeleccionadaActiva);
+    document.getElementById('num-rapido').value = '';
+}
+
 function detectarJugadasEspeciales() {
     const alertCont = document.getElementById('alertas-algoritmo');
     const hoy = document.getElementById('fecha-analisis').value;
@@ -157,12 +207,13 @@ function detectarJugadasEspeciales() {
     alertCont.innerHTML = '';
     const ult = sorteosHoy[sorteosHoy.length-1];
     const pen = sorteosHoy[sorteosHoy.length-2];
-    if(ult.num.split('').reverse().join('') === pen.num) alertCont.innerHTML += `<span class="badge bg-espejo">🔄 ESPEJO</span>`;
+    if(ult.num.split('').reverse().join('') === pen.num) alertCont.innerHTML += `<span class="badge bg-espejo">🔄 ESPEJO (${pen.num}-${ult.num})</span>`;
     if(Math.abs(parseInt(ult.num) - parseInt(pen.num)) === 1) alertCont.innerHTML += `<span class="badge bg-escalera">📈 ESCALERA</span>`;
 }
 
 function generarGridBotones() {
     const cont = document.getElementById('grid-container');
+    if(!cont) return;
     cont.innerHTML = '';
     listaAnimales.forEach(a => {
         const d = document.createElement('div');
@@ -183,6 +234,7 @@ function openTab(evt, n) {
 function estudiarAnimalPatron() {
     const n = document.getElementById('select-estudio-animal').value;
     const res = document.getElementById('resultado-patron-avanzado');
+    if(!n) return;
     const h = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha) || horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
     let ant = {}, sig = {};
     h.forEach((r, i) => {
@@ -192,13 +244,18 @@ function estudiarAnimalPatron() {
         }
     });
     const top = (o) => Object.entries(o).sort((a,b)=>b[1]-a[1])[0] || ["--", 0];
-    res.innerHTML = `<div class="card-estudio">💡 Histórico para ${n}:<br>Sale antes: ${top(ant)[0]}<br>Sale después: ${top(sig)[0]}</div>`;
+    res.innerHTML = `<div class="card-estudio">💡 Análisis del <b>${n}</b>:<br>Suele atraer antes al: <b>${top(ant)[0]}</b><br>Suele soltar después al: <b>${top(sig)[0]}</b></div>`;
 }
 
 function llenarSelectorEstudio() {
     const s = document.getElementById('select-estudio-animal');
+    if(!s) return;
     listaAnimales.forEach(a => s.innerHTML += `<option value="${a.n}">${a.n} - ${a.a}</option>`);
 }
 
-setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
+setInterval(() => { 
+    const c = document.getElementById('live-clock');
+    if(c) c.innerText = new Date().toLocaleTimeString(); 
+}, 1000);
+
 window.onload = inicializarSistema;
