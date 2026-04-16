@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador CRCA - Pro Algoritmo</title>
+    <title>Analizador CRCA - Algoritmo 100%</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .panel-diario { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 15px; background: #0f172a; padding: 10px; border-radius: 8px; }
@@ -16,7 +16,8 @@
         .bg-repetido { background: #ef4444; }
         .row-guacharo { background: rgba(251, 191, 36, 0.2) !important; color: #fbbf24; }
         .animal-btn { background:#334155; padding:5px; text-align:center; border-radius:4px; cursor:pointer; font-size:0.65rem; color:white; border: 1px solid #475569;}
-        .card-estudio { background: #1e293b; padding: 10px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #38bdf8; }
+        .card-prediccion { background: #1e293b; border-radius: 8px; padding: 12px; margin-bottom: 15px; border: 1px solid #38bdf8; }
+        .dato-fijo { background: #0f172a; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #38bdf8; border: 2px solid #38bdf8; }
     </style>
 </head>
 <body>
@@ -32,6 +33,15 @@
         </header>
 
         <section id="registro" class="tab-content active">
+            <div class="card-prediccion">
+                <p style="font-size: 0.7rem; color: #38bdf8; margin: 0 0 10px 0; text-align: center; font-weight: bold;">🎯 3 DATOS FIJOS PARA HOY</p>
+                <div style="display: flex; justify-content: space-around;" id="contenedor-fijos">
+                    <div class="dato-fijo">--</div>
+                    <div class="dato-fijo">--</div>
+                    <div class="dato-fijo">--</div>
+                </div>
+            </div>
+
             <div class="panel-diario" id="panel-diario-sorteos"></div>
             
             <div id="alertas-algoritmo" style="margin-bottom: 10px;"></div>
@@ -48,9 +58,12 @@
         </section>
 
         <section id="estudio-avanzado" class="tab-content" style="display:none;">
+            <h3>Sugerencias por Elemento</h3>
+            <div id="sugerencias-elemento" style="margin-bottom: 20px;"></div>
+
             <h3>ESTUDIO DE PATRONES</h3>
             <select id="select-estudio-animal" onchange="estudiarAnimalPatron()" style="width:100%; padding:10px; margin-bottom:15px;">
-                <option value="">-- Selecciona Animal para Estudiar --</option>
+                <option value="">-- Selecciona Animal --</option>
             </select>
             <div id="resultado-patron-avanzado"></div>
             
@@ -58,7 +71,7 @@
             
             <h3>ESTADO GUACHARO (75)</h3>
             <div class="card-stats" style="text-align:center; padding:15px; background:#0f172a; border-radius:10px; border:1px solid #fbbf24;">
-                <p style="color:#fbbf24; margin:0;">DÍAS SIN SALIR</p>
+                <p style="color:#fbbf24; margin:0;">SORTEOS SIN SALIR</p>
                 <div id="dias-sin-75" style="font-size:2.5rem; font-weight:bold;">0</div>
             </div>
         </section>
