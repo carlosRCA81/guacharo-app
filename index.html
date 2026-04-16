@@ -3,36 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador CRCA - Pro</title>
+    <title>Analizador CRCA - Pro Algoritmo</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .panel-diario { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 15px; background: #0f172a; padding: 10px; border-radius: 8px; }
         .hora-box { background: #334155; padding: 8px; text-align: center; border-radius: 4px; border: 1px solid #475569; color: #f8fafc; cursor: pointer; font-size: 0.65rem;}
         .hora-box.jugado { background: #22c55e !important; color: #0f172a; font-weight: bold;}
         .hora-box.active-select { border: 2px solid #38bdf8 !important; background: #1e293b; }
-        .badge { padding: 3px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; margin-right: 4px; display: inline-block; margin-top: 5px;}
-        .espejito { background: #a855f7; color: white; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; margin-right: 5px; color: white; margin-top: 5px; display: inline-block; }
+        .bg-espejo { background: #a855f7; }
+        .bg-escalera { background: #f59e0b; }
+        .bg-repetido { background: #ef4444; }
         .row-guacharo { background: rgba(251, 191, 36, 0.2) !important; color: #fbbf24; }
         .animal-btn { background:#334155; padding:5px; text-align:center; border-radius:4px; cursor:pointer; font-size:0.65rem; color:white; border: 1px solid #475569;}
-        
-        /* ESTILO PARA EL AVISO (NUEVO) */
-        #aviso-flotante {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            padding: 10px 20px; border-radius: 20px; color: white; font-weight: bold;
-            display: none; z-index: 9999; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
+        .card-estudio { background: #1e293b; padding: 10px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #38bdf8; }
     </style>
 </head>
 <body>
-    <div id="aviso-flotante"></div>
-
     <div id="main-app">
         <header>
-            <h1>ANALIZADOR CRCA</h1>
+            <h1>ANALIZADOR CRCA PRO</h1>
             <div id="live-clock">00:00:00</div>
             <div class="tab-container">
                 <button class="tab-btn active" onclick="openTab(event, 'registro')">REGISTRO</button>
-                <button class="tab-btn" onclick="openTab(event, 'estudio')">ESTADO 75</button>
+                <button class="tab-btn" onclick="openTab(event, 'estudio-avanzado')">ALGORITMO</button>
                 <button class="tab-btn" onclick="openTab(event, 'historial')">HISTORIAL</button>
             </div>
         </header>
@@ -40,9 +34,7 @@
         <section id="registro" class="tab-content active">
             <div class="panel-diario" id="panel-diario-sorteos"></div>
             
-            <div id="alerta-probabilidad" style="background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #38bdf8; min-height: 40px;">
-                <p style="color: #64748b; font-size: 0.7rem; margin: 0;">Seleccione una hora para estudiar...</p>
-            </div>
+            <div id="alertas-algoritmo" style="margin-bottom: 10px;"></div>
 
             <div class="controls-row">
                 <input type="date" id="fecha-analisis" style="width:100%; margin-bottom:10px;">
@@ -50,22 +42,30 @@
 
             <div class="entrada-rapida-container" style="display:flex; gap:10px; margin-bottom:15px;">
                 <input type="text" id="num-rapido" maxlength="2" placeholder="00" style="width:60px; text-align:center; font-weight:bold;">
-                <button onclick="registrarPorNumero()" style="flex-grow:1;">ANOTAR NÚMERO</button>
+                <button onclick="registrarPorNumero()" style="flex-grow:1;">ANOTAR RESULTADO</button>
             </div>
             <div class="grid-animales" id="grid-container" style="display:grid; grid-template-columns: repeat(5, 1fr); gap:5px;"></div>
         </section>
 
-        <section id="estudio" class="tab-content" style="display:none;">
-            <h3>ESTADO GUACHARO</h3>
-            <div class="card-stats" style="text-align:center; padding:20px; background:#0f172a; border-radius:10px; border:1px solid #fbbf24;">
+        <section id="estudio-avanzado" class="tab-content" style="display:none;">
+            <h3>ESTUDIO DE PATRONES</h3>
+            <select id="select-estudio-animal" onchange="estudiarAnimalPatron()" style="width:100%; padding:10px; margin-bottom:15px;">
+                <option value="">-- Selecciona Animal para Estudiar --</option>
+            </select>
+            <div id="resultado-patron-avanzado"></div>
+            
+            <hr style="border: 0.5px solid #334155; margin: 20px 0;">
+            
+            <h3>ESTADO GUACHARO (75)</h3>
+            <div class="card-stats" style="text-align:center; padding:15px; background:#0f172a; border-radius:10px; border:1px solid #fbbf24;">
                 <p style="color:#fbbf24; margin:0;">DÍAS SIN SALIR</p>
-                <div id="dias-sin-75" style="font-size:3rem; font-weight:bold;">0</div>
+                <div id="dias-sin-75" style="font-size:2.5rem; font-weight:bold;">0</div>
             </div>
         </section>
 
         <section id="historial" class="tab-content" style="display:none;">
             <div style="background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-                <label style="font-size: 0.7rem; color: #38bdf8;">VER RESULTADOS DEL DÍA:</label>
+                <label style="font-size: 0.7rem; color: #38bdf8;">FILTRAR POR FECHA:</label>
                 <input type="date" id="fecha-busqueda-historial" onchange="actualizarTabla()" style="width:100%;">
             </div>
             <div class="tabla-contenedor" style="max-height: 400px; overflow-y: auto;">
@@ -78,7 +78,6 @@
                     <tbody id="lista-historial" style="text-align:center;"></tbody>
                 </table>
             </div>
-            <button onclick="cargarHistorialRemoto()" style="margin-top:10px; background:#334155;">ACTUALIZAR NUBE</button>
         </section>
     </div>
 
