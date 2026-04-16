@@ -35,15 +35,19 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historial = [];
 let horaSeleccionadaActiva = null;
 
-// RELOJ
+// RELOJ EN VIVO
 setInterval(() => {
-    const now = new Date();
-    document.getElementById('live-clock').innerText = now.toLocaleTimeString();
+    const clock = document.getElementById('live-clock');
+    if(clock) clock.innerText = new Date().toLocaleTimeString();
 }, 1000);
 
 async function inicializarSistema() {
     const hoy = new Date().toISOString().split('T')[0];
-    document.getElementById('fecha-analisis').value = hoy;
+    const fechaInput = document.getElementById('fecha-analisis');
+    if(fechaInput) {
+        fechaInput.value = hoy;
+        fechaInput.addEventListener('change', () => { generarPanelDiario(); ejecutarEstudio(); });
+    }
     document.getElementById('fecha-busqueda-historial').value = hoy;
 
     generarGridBotones();
@@ -61,7 +65,7 @@ async function cargarHistorialRemoto() {
 function actualizarInterfaz() {
     generarPanelDiario();
     actualizarTabla(); 
-    ejecutarEstudioAlgoritmo();
+    ejecutarEstudio();
     actualizarContadorGuacharo();
 }
 
@@ -91,7 +95,7 @@ function generarPanelDiario() {
     });
 }
 
-function ejecutarEstudioAlgoritmo() {
+function ejecutarEstudio() {
     const alertaDiv = document.getElementById('alerta-probabilidad');
     const hoy = document.getElementById('fecha-analisis').value;
     const sorteosHoy = historial.filter(r => r.fecha === hoy)
@@ -99,39 +103,36 @@ function ejecutarEstudioAlgoritmo() {
 
     let html = "";
     
-    // 1. TOP 3
+    // Sugerencia basada en frecuencia
     const conteo = {};
     historial.forEach(r => conteo[r.num] = (conteo[r.num] || 0) + 1);
     const top3 = Object.entries(conteo).sort((a,b) => b[1] - a[1]).slice(0,3).map(e => e[0]);
-    html += `<div style="color:#fbbf24; font-size:0.8rem; margin-bottom:5px;">📊 TOP 3 SUGERIDOS: ${top3.join(' - ')}</div>`;
+    html += `<div style="color:#fbbf24; font-size:0.75rem; margin-bottom:5px;">📊 SUGERIDOS: ${top3.join(' - ')}</div>`;
 
-    // 2. ALERTAS
     if(sorteosHoy.length > 0) {
         const ult = sorteosHoy[sorteosHoy.length - 1];
+        // Espejo
         let esp = ult.num.split('').reverse().join('').padStart(2, '0');
         if(parseInt(esp) <= 75) html += `<span class="badge espejito">ESPEJO: ${esp}</span>`;
-        
+        // Escalera
         let esc = (parseInt(ult.num) + 1).toString().padStart(2, '0');
         if(parseInt(esc) <= 75) html += `<span class="badge escalera">ESCALERA: ${esc}</span>`;
-        
-        if(sorteosHoy.length >= 2 && ult.tipo === sorteosHoy[sorteosHoy.length-2].tipo) {
-            html += `<span class="badge seguidilla">SEGUIDILLA ${ult.tipo}</span>`;
-        }
     }
-    alertaDiv.innerHTML = html || "Esperando datos...";
+    alertaDiv.innerHTML = html || "Esperando datos del día...";
 }
 
 async function registrarSorteo(num, animal, tipo, hora) {
     const fecha = document.getElementById('fecha-analisis').value;
     const nuevoRegistro = { fecha, hora, num, animal, tipo };
 
-    // Optimismo: actualizar local primero
+    // Actualización local rápida
     historial = historial.filter(r => !(r.fecha === fecha && r.hora === hora));
     historial.push(nuevoRegistro);
     actualizarInterfaz();
 
-    // Guardar en nube
-    await _supabase.from('historial_sorteos').upsert(nuevoRegistro);
+    // Guardar en Supabase con el comando correcto
+    const { error } = await _supabase.from('historial_sorteos').upsert(nuevoRegistro, { onConflict: 'fecha,hora' });
+    if(error) alert("Error al guardar: " + error.message);
 }
 
 function registrarPorNumero() {
@@ -142,6 +143,8 @@ function registrarPorNumero() {
     if(ani) {
         registrarSorteo(ani.n, ani.a, ani.t, horaSeleccionadaActiva);
         document.getElementById('num-rapido').value = '';
+    } else {
+        alert("Número no válido (0-75)");
     }
 }
 
@@ -150,11 +153,10 @@ function generarGridBotones() {
     c.innerHTML = '';
     listaAnimales.forEach(a => {
         const b = document.createElement('div');
-        b.className = 'animal-btn'; // Asegúrate que esta clase esté en tu CSS o usa la del grid
-        b.style = "background:#334155; padding:5px; text-align:center; border-radius:4px; cursor:pointer; font-size:0.7rem;";
+        b.style = "background:#334155; padding:5px; text-align:center; border-radius:4px; cursor:pointer; font-size:0.65rem; color:white;";
         b.innerHTML = `<strong>${a.n}</strong><br>${a.a}`;
         b.onclick = () => {
-            if (!horaSeleccionadaActiva) return alert("Selecciona HORA");
+            if (!horaSeleccionadaActiva) return alert("Selecciona HORA primero");
             registrarSorteo(a.n, a.a, a.t, horaSeleccionadaActiva);
         };
         c.appendChild(b);
@@ -164,11 +166,15 @@ function generarGridBotones() {
 function actualizarTabla(datos = null) {
     const cuerpo = document.getElementById('lista-historial');
     cuerpo.innerHTML = '';
-    const lista = datos || [...historial].sort((a, b) => b.fecha.localeCompare(a.fecha) || horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora)).slice(0, 20);
+    
+    // Ordenar: fecha más reciente primero, y hora más tarde primero
+    const lista = datos || [...historial].sort((a, b) => b.fecha.localeCompare(a.fecha) || horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora)).slice(0, 30);
 
     lista.forEach(r => {
-        const rowCls = r.num === '75' ? 'style="background:rgba(251,191,36,0.2); color:#fbbf24;"' : '';
-        cuerpo.innerHTML += `<tr ${rowCls}><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
+        const rowCls = r.num === '75' ? 'class="row-guacharo"' : '';
+        cuerpo.innerHTML += `<tr ${rowCls}>
+            <td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td>
+        </tr>`;
     });
 }
 
