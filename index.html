@@ -7,23 +7,21 @@
     <link rel="stylesheet" href="style.css">
     <style>
         .panel-diario { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 15px; background: #0f172a; padding: 10px; border-radius: 8px; font-size: 0.7rem;}
-        .hora-box { background: #334155; padding: 8px; text-align: center; border-radius: 4px; border: 1px solid #475569; color: #f8fafc; cursor: pointer; transition: 0.3s;}
-        .hora-box.jugado { background: #22c55e !important; color: #0f172a; font-weight: bold; border: 2px solid #fff;}
-        .hora-box.active-select { border: 2px solid #38bdf8; background: #1e293b; }
-        .entrada-rapida-container { background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #38bdf8; display: flex; gap: 10px; align-items: center;}
-        #num-rapido { background: #1e293b; color: #fbbf24; border: none; padding: 8px; border-radius: 4px; font-size: 1rem; font-weight: bold; width: 60px; text-align: center;}
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; margin-right: 5px; display: inline-block; margin-top: 5px;}
+        .hora-box { background: #334155; padding: 8px; text-align: center; border-radius: 4px; border: 1px solid #475569; color: #f8fafc; cursor: pointer;}
+        .hora-box.jugado { background: #22c55e !important; color: #0f172a; font-weight: bold;}
+        .hora-box.active-select { border: 2px solid #38bdf8 !important; background: #1e293b; }
+        .badge { padding: 3px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; margin-right: 4px; display: inline-block; margin-top: 5px;}
         .espejito { background: #a855f7; color: white; }
         .escalera { background: #3b82f6; color: white; }
         .seguidilla { background: #ec4899; color: white; }
-        #alerta-probabilidad { background: #1e293b; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #fbbf24; min-height: 40px; }
+        .row-guacharo { background: rgba(251, 191, 36, 0.2) !important; color: #fbbf24; }
     </style>
 </head>
 <body>
     <div id="main-app">
         <header>
             <h1>ANALIZADOR CRCA</h1>
-            <div id="live-clock">Cargando...</div>
+            <div id="live-clock">00:00:00</div>
             <div class="tab-container">
                 <button class="tab-btn active" onclick="openTab(event, 'registro')">REGISTRO</button>
                 <button class="tab-btn" onclick="openTab(event, 'estudio')">ESTUDIO 75</button>
@@ -37,39 +35,41 @@
                 <input type="date" id="fecha-analisis">
             </div>
             
-            <div id="alerta-probabilidad"></div>
+            <div id="alerta-probabilidad" style="background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #fbbf24; min-height: 40px;">
+                <p style="color: #64748b; font-size: 0.7rem; margin: 0;">Seleccione una hora y anote para ver el análisis...</p>
+            </div>
 
-            <div class="entrada-rapida-container">
-                <input type="text" id="num-rapido" maxlength="2" placeholder="00">
-                <button onclick="registrarPorNumero()" style="width: auto; padding: 10px 20px;">ANOTAR</button>
+            <div class="entrada-rapida-container" style="display:flex; gap:10px; margin-bottom:15px;">
+                <input type="text" id="num-rapido" maxlength="2" placeholder="00" style="width:60px; text-align:center; font-weight:bold;">
+                <button onclick="registrarPorNumero()" style="flex-grow:1;">ANOTAR NÚMERO</button>
             </div>
             <div class="grid-animales" id="grid-container" style="display:grid; grid-template-columns: repeat(5, 1fr); gap:5px;"></div>
         </section>
 
         <section id="estudio" class="tab-content" style="display:none;">
-            <h3>INTELIGENCIA GUACHARO</h3>
-            <div class="card-stats">
-                <p style="color:#fbbf24;">DÍAS AUSENTE</p>
-                <div style="font-size:3rem; color:#fff;" id="dias-sin-75">0</div>
+            <h3>ESTADO GUACHARO</h3>
+            <div class="card-stats" style="text-align:center; padding:20px; background:#0f172a; border-radius:10px; border:1px solid #fbbf24;">
+                <p style="color:#fbbf24; margin:0;">DÍAS SIN SALIR</p>
+                <div id="dias-sin-75" style="font-size:3rem; font-weight:bold;">0</div>
             </div>
         </section>
 
         <section id="historial" class="tab-content" style="display:none;">
-            <h3>DATOS ACUMULADOS</h3>
             <div style="background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-                <input type="date" id="fecha-busqueda-historial" style="margin-bottom:10px;">
-                <button onclick="buscarHistorialPorFecha()">FILTRAR DÍA</button>
+                <label style="font-size: 0.7rem; color: #38bdf8;">BUSCAR POR FECHA:</label>
+                <input type="date" id="fecha-busqueda-historial" onchange="buscarHistorialPorFecha()">
             </div>
-
-            <div class="tabla-contenedor">
-                <table>
+            <div class="tabla-contenedor" style="max-height: 400px; overflow-y: auto;">
+                <table style="width:100%; border-collapse: collapse; font-size: 0.75rem;">
                     <thead>
-                        <tr><th>Fecha</th><th>Hora</th><th>Nro</th><th>Animal</th><th>Tipo</th></tr>
+                        <tr style="background:#1e293b; color:#38bdf8;">
+                            <th>Fecha</th><th>Hora</th><th>Nro</th><th>Animal</th>
+                        </tr>
                     </thead>
-                    <tbody id="lista-historial"></tbody>
+                    <tbody id="lista-historial" style="text-align:center;"></tbody>
                 </table>
             </div>
-            <button onclick="cargarHistorialRemoto()" style="margin-top:10px; background:#475569;">REFRESCAR TODO</button>
+            <button onclick="cargarHistorialRemoto()" style="margin-top:10px; background:#334155;">ACTUALIZAR TODO</button>
         </section>
     </div>
 
