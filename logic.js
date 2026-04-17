@@ -39,7 +39,7 @@ let historial = [];
 let horaSeleccionadaActiva = null;
 
 // ==========================================
-// INICIALIZACIÓN Y CARGA
+// INICIALIZACIÓN
 // ==========================================
 async function inicializarSistema() {
     document.getElementById('fecha-analisis').value = new Date().toISOString().split('T')[0];
@@ -60,10 +60,47 @@ async function cargarHistorialRemoto() {
 }
 
 // ==========================================
-// ALGORITMO AVANZADO DEL GUACHARO (75)
+// NUEVO: SISTEMA DE PREDICCIÓN HISTÓRICA TOTAL
+// ==========================================
+function calcularPrediccionTotal() {
+    if (historial.length < 5) return;
+
+    // Conteo global desde enero
+    const frecuenciasGlobales = {};
+    historial.forEach(r => frecuenciasGlobales[r.num] = (frecuenciasGlobales[r.num] || 0) + 1);
+
+    // 1. EL NÚMERO "JALADO" (Basado en el último resultado)
+    const hOrdenado = [...historial].sort((a,b) => b.fecha.localeCompare(a.fecha) || horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
+    const ultimoNum = hOrdenado[0].num;
+    
+    let mapaSiguientes = {};
+    hOrdenado.forEach((r, i) => {
+        if (r.num === ultimoNum && i > 0) {
+            let sig = hOrdenado[i-1].num;
+            mapaSiguientes[sig] = (mapaSiguientes[sig] || 0) + 1;
+        }
+    });
+    const jalado = Object.entries(mapaSiguientes).sort((a,b) => b[1] - a[1])[0]?.[0] || '75';
+
+    // 2. EL FIJO POR DÍA DE SEMANA (Lunes, Martes...)
+    const hoySemana = new Date().getDay();
+    const frecuenciasDia = {};
+    historial.filter(r => new Date(r.fecha).getDay() === hoySemana)
+             .forEach(r => frecuenciasDia[r.num] = (frecuenciasDia[r.num] || 0) + 1);
+    const fijoDelDia = Object.entries(frecuenciasDia).sort((a,b) => b[1] - a[1])[0]?.[0] || '37';
+
+    // 3. ACTUALIZAR PANEL DE FIJOS
+    const cont = document.getElementById('contenedor-fijos');
+    if(cont) {
+        const fijos = [jalado, fijoDelDia, '75'];
+        cont.innerHTML = fijos.map(f => `<div class="dato-fijo" title="Fuerza del animal">${f}</div>`).join('');
+    }
+}
+
+// ==========================================
+// ALGORITMO DEL GUACHARO (Sincronizado)
 // ==========================================
 function analizarGuacharo() {
-    // 1. Conteo de sorteos sin salir
     const hO = [...historial].sort((a,b) => b.fecha.localeCompare(a.fecha) || horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
     let index75 = hO.findIndex(r => r.num === '75');
     let sorteosSin75 = index75 === -1 ? hO.length : index75;
@@ -71,51 +108,10 @@ function analizarGuacharo() {
     const display = document.getElementById('dias-sin-75');
     if(display) display.innerText = sorteosSin75;
 
-    // 2. Análisis de Ciclos (Basado en los datos de Lara: Ene-Abr)
-    const apariciones = hO.filter(r => r.num === '75');
     let alertaDiv = document.getElementById('alertas-algoritmo');
-
-    if(apariciones.length >= 2) {
-        // Calculamos promedio de espera en días
-        let fechasUnicas = [...new Set(apariciones.map(a => a.fecha))].sort();
-        let diffDias = 0;
-        for(let i=1; i<fechasUnicas.length; i++) {
-            diffDias += (new Date(fechasUnicas[i]) - new Date(fechasUnicas[i-1])) / (1000*60*60*24);
-        }
-        let promedioDias = diffDias / (fechasUnicas.length - 1);
-        
-        // 3. Notificación de Momento de Juego
-        let hoy = new Date();
-        let ultimaFecha = new Date(fechasUnicas[fechasUnicas.length - 1]);
-        let diasDesdeUltimo = (hoy - ultimaFecha) / (1000*60*60*24);
-
-        if(diasDesdeUltimo >= 11 && diasDesdeUltimo <= 15) {
-            alertaDiv.innerHTML += `<div class="badge" style="background: #ef4444; display: block; margin-top: 10px; font-size: 0.8rem; animation: pulse 2s infinite;">⚠️ GUACHARO EN MADURACIÓN (Ciclo ${Math.floor(diasDesdeUltimo)} días). ¡JUGAR AHORA!</div>`;
-        }
+    if(sorteosSin75 > 20 && alertaDiv) {
+        alertaDiv.innerHTML += `<div class="badge" style="background: #ef4444; display: block; margin-top: 10px; animation: pulse 2s infinite;">🔥 PRESIÓN MÁXIMA: 75 con ${sorteosSin75} sorteos de deuda.</div>`;
     }
-}
-
-// ==========================================
-// PREDICCIONES Y 3 DATOS FIJOS
-// ==========================================
-function calcularTresDatosFijos() {
-    const cont = document.getElementById('contenedor-fijos');
-    if(!cont || historial.length < 10) return;
-
-    const frecuencias = {};
-    historial.forEach(r => frecuencias[r.num] = (frecuencias[r.num] || 0) + 1);
-    
-    // Dato 1: El más frío (el que más debe)
-    const frio = listaAnimales.sort((a,b) => (frecuencias[a.n] || 0) - (frecuencias[b.n] || 0))[0].n;
-    
-    // Dato 2: El que más sale por racha (Caliente)
-    const caliente = Object.entries(frecuencias).sort((a,b) => b[1] - a[1])[0][0];
-
-    // Dato 3: El Guácharo (75) o el 00 por ciclo
-    const dato3 = (parseInt(document.getElementById('dias-sin-75').innerText) > 15) ? '75' : '00';
-
-    const fijos = [frio, caliente, dato3];
-    cont.innerHTML = fijos.map(f => `<div class="dato-fijo">${f}</div>`).join('');
 }
 
 function sugerirPorElemento() {
@@ -125,37 +121,34 @@ function sugerirPorElemento() {
     
     if(sorteosHoy.length > 0 && res) {
         const ultimoTipo = sorteosHoy[0].tipo;
-        // Sugerir 3 del mismo elemento que NO hayan salido hoy
         const sugeridos = listaAnimales
             .filter(a => a.t === ultimoTipo && !sorteosHoy.some(s => s.num === a.n))
             .slice(0, 3).map(a => a.n).join(', ');
 
-        res.innerHTML = `<div class="card-estudio">🔥 Racha <b>${ultimoTipo}</b>. Próximos sugeridos: <b>${sugeridos}</b></div>`;
+        res.innerHTML = `<div class="card-estudio">⚡ Tendencia: <b>${ultimoTipo}</b>. Sugeridos: <b>${sugeridos}</b></div>`;
     }
 }
 
 // ==========================================
-// REGISTRO Y TABLAS (SINCRO SUPABASE)
+// REGISTRO Y SINCRO SUPABASE
 // ==========================================
 async function registrarSorteo(num, animal, tipo, hora) {
     const fecha = document.getElementById('fecha-analisis').value;
     const nuevo = { fecha, hora, num: num.toString(), animal, tipo };
     
-    // Update local rápido
     const idx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
     if(idx !== -1) historial[idx] = nuevo; else historial.unshift(nuevo);
     
     actualizarInterfaz();
 
-    // Sincro Nube (On Conflict para no duplicar horas)
     try {
         await _supabase.from('historial_sorteos').upsert(nuevo, { onConflict: 'fecha,hora' });
-    } catch (e) { console.error("Error de conexión"); }
+    } catch (e) { console.error("Error de conexión Supabase"); }
 }
 
 function actualizarInterfaz() {
     analizarGuacharo();
-    calcularTresDatosFijos();
+    calcularPrediccionTotal();
     actualizarTabla();
     generarPanelDiario();
     sugerirPorElemento();
@@ -172,9 +165,6 @@ function actualizarTabla() {
     });
 }
 
-// ==========================================
-// UTILIDADES DE INTERFAZ
-// ==========================================
 function generarPanelDiario() {
     const p = document.getElementById('panel-diario-sorteos');
     const f = document.getElementById('fecha-analisis').value;
@@ -193,7 +183,7 @@ function generarPanelDiario() {
 function registrarPorNumero() {
     if(!horaSeleccionadaActiva) return alert("Selecciona una hora primero");
     let v = document.getElementById('num-rapido').value.padStart(2, '0').replace('000','00');
-    if(v === '0') v = '0';
+    if(v === '0' && document.getElementById('num-rapido').value !== '00') v = '0';
     const ani = listaAnimales.find(a => a.n === v);
     if(ani) registrarSorteo(ani.n, ani.a, ani.t, horaSeleccionadaActiva);
     document.getElementById('num-rapido').value = '';
@@ -207,8 +197,8 @@ function detectarJugadasEspeciales() {
     alertCont.innerHTML = '';
     const ult = sorteosHoy[sorteosHoy.length-1];
     const pen = sorteosHoy[sorteosHoy.length-2];
-    if(ult.num.split('').reverse().join('') === pen.num) alertCont.innerHTML += `<span class="badge bg-espejo">🔄 ESPEJO (${pen.num}-${ult.num})</span>`;
-    if(Math.abs(parseInt(ult.num) - parseInt(pen.num)) === 1) alertCont.innerHTML += `<span class="badge bg-escalera">📈 ESCALERA</span>`;
+    if(ult.num.split('').reverse().join('') === pen.num) alertCont.innerHTML += `<span class="badge" style="background:#8b5cf6">🔄 ESPEJO (${pen.num}-${ult.num})</span>`;
+    if(Math.abs(parseInt(ult.num) - parseInt(pen.num)) === 1) alertCont.innerHTML += `<span class="badge" style="background:#10b981">📈 ESCALERA</span>`;
 }
 
 function generarGridBotones() {
@@ -244,12 +234,13 @@ function estudiarAnimalPatron() {
         }
     });
     const top = (o) => Object.entries(o).sort((a,b)=>b[1]-a[1])[0] || ["--", 0];
-    res.innerHTML = `<div class="card-estudio">💡 Análisis del <b>${n}</b>:<br>Suele atraer antes al: <b>${top(ant)[0]}</b><br>Suele soltar después al: <b>${top(sig)[0]}</b></div>`;
+    res.innerHTML = `<div class="card-estudio">🧠 Inteligencia del <b>${n}</b>:<br>Llama antes al: <b>${top(ant)[0]}</b><br>Suele dejar al: <b>${top(sig)[0]}</b></div>`;
 }
 
 function llenarSelectorEstudio() {
     const s = document.getElementById('select-estudio-animal');
     if(!s) return;
+    s.innerHTML = '<option value="">-- Seleccionar --</option>';
     listaAnimales.forEach(a => s.innerHTML += `<option value="${a.n}">${a.n} - ${a.a}</option>`);
 }
 
