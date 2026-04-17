@@ -16,8 +16,12 @@
         .bg-repetido { background: #ef4444; }
         .row-guacharo { background: rgba(251, 191, 36, 0.2) !important; color: #fbbf24; }
         .animal-btn { background:#334155; padding:5px; text-align:center; border-radius:4px; cursor:pointer; font-size:0.65rem; color:white; border: 1px solid #475569;}
-        .card-prediccion { background: #1e293b; border-radius: 8px; padding: 12px; margin-bottom: 15px; border: 1px solid #38bdf8; }
+        .card-prediccion { background: #1e293b; border-radius: 8px; padding: 12px; margin-bottom: 10px; border: 1px solid #38bdf8; }
         .dato-fijo { background: #0f172a; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #38bdf8; border: 2px solid #38bdf8; }
+        /* Estilo para el nuevo Panel Francotirador */
+        .panel-sniper { background: linear-gradient(145deg, #1e293b, #0f172a); border: 2px solid #ef4444; border-radius: 12px; padding: 10px; margin-bottom: 15px; text-align: center; box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); }
+        .sniper-badge { background: #ef4444; color: white; font-size: 0.6rem; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; font-weight: bold; }
+        .sniper-nums { display: flex; justify-content: center; gap: 15px; margin-top: 8px; font-size: 1.2rem; font-weight: bold; color: #fff; }
     </style>
 </head>
 <body>
@@ -40,6 +44,11 @@
                     <div class="dato-fijo">--</div>
                     <div class="dato-fijo">--</div>
                 </div>
+            </div>
+
+            <div class="panel-sniper" id="panel-proxima-jugada">
+                <span class="sniper-badge">🎯 Próxima Jugada Calculada</span>
+                <div class="sniper-nums" id="numeros-sugeridos-directos">ESPERANDO DATOS...</div>
             </div>
 
             <div class="panel-diario" id="panel-diario-sorteos"></div>
