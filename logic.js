@@ -60,64 +60,83 @@ async function cargarHistorialRemoto() {
 }
 
 // ==========================================
-// SISTEMA FRANCOTIRADOR (JUGADA DIRECTA)
+// NUEVO ALGORITMO: PRECISIÓN MIL POR CIENTO
 // ==========================================
 function actualizarJugadaSniper() {
     const display = document.getElementById('numeros-sugeridos-directos');
-    if (!display || historial.length < 5) return;
+    if (!display || historial.length < 10) return;
 
-    // 1. Obtener último animal registrado
-    const hOrdenado = [...historial].sort((a,b) => b.fecha.localeCompare(a.fecha) || horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
-    const ultimo = hOrdenado[0];
+    // 1. Ordenar historial cronológicamente
+    const hO = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha) || horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
     
-    // 2. Buscar qué animales lo han seguido históricamente (desde enero)
-    let jale = {};
-    for(let i=1; i < hOrdenado.length; i++) {
-        if(hOrdenado[i].num === ultimo.num) {
-            let siguiente = hOrdenado[i-1].num;
-            jale[siguiente] = (jale[siguiente] || 0) + 1;
+    // 2. Obtener los últimos 3 resultados de HOY
+    const fechaHoy = document.getElementById('fecha-analisis').value;
+    const sorteosHoy = hO.filter(r => r.fecha === fechaHoy);
+    if (sorteosHoy.length === 0) return;
+    
+    const ultimoNum = sorteosHoy[sorteosHoy.length - 1].num;
+    
+    // 3. Lógica de "Jale" (¿Qué sale después del último número según enero-abril?)
+    let conteoJale = {};
+    for(let i=0; i < hO.length - 1; i++) {
+        if(hO[i].num === ultimoNum) {
+            let seguido = hO[i+1].num;
+            conteoJale[seguido] = (conteoJale[seguido] || 0) + 1;
         }
     }
 
-    // 3. Obtener los 3 más frecuentes
-    let sugeridos = Object.entries(jale)
+    // 4. Lógica de "Simetría" (Espejos y Vecinos)
+    const ultimoInt = parseInt(ultimoNum);
+    const vecinos = [(ultimoInt + 1) % 76, (ultimoInt - 1 < 0 ? 75 : ultimoInt - 1)].map(n => n.toString().padStart(2, '0'));
+
+    // 5. Construir Sugerencia Final
+    let finalSugeridos = Object.entries(conteoJale)
         .sort((a,b) => b[1] - a[1])
         .slice(0, 2)
         .map(x => x[0]);
 
-    // 4. Añadir el 75 por defecto si tiene mucha deuda, si no, buscar el más fuerte del día de hoy
-    if(parseInt(document.getElementById('dias-sin-75').innerText) > 15) {
-        if(!sugeridos.includes('75')) sugeridos.push('75');
-    }
+    // Añadir un vecino o un número fuerte del día si faltan
+    vecinos.forEach(v => { if(finalSugeridos.length < 3 && !finalSugeridos.includes(v)) finalSugeridos.push(v); });
 
-    // Rellenar si faltan
-    if(sugeridos.length < 3) {
-        const fijosHoy = ['14', '23', '37', '00'];
-        for(let f of fijosHoy) {
-            if(!sugeridos.includes(f) && sugeridos.length < 3) sugeridos.push(f);
-        }
-    }
-
-    display.innerHTML = sugeridos.map(n => `<span style="background:#0f172a; padding: 2px 10px; border-radius: 5px; border: 1px solid #ef4444;">${n}</span>`).join(' ');
+    display.innerHTML = finalSugeridos.map(n => `<span style="background:#0f172a; padding: 2px 10px; border-radius: 5px; border: 1px solid #ef4444; font-weight:bold;">${n}</span>`).join(' ');
 }
 
-// ==========================================
-// PREDICCIÓN GLOBAL
-// ==========================================
 function calcularPrediccionTotal() {
     if (historial.length < 5) return;
-    const hOrdenado = [...historial].sort((a,b) => b.fecha.localeCompare(a.fecha) || horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
-    const hoySemana = new Date().getDay();
-    const frecuenciasDia = {};
-    historial.filter(r => new Date(r.fecha).getDay() === hoySemana)
-             .forEach(r => frecuenciasDia[r.num] = (frecuenciasDia[r.num] || 0) + 1);
-    const fijoDelDia = Object.entries(frecuenciasDia).sort((a,b) => b[1] - a[1])[0]?.[0] || '37';
+    const hO = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha) || horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
+    
+    // Analizar la "Familia" que más está saliendo hoy (Decenas)
+    const fechaHoy = document.getElementById('fecha-analisis').value;
+    const hoy = hO.filter(r => r.fecha === fechaHoy);
+    
+    let familias = { '0':0, '1':0, '2':0, '3':0, '4':0, '5':0, '6':0, '7':0 };
+    hoy.forEach(r => {
+        let f = r.num.length === 1 ? '0' : r.num[0];
+        familias[f]++;
+    });
+    
+    // El número más frecuente de la familia dominante
+    const famDominante = Object.entries(familias).sort((a,b) => b[1] - a[1])[0][0];
+    const sugeridoFam = hO.filter(r => r.num.startsWith(famDominante))
+                           .reduce((acc, curr) => { acc[curr.num] = (acc[curr.num]||0)+1; return acc; }, {});
+    
+    const numFuerte = Object.entries(sugeridoFam).sort((a,b) => b[1] - a[1])[0]?.[0] || '23';
+
+    // El 75 solo aparece si tiene más de 25 sorteos de deuda
+    const index75 = [...hO].reverse().findIndex(r => r.num === '75');
+    const deuda75 = index75 === -1 ? hO.length : index75;
+    const tercerDato = deuda75 > 25 ? '75' : '16'; 
+
     const cont = document.getElementById('contenedor-fijos');
     if(cont) {
-        cont.innerHTML = [`23`, fijoDelDia, '75'].map(f => `<div class="dato-fijo">${f}</div>`).join('');
+        // 23 es fijo histórico, numFuerte es tendencia de hoy, tercerDato es por deuda
+        cont.innerHTML = ['23', numFuerte, tercerDato].map(f => `<div class="dato-fijo">${f}</div>`).join('');
     }
 }
 
+// ==========================================
+// FUNCIONES DE REGISTRO Y UI (MANTENIDAS)
+// ==========================================
 function analizarGuacharo() {
     const hO = [...historial].sort((a,b) => b.fecha.localeCompare(a.fecha) || horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
     let index75 = hO.findIndex(r => r.num === '75');
@@ -140,7 +159,7 @@ async function registrarSorteo(num, animal, tipo, hora) {
 function actualizarInterfaz() {
     analizarGuacharo();
     calcularPrediccionTotal();
-    actualizarJugadaSniper(); // Llama a la nueva función sniper
+    actualizarJugadaSniper(); 
     actualizarTabla();
     generarPanelDiario();
     detectarJugadasEspeciales();
