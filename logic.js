@@ -60,97 +60,151 @@ async function cargarHistorialRemoto() {
 }
 
 // ==========================================
-// NUEVO ALGORITMO: PRECISIÓN MIL POR CIENTO
+// MOTOR DE INTELIGENCIA PROFUNDA (EL CEREBRO)
 // ==========================================
-function actualizarJugadaSniper() {
-    const display = document.getElementById('numeros-sugeridos-directos');
-    if (!display || historial.length < 10) return;
 
-    // 1. Ordenar historial cronológicamente
-    const hO = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha) || horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
-    
-    // 2. Obtener los últimos 3 resultados de HOY
+function buscarDiaGemelo() {
+    const alertCont = document.getElementById('alertas-algoritmo');
+    if (!alertCont || historial.length < 50) return;
+
     const fechaHoy = document.getElementById('fecha-analisis').value;
-    const sorteosHoy = hO.filter(r => r.fecha === fechaHoy);
-    if (sorteosHoy.length === 0) return;
-    
-    const ultimoNum = sorteosHoy[sorteosHoy.length - 1].num;
-    
-    // 3. Lógica de "Jale" (¿Qué sale después del último número según enero-abril?)
-    let conteoJale = {};
-    for(let i=0; i < hO.length - 1; i++) {
-        if(hO[i].num === ultimoNum) {
-            let seguido = hO[i+1].num;
-            conteoJale[seguido] = (conteoJale[seguido] || 0) + 1;
+    const sorteosHoy = historial.filter(r => r.fecha === fechaHoy).map(r => r.num);
+    if (sorteosHoy.length < 3) return;
+
+    // Agrupar historial por fechas
+    const diasPasados = {};
+    historial.forEach(r => {
+        if (r.fecha !== fechaHoy) {
+            if (!diasPasados[r.fecha]) diasPasados[r.fecha] = [];
+            diasPasados[r.fecha].push(r.num);
+        }
+    });
+
+    let mejorCoincidencia = { fecha: '', puntos: 0 };
+
+    for (const [fecha, nums] of Object.entries(diasPasados)) {
+        let coincidencias = sorteosHoy.filter(n => nums.includes(n)).length;
+        if (coincidencias > mejorCoincidencia.puntos) {
+            mejorCoincidencia = { fecha, puntos: coincidencias };
         }
     }
 
-    // 4. Lógica de "Simetría" (Espejos y Vecinos)
-    const ultimoInt = parseInt(ultimoNum);
-    const vecinos = [(ultimoInt + 1) % 76, (ultimoInt - 1 < 0 ? 75 : ultimoInt - 1)].map(n => n.toString().padStart(2, '0'));
+    if (mejorCoincidencia.puntos >= 3) {
+        const div = document.createElement('div');
+        div.className = 'badge bg-info text-dark m-1';
+        div.innerHTML = `⚠️ DÍA GEMELO DETECTADO: Se parece al ${mejorCoincidencia.fecha} (${mejorCoincidencia.puntos} aciertos)`;
+        alertCont.appendChild(div);
+    }
+}
 
-    // 5. Construir Sugerencia Final
-    let finalSugeridos = Object.entries(conteoJale)
-        .sort((a,b) => b[1] - a[1])
-        .slice(0, 2)
-        .map(x => x[0]);
+function actualizarJugadaSniper() {
+    const display = document.getElementById('numeros-sugeridos-directos');
+    const alertCont = document.getElementById('alertas-algoritmo');
+    if (!display || historial.length < 10) return;
 
-    // Añadir un vecino o un número fuerte del día si faltan
-    vecinos.forEach(v => { if(finalSugeridos.length < 3 && !finalSugeridos.includes(v)) finalSugeridos.push(v); });
+    const hO = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha) || horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
+    const fechaHoy = document.getElementById('fecha-analisis').value;
+    const hoy = hO.filter(r => r.fecha === fechaHoy);
+    if (hoy.length === 0) return;
 
-    display.innerHTML = finalSugeridos.map(n => `<span style="background:#0f172a; padding: 2px 10px; border-radius: 5px; border: 1px solid #ef4444; font-weight:bold;">${n}</span>`).join(' ');
+    const ultimoNum = hoy[hoy.length - 1].num;
+    
+    // ANALIZAR JUGADA MAESTRA (MENSAJE ESPECIAL)
+    let mensajeMaestro = "";
+    
+    // 1. Detectar Seguidilla de Familia
+    let familiaActual = ultimoNum.length === 1 ? '0' : ultimoNum[0];
+    let conteoFamilia = hoy.filter(r => (r.num.length === 1 ? '0' : r.num[0]) === familiaActual).length;
+    
+    if (conteoFamilia >= 2) {
+        mensajeMaestro = `🔥 Lara, es hora de realizar jugadas en la familia de los ${familiaActual}0!`;
+    }
+
+    // 2. Detectar Espejo Inmediato
+    const espejo = ultimoNum.split('').reverse().join('').padStart(2, '0').replace('000','00');
+    if (ultimoNum !== espejo) {
+        mensajeMaestro = `🔄 Alerta de Espejo: El ${espejo} tiene alta probabilidad tras salir el ${ultimoNum}`;
+    }
+
+    // Mostrar Mensaje en la Interfaz (Nueva Sección)
+    const infoMaestra = document.getElementById('resultado-patron-avanzado');
+    if (infoMaestra && mensajeMaestro) {
+        infoMaestra.innerHTML = `<div style="background:#ef4444; color:white; padding:15px; border-radius:10px; font-weight:bold; animation: pulse 2s infinite;">${mensajeMaestro}</div>`;
+    }
+
+    // Lógica Sniper mejorada por Jales Históricos
+    let jales = {};
+    for(let i=0; i < hO.length - 1; i++) {
+        if(hO[i].num === ultimoNum) {
+            let seg = hO[i+1].num;
+            jales[seg] = (jales[seg] || 0) + 1;
+        }
+    }
+
+    let sugeridos = Object.entries(jales).sort((a,b) => b[1] - a[1]).slice(0, 3).map(x => x[0]);
+    
+    // Si es el último sorteo, calcular el "Día Siguiente"
+    if (hoy.length >= 11) {
+        const fijosManana = calcularFijosManana();
+        display.innerHTML = `<b>MAÑANA:</b> ` + fijosManana.map(n => `<span class="badge bg-success">${n}</span>`).join(' ');
+    } else {
+        display.innerHTML = sugeridos.map(n => `<span style="background:#0f172a; padding: 2px 10px; border-radius: 5px; border: 1px solid #ef4444; font-weight:bold;">${n}</span>`).join(' ');
+    }
+}
+
+function calcularFijosManana() {
+    // Analiza los 3 números con más frecuencia en el historial completo para el día de la semana que viene
+    const manana = new Date();
+    manana.setDate(manana.getDate() + 1);
+    const diaSemana = manana.getDay();
+    
+    let frec = {};
+    historial.filter(r => new Date(r.fecha).getDay() === diaSemana)
+             .forEach(r => frec[r.num] = (frec[r.num] || 0) + 1);
+             
+    return Object.entries(frec).sort((a,b) => b[1] - a[1]).slice(0, 3).map(x => x[0]);
 }
 
 function calcularPrediccionTotal() {
     if (historial.length < 5) return;
     const hO = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha) || horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
-    
-    // Analizar la "Familia" que más está saliendo hoy (Decenas)
     const fechaHoy = document.getElementById('fecha-analisis').value;
     const hoy = hO.filter(r => r.fecha === fechaHoy);
     
-    let familias = { '0':0, '1':0, '2':0, '3':0, '4':0, '5':0, '6':0, '7':0 };
-    hoy.forEach(r => {
-        let f = r.num.length === 1 ? '0' : r.num[0];
-        familias[f]++;
-    });
-    
-    // El número más frecuente de la familia dominante
-    const famDominante = Object.entries(familias).sort((a,b) => b[1] - a[1])[0][0];
-    const sugeridoFam = hO.filter(r => r.num.startsWith(famDominante))
-                           .reduce((acc, curr) => { acc[curr.num] = (acc[curr.num]||0)+1; return acc; }, {});
-    
-    const numFuerte = Object.entries(sugeridoFam).sort((a,b) => b[1] - a[1])[0]?.[0] || '23';
+    // El 23 siempre como eje central por tu preferencia histórica
+    let sugeridos = ['23'];
 
-    // El 75 solo aparece si tiene más de 25 sorteos de deuda
+    if (hoy.length > 0) {
+        const ultimo = hoy[hoy.length-1].num;
+        // Vecino y Espejo
+        const vecino = (parseInt(ultimo) + 1).toString().padStart(2, '0');
+        sugeridos.push(vecino);
+    }
+
+    // El 75 solo si hay deuda real > 20 sorteos
     const index75 = [...hO].reverse().findIndex(r => r.num === '75');
-    const deuda75 = index75 === -1 ? hO.length : index75;
-    const tercerDato = deuda75 > 25 ? '75' : '16'; 
+    sugeridos.push(index75 > 20 || index75 === -1 ? '75' : '10');
 
     const cont = document.getElementById('contenedor-fijos');
     if(cont) {
-        // 23 es fijo histórico, numFuerte es tendencia de hoy, tercerDato es por deuda
-        cont.innerHTML = ['23', numFuerte, tercerDato].map(f => `<div class="dato-fijo">${f}</div>`).join('');
+        cont.innerHTML = sugeridos.map(f => `<div class="dato-fijo">${f}</div>`).join('');
     }
 }
 
 // ==========================================
-// FUNCIONES DE REGISTRO Y UI (MANTENIDAS)
+// FUNCIONES DE REGISTRO Y UI (OPTIMIZADAS)
 // ==========================================
-function analizarGuacharo() {
-    const hO = [...historial].sort((a,b) => b.fecha.localeCompare(a.fecha) || horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
-    let index75 = hO.findIndex(r => r.num === '75');
-    let sorteosSin75 = index75 === -1 ? hO.length : index75;
-    const display = document.getElementById('dias-sin-75');
-    if(display) display.innerText = sorteosSin75;
-}
 
 async function registrarSorteo(num, animal, tipo, hora) {
     const fecha = document.getElementById('fecha-analisis').value;
     const nuevo = { fecha, hora, num: num.toString(), animal, tipo };
+    
+    // Actualizar localmente
     const idx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
     if(idx !== -1) historial[idx] = nuevo; else historial.unshift(nuevo);
+    
     actualizarInterfaz();
+    
     try {
         await _supabase.from('historial_sorteos').upsert(nuevo, { onConflict: 'fecha,hora' });
     } catch (e) { console.error("Error Supabase"); }
@@ -160,9 +214,18 @@ function actualizarInterfaz() {
     analizarGuacharo();
     calcularPrediccionTotal();
     actualizarJugadaSniper(); 
+    buscarDiaGemelo(); // Nueva Capa de Inteligencia
     actualizarTabla();
     generarPanelDiario();
     detectarJugadasEspeciales();
+}
+
+function analizarGuacharo() {
+    const hO = [...historial].sort((a,b) => b.fecha.localeCompare(a.fecha) || horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
+    let index75 = hO.reverse().findIndex(r => r.num === '75');
+    let sorteosSin75 = index75 === -1 ? hO.length : index75;
+    const display = document.getElementById('dias-sin-75');
+    if(display) display.innerText = sorteosSin75;
 }
 
 function actualizarTabla() {
@@ -207,8 +270,9 @@ function detectarJugadasEspeciales() {
     alertCont.innerHTML = '';
     const ult = sorteosHoy[sorteosHoy.length-1];
     const pen = sorteosHoy[sorteosHoy.length-2];
-    if(ult.num.split('').reverse().join('') === pen.num) alertCont.innerHTML += `<span class="badge bg-espejo">🔄 ESPEJO (${pen.num}-${ult.num})</span>`;
-    if(Math.abs(parseInt(ult.num) - parseInt(pen.num)) === 1) alertCont.innerHTML += `<span class="badge bg-escalera">📈 ESCALERA</span>`;
+    
+    if(ult.num.split('').reverse().join('').padStart(2,'0') === pen.num) alertCont.innerHTML += `<span class="badge bg-warning text-dark">🔄 ESPEJO DETECTADO</span>`;
+    if(Math.abs(parseInt(ult.num) - parseInt(pen.num)) === 1) alertCont.innerHTML += `<span class="badge bg-info">📈 POSIBLE ESCALERA</span>`;
 }
 
 function generarGridBotones() {
@@ -229,22 +293,6 @@ function openTab(evt, n) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(n).style.display = 'block';
     evt.currentTarget.classList.add('active');
-}
-
-function estudiarAnimalPatron() {
-    const n = document.getElementById('select-estudio-animal').value;
-    const res = document.getElementById('resultado-patron-avanzado');
-    if(!n) return;
-    const h = [...historial].sort((a,b) => a.fecha.localeCompare(b.fecha) || horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
-    let ant = {}, sig = {};
-    h.forEach((r, i) => {
-        if(r.num === n) {
-            if(i > 0) { let k = h[i-1].num; ant[k] = (ant[k]||0)+1; }
-            if(i < h.length-1) { let k = h[i+1].num; sig[k] = (sig[k]||0)+1; }
-        }
-    });
-    const top = (o) => Object.entries(o).sort((a,b)=>b[1]-a[1])[0] || ["--", 0];
-    res.innerHTML = `<div class="card-estudio">🧠 Inteligencia del <b>${n}</b>:<br>Llama antes al: <b>${top(ant)[0]}</b><br>Suele dejar al: <b>${top(sig)[0]}</b></div>`;
 }
 
 function llenarSelectorEstudio() {
