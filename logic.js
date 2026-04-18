@@ -1,5 +1,5 @@
 // ==========================================
-// CONFIGURACIÓN SUPABASE (INTACTA)
+// CONFIGURACIÓN SUPABASE (PROTEGIDA)
 // ==========================================
 const SUPABASE_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
@@ -54,7 +54,7 @@ async function cargarHistorialRemoto() {
 }
 
 // ==========================================
-// NUEVO MOTOR: CACHADOR DE SECUENCIAS E INTELIGENCIA 🧠
+// EL ALGORITMO MAESTRO: ESCANEO DE ADN 🧠
 // ==========================================
 
 function buscarDiaGemelo() {
@@ -63,84 +63,79 @@ function buscarDiaGemelo() {
     if (!alertCont || historial.length < 20) return;
 
     const fechaHoy = document.getElementById('fecha-analisis').value;
-    const sorteosHoy = historial.filter(r => r.fecha === fechaHoy).sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora)).map(r => r.num);
+    const sorteosHoy = historial.filter(r => r.fecha === fechaHoy)
+                                .sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora))
+                                .map(r => r.num);
+    
     if (sorteosHoy.length < 2) return;
+    const triadaActual = sorteosHoy.slice(-3).join('-');
 
-    // AGRUPAR POR DÍAS PARA BUSCAR SECUENCIAS
     const diasPasados = {};
     historial.forEach(r => {
         if (r.fecha !== fechaHoy) {
             if (!diasPasados[r.fecha]) diasPasados[r.fecha] = [];
-            diasPasados[r.fecha].push({num: r.num, hora: r.hora});
+            diasPasados[r.fecha].push(r);
         }
     });
 
     let mejoresCoincidencias = [];
 
     for (const [fecha, datos] of Object.entries(diasPasados)) {
-        const numsPasados = datos.map(d => d.num);
-        let coincidencias = sorteosHoy.filter(n => numsPasados.includes(n)).length;
-        
-        if (coincidencias >= 2) {
-            mejoresCoincidencias.push({ fecha, puntos: coincidencias, todos: numsPasados });
+        const ordenados = datos.sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
+        const numsPasados = ordenados.map(d => d.num);
+        const cadenaPasada = numsPasados.join('-');
+
+        if (cadenaPasada.includes(triadaActual)) {
+            mejoresCoincidencias.push({ fecha, tipo: 'TRIADA MAESTRA', datos: ordenados });
+        } else {
+            let match = sorteosHoy.filter(n => numsPasados.includes(n)).length;
+            if (match >= 3) mejoresCoincidencias.push({ fecha, tipo: 'ALTA PROBABILIDAD', puntos: match, datos: ordenados });
         }
     }
 
-    // ORDENAR POR LAS QUE MÁS SE PARECEN A HOY
-    mejoresCoincidencias.sort((a,b) => b.puntos - a.puntos);
+    mejoresCoincidencias.sort((a,b) => (b.puntos || 10) - (a.puntos || 10));
 
     if (mejoresCoincidencias.length > 0) {
         const top = mejoresCoincidencias[0];
-        alertCont.innerHTML = `<div class="badge bg-primary m-1">🧠 SECUENCIA DETECTADA: El día ${top.fecha} tuvo ${top.puntos} iguales a hoy</div>`;
+        const horaSiguienteIdx = sorteosHoy.length;
+        const horaBuscada = horasSorteo[horaSiguienteIdx];
+        const prediccion = top.datos.find(d => d.hora === horaBuscada);
+
+        alertCont.innerHTML = `<div class="badge bg-success m-1">🧠 ALGORITMO: Secuencia hallada en ${top.fecha}</div>`;
         
-        // EXTRAER QUÉ NÚMEROS SALIERON EN ESOS DÍAS QUE HOY NO HAN SALIDO
-        let sugeridosPorSecuencia = top.todos.filter(n => !sorteosHoy.includes(n)).slice(0,4);
-        
-        if (infoAvanzada && sugeridosPorSecuencia.length > 0) {
-            infoAvanzada.innerHTML = `
-                <div style="background:#0f172a; border: 2px solid #3b82f6; color:white; padding:15px; border-radius:10px;">
-                    <h5 style="color:#3b82f6; margin-bottom:10px;">🧠 ANALIZADOR DE HISTORIA:</h5>
-                    <p>El día <b>${top.fecha}</b> salieron los mismos números. En esa ocasión, también salieron:</p>
-                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                        ${sugeridosPorSecuencia.map(n => `<span style="background:#3b82f6; padding:5px 15px; border-radius:50px; font-weight:bold;">${n}</span>`).join('')}
-                    </div>
-                    <p style="font-size:0.8rem; margin-top:10px; color:#94a3b8;">* Estos números completaron la secuencia en el pasado.</p>
+        infoAvanzada.innerHTML = `
+            <div style="background:linear-gradient(145deg, #0f172a, #1e293b); border-left: 5px solid #10b981; color:white; padding:15px; border-radius:10px;">
+                <h5 style="color:#10b981; margin-bottom:10px;">🧠 CAZADOR DE SECUENCIAS:</h5>
+                <p>Basado en el patrón de hoy, en el historial (<b>${top.fecha}</b>) el siguiente fue:</p>
+                <div style="display:flex; align-items:center; gap:15px; background:rgba(16,185,129,0.1); padding:10px; border-radius:8px;">
+                    <b style="font-size:2rem; color:#10b981;">${prediccion ? prediccion.num : '??'}</b>
+                    <span style="font-size:1.2rem;">${prediccion ? prediccion.animal : 'SIN DATOS'}</span>
                 </div>
-            `;
-        }
+                <p style="font-size:0.8rem; margin-top:10px; color:#94a3b8;">* Coincidencia detectada: ${top.tipo}</p>
+            </div>
+        `;
     }
 }
 
 function actualizarJugadaSniper() {
     const display = document.getElementById('numeros-sugeridos-directos');
-    if (!display || historial.length < 10) return;
-
     const fechaHoy = document.getElementById('fecha-analisis').value;
     const hoy = historial.filter(r => r.fecha === fechaHoy).sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
-    if (hoy.length === 0) return;
-
-    const ultimoNum = hoy[hoy.length - 1].num;
     
-    // JALES INTELIGENTES (Ejemplo: 35 jala 08, 25)
-    let jalesManuales = {
-        '35': ['08', '25', '14'],
-        '26': ['62', '11', '23'],
-        '16': ['11', '23', '04'],
+    if (hoy.length === 0) return;
+    const ultimo = hoy[hoy.length - 1];
+
+    let jales = {
+        '65': ['01', '11', '23'],
+        '60': ['03', '33', '13'],
+        '03': ['60', '65', '08'],
         '75': ['00', '10', '20']
     };
 
-    let sugeridos = jalesManuales[ultimoNum] || [];
-
-    // Si no hay jale manual, buscar en base de datos
+    let sugeridos = jales[ultimo.num] || [];
     if (sugeridos.length === 0) {
-        let f = {};
-        for(let i=0; i < historial.length - 1; i++) {
-            if(historial[i].num === ultimoNum) {
-                let sig = historial[i+1].num;
-                f[sig] = (f[sig] || 0) + 1;
-            }
-        }
-        sugeridos = Object.entries(f).sort((a,b) => b[1] - a[1]).slice(0, 3).map(x => x[0]);
+        let n = parseInt(ultimo.num);
+        sugeridos = [(n+1).toString().padStart(2,'0'), '11', '23'];
     }
 
     display.innerHTML = sugeridos.map(n => `<span style="background:#0f172a; padding: 5px 12px; border-radius: 5px; border: 1px solid #ef4444; color:white; font-weight:bold; margin-right:5px;">${n}</span>`).join('');
@@ -149,23 +144,16 @@ function actualizarJugadaSniper() {
 function calcularPrediccionTotal() {
     const cont = document.getElementById('contenedor-fijos');
     if(!cont || historial.length < 10) return;
-
-    // TRIPLETA BLINDADA (Fijos del día)
     let frec = {};
-    const hoy = new Date().getDay();
-    historial.filter(r => new Date(r.fecha).getDay() === hoy)
-             .forEach(r => frec[r.num] = (frec[r.num] || 0) + 1);
-
+    const hoyIdx = new Date().getDay();
+    historial.filter(r => new Date(r.fecha).getDay() === hoyIdx).forEach(r => frec[r.num] = (frec[r.num] || 0) + 1);
     let tripleta = Object.entries(frec).sort((a,b) => b[1] - a[1]).slice(0, 3).map(x => x[0]);
-    
-    // Ajuste por Deuda Histórica (El 75 y 23)
     if (!tripleta.includes('23')) tripleta[2] = '23';
-
-    cont.innerHTML = tripleta.map(f => `<div class="dato-fijo" style="background:#ef4444; border:none; color:white; font-weight:bold;">${f}</div>`).join('');
+    cont.innerHTML = tripleta.map(f => `<div class="dato-fijo" style="background:#ef4444; color:white; font-weight:bold;">${f}</div>`).join('');
 }
 
 // ==========================================
-// REGISTRO Y UI (MANTENIDAS)
+// REGISTRO Y UI (SIN CAMBIOS EN CONEXIÓN)
 // ==========================================
 
 async function registrarSorteo(num, animal, tipo, hora) {
@@ -192,10 +180,7 @@ function analizarGuacharo() {
     let index75 = hO.findIndex(r => r.num === '75');
     let sorteosSin75 = index75 === -1 ? hO.length : index75;
     const display = document.getElementById('dias-sin-75');
-    if(display) {
-        display.innerText = sorteosSin75;
-        if(sorteosSin75 > 30) display.style.color = "#ef4444";
-    }
+    if(display) display.innerText = sorteosSin75;
 }
 
 function actualizarTabla() {
@@ -204,7 +189,7 @@ function actualizarTabla() {
     if(!c) return;
     c.innerHTML = '';
     historial.filter(r => r.fecha === f).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora)).forEach(r => {
-        c.innerHTML += `<tr ${r.num==='75'?'class="row-guacharo"':''}><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td></tr>`;
+        c.innerHTML += `<tr><td>${r.fecha}</td><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td></tr>`;
     });
 }
 
@@ -225,8 +210,7 @@ function generarPanelDiario() {
 
 function registrarPorNumero() {
     if(!horaSeleccionadaActiva) return alert("Selecciona una hora primero");
-    let v = document.getElementById('num-rapido').value.padStart(2, '0').replace('000','00');
-    if(v === '0' && document.getElementById('num-rapido').value !== '00') v = '0';
+    let v = document.getElementById('num-rapido').value.padStart(2, '0');
     const ani = listaAnimales.find(a => a.n === v);
     if(ani) registrarSorteo(ani.n, ani.a, ani.t, horaSeleccionadaActiva);
     document.getElementById('num-rapido').value = '';
@@ -235,13 +219,9 @@ function registrarPorNumero() {
 function detectarJugadasEspeciales() {
     const alertCont = document.getElementById('alertas-algoritmo');
     const hoy = document.getElementById('fecha-analisis').value;
-    const sorteosHoy = historial.filter(r => r.fecha === hoy).sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
-    if(sorteosHoy.length < 2 || !alertCont) return;
+    const sorteosHoy = historial.filter(r => r.fecha === hoy);
+    if(sorteosHoy.length < 2) return;
     alertCont.innerHTML = '';
-    const ult = sorteosHoy[sorteosHoy.length-1];
-    const pen = sorteosHoy[sorteosHoy.length-2];
-    if(ult.num.split('').reverse().join('').padStart(2,'0') === pen.num) alertCont.innerHTML += `<span class="badge bg-warning text-dark">🔄 ESPEJO</span>`;
-    if(Math.abs(parseInt(ult.num) - parseInt(pen.num)) === 1) alertCont.innerHTML += `<span class="badge bg-info">📈 ESCALERA</span>`;
 }
 
 function generarGridBotones() {
@@ -267,7 +247,6 @@ function openTab(evt, n) {
 function llenarSelectorEstudio() {
     const s = document.getElementById('select-estudio-animal');
     if(!s) return;
-    s.innerHTML = '<option value="">-- Seleccionar --</option>';
     listaAnimales.forEach(a => s.innerHTML += `<option value="${a.n}">${a.n} - ${a.a}</option>`);
 }
 
