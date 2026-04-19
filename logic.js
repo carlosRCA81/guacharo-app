@@ -6,9 +6,9 @@ const listaAnimales = [
     {n:'0', a:'DELFIN', c:'AZUL', s:'A'}, {n:'00', a:'BALLENA', c:'AZUL', s:'D'},
     {n:'01', a:'CARNERO', c:'ROJO', s:'D'}, {n:'02', a:'TORO', c:'NEGRO', s:'A'},
     {n:'03', a:'CIEMPIES', c:'ROJO', s:'C'}, {n:'04', a:'ALACRAN', c:'ROJO', s:'F'},
-    {n:'05', a:'LEON', c:'ROJO', s:'C'}, {n:'06', a:'RANA', c:'ROJO', s:'F'},
-    {n:'07', a:'PERICO', c:'ROJO', s:'B'}, {n:'08', a:'RATON', c:'ROJO', s:'E'},
-    {n:'09', a:'AGUILA', c:'ROJO', s:'A'}, {n:'10', a:'TIGRE', c:'ROJO', s:'D'},
+    {n:'05', a:'LEON', c:'NEGRO', s:'C'}, {n:'06', a:'RANA', c:'NEGRO', s:'F'},
+    {n:'07', a:'PERICO', c:'ROJO', s:'B'}, {n:'08', a:'RATON', c:'NEGRO', s:'E'},
+    {n:'09', a:'AGUILA', c:'ROJO', s:'A'}, {n:'10', a:'TIGRE', c:'NEGRO', s:'D'},
     {n:'11', a:'GATO', c:'NEGRO', s:'B'}, {n:'12', a:'CABALLO', c:'ROJO', s:'E'},
     {n:'13', a:'MONO', c:'NEGRO', s:'D'}, {n:'14', a:'PALOMA', c:'ROJO', s:'A'},
     {n:'15', a:'ZORRO', c:'NEGRO', s:'C'}, {n:'16', a:'OSO', c:'ROJO', s:'F'},
@@ -19,18 +19,12 @@ const listaAnimales = [
     {n:'25', a:'GALLINA', c:'ROJO', s:'D'}, {n:'26', a:'VACA', c:'NEGRO', s:'A'},
     {n:'27', a:'PERRO', c:'ROJO', s:'D'}, {n:'28', a:'ZAMURO', c:'NEGRO', s:'A'},
     {n:'29', a:'ELEFANTE', c:'NEGRO', s:'E'}, {n:'30', a:'CAIMAN', c:'ROJO', s:'B'},
-    {n:'31', a:'LAPA', c:'ROJO', s:'E'}, {n:'32', a:'ARDILLA', c:'ROJO', s:'B'},
+    {n:'31', a:'LAPA', c:'NEGRO', s:'E'}, {n:'32', a:'ARDILLA', c:'ROJO', s:'B'},
     {n:'33', a:'PESCADO', c:'NEGRO', s:'F'}, {n:'34', a:'VENADO', c:'ROJO', s:'C'},
     {n:'35', a:'JIRAFA', c:'NEGRO', s:'A'}, {n:'36', a:'CULEBRA', c:'ROJO', s:'D'}
 ];
 
-// LISTA DE 12 HORAS CORREGIDA (DE 8:00 AM A 7:00 PM SIN FALTAR 2 Y 3)
-const horasSorteo = [
-    '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', 
-    '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', 
-    '6:00 PM', '7:00 PM'
-];
-
+const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
 let historial = [];
 let horaSeleccionadaActiva = null;
 
@@ -45,10 +39,7 @@ async function inicializarSistema() {
 async function cargarHistorialRemoto() {
     try {
         const { data } = await _supabase.from('historial_sorteos').select('*').order('fecha', { ascending: false });
-        if (data) { 
-            historial = data; 
-            actualizarInterfaz(); 
-        }
+        if (data) { historial = data; actualizarInterfaz(); }
     } catch (e) { console.error("Error Supabase"); }
 }
 
@@ -66,13 +57,13 @@ function generarPanelDiario() {
     });
 }
 
-function registrarSorteo(num, animal, color, hora) {
+async function registrarSorteo(num, animal, color, hora) {
     const fecha = document.getElementById('fecha-analisis').value;
     const nuevo = { fecha, hora, num: num.toString(), animal, tipo: color };
     const idx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
     if(idx !== -1) historial[idx] = nuevo; else historial.unshift(nuevo);
     actualizarInterfaz();
-    _supabase.from('historial_sorteos').upsert(nuevo).then();
+    try { await _supabase.from('historial_sorteos').upsert(nuevo, { onConflict: 'fecha,hora' }); } catch (e) { }
 }
 
 function actualizarInterfaz() {
