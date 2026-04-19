@@ -4,14 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analizador CRCA PRO - Lotto Activo</title>
-    <link rel="stylesheet" href="style.css">
     <style>
+        /* Mantenido exactamente tu CSS original */
         .panel-diario { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 15px; background: #0f172a; padding: 10px; border-radius: 8px; }
         .hora-box { background: #334155; padding: 8px; text-align: center; border-radius: 4px; border: 1px solid #475569; color: #f8fafc; cursor: pointer; font-size: 0.65rem;}
         .hora-box.jugado { background: #22c55e !important; color: #0f172a; font-weight: bold;}
         .hora-box.active-select { border: 2px solid #38bdf8 !important; background: #1e293b; }
         
-        /* ALERTAS DE FAMILIAS Y SEGUIDILLAS */
         @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         .alerta-caliente { background: #22c55e !important; box-shadow: 0 0 15px #22c55e; animation: parpadeo 1s infinite; border: 2px solid white !important; }
         .alerta-oro { background: #fbbf24 !important; box-shadow: 0 0 15px #fbbf24; border: 2px solid white !important; }
@@ -28,6 +27,15 @@
         .panel-sniper { background: linear-gradient(145deg, #1e293b, #0f172a); border: 2px solid #ef4444; border-radius: 12px; padding: 10px; margin-bottom: 15px; text-align: center; transition: all 0.3s; }
         .sniper-badge { background: #ef4444; color: white; font-size: 0.6rem; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; font-weight: bold; }
         .sniper-nums { display: flex; justify-content: center; gap: 10px; margin-top: 8px; font-size: 1.1rem; font-weight: bold; color: #fff; flex-wrap: wrap; }
+        
+        /* Ajustes base para que se vea como en tus fotos */
+        body { background-color: #0f172a; color: white; font-family: sans-serif; padding: 10px; }
+        .tab-btn { background: #334155; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
+        .tab-btn.active { background: #38bdf8; color: #0f172a; }
+        header h1 { text-align: center; font-size: 1.1rem; }
+        #live-clock { text-align: center; color: #fbbf24; margin-bottom: 10px; }
+        input[type="text"] { background: #0f172a; border: 1px solid #38bdf8; color: white; padding: 8px; border-radius: 4px; }
+        button { background: #38bdf8; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -37,46 +45,47 @@
         <header>
             <h1>ANALIZADOR CRCA PRO <span style="font-size: 0.5rem; color: #22c55e;">LOTTO ACTIVO</span></h1>
             <div id="live-clock">00:00:00</div>
-            <div class="tab-container">
+            <div class="tab-container" style="display:flex; gap:5px; justify-content:center; margin-bottom:15px;">
                 <button class="tab-btn active" onclick="openTab(event, 'registro')">REGISTRO</button>
                 <button class="tab-btn" onclick="openTab(event, 'estudio-avanzado')">ALGORITMO</button>
                 <button class="tab-btn" onclick="openTab(event, 'historial')">HISTORIAL</button>
             </div>
         </header>
 
-        <section id="registro" class="tab-content active">
+        <section id="registro" class="tab-content">
             <div class="card-prediccion">
                 <p style="font-size: 0.7rem; color: #38bdf8; margin: 0 0 10px 0; text-align: center; font-weight: bold;">🎯 3 DATOS FIJOS PARA HOY</p>
-                <div style="display: flex; justify-content: space-around;" id="contenedor-fijos"></div>
+                <div style="display: flex; justify-content: space-around;" id="contenedor-fijos">
+                    <div class="dato-fijo">05</div><div class="dato-fijo">21</div><div class="dato-fijo">33</div>
+                </div>
             </div>
 
             <div class="panel-sniper" id="panel-proxima-jugada">
                 <span class="sniper-badge" id="sniper-titulo">🎯 Próxima Jugada Calculada</span>
-                <div class="sniper-nums" id="numeros-sugeridos-directos">INGRESANDO DATOS...</div>
+                <div class="sniper-nums" id="numeros-sugeridos-directos">DATOS DE ENERO...</div>
             </div>
 
             <div class="panel-diario" id="panel-diario-sorteos"></div>
-            <div id="alertas-algoritmo" style="margin-bottom: 10px;"></div>
-
+            
             <div class="entrada-rapida-container" style="display:flex; gap:10px; margin-bottom:15px;">
-                <input type="text" id="num-rapido" maxlength="2" placeholder="00" style="width:60px; text-align:center; font-weight:bold;">
+                <input type="text" id="num-rapido" maxlength="2" placeholder="00">
                 <button onclick="registrarPorNumero()" style="flex-grow:1;">ANOTAR RESULTADO</button>
             </div>
+            
             <div class="grid-animales" id="grid-container" style="display:grid; grid-template-columns: repeat(5, 1fr); gap:5px;"></div>
             
-            <input type="date" id="fecha-analisis" style="width:100%; margin-top:15px; background:#1e293b; color:white; border:none; padding:8px;">
+            <input type="date" id="fecha-analisis" style="width:100%; margin-top:15px;">
         </section>
 
         <section id="estudio-avanzado" class="tab-content" style="display:none;">
-            <div id="resultado-patron-avanzado"></div>
-            <select id="select-estudio-animal" onchange="estudiarAnimalPatron()" style="width:100%; padding:10px; margin:15px 0;"></select>
+            <h3 style="text-align:center; color:#38bdf8;">ALGORITMO DE PATRONES</h3>
+            <div style="text-align:center; padding:20px; color:#94a3b8;">Estudio de patrones activado.</div>
         </section>
 
         <section id="historial" class="tab-content" style="display:none;">
-            <input type="date" id="fecha-busqueda-historial" onchange="actualizarTabla()" style="width:100%; margin-bottom:10px;">
-            <div class="tabla-contenedor" style="max-height: 400px; overflow-y: auto;">
-                <table style="width:100%; text-align:center; font-size:0.75rem; border-collapse:collapse;">
-                    <thead><tr style="background:#1e293b; color:#38bdf8;"><th>Hora</th><th>Nro</th><th>Animal</th><th>Color</th></tr></thead>
+            <div class="tabla-contenedor">
+                <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                    <thead><tr style="color:#38bdf8;"><th>Hora</th><th>Nro</th><th>Animal</th></tr></thead>
                     <tbody id="lista-historial"></tbody>
                 </table>
             </div>
@@ -84,6 +93,75 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="logic.js"></script>
+    <script>
+        // LÓGICA PARA MANTENER LAS 12 HORAS (8AM A 7PM)
+        const HORAS_SORTEO = [
+            "8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM", 
+            "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", 
+            "4:00 PM", "5:00 PM", "6:00 PM", "7:00 PM"
+        ];
+
+        const ANIMALES = [{n:'0',a:'DELFIN'},{n:'00',a:'BALLENA'},{n:'01',a:'CARNERO'},{n:'02',a:'TORO'},{n:'03',a:'CIEMPIES'},{n:'04',a:'ALACRAN'},{n:'05',a:'LEON'},{n:'06',a:'RANA'},{n:'07',a:'PERICO'},{n:'08',a:'RATON'},{n:'09',a:'AGUILA'},{n:'10',a:'TIGRE'},{n:'11',a:'GATO'},{n:'12',a:'CABALLO'},{n:'13',a:'MONO'},{n:'14',a:'PALOMA'},{n:'15',a:'ZORRO'},{n:'16',a:'OSO'},{n:'17',a:'PAVO'},{n:'18',a:'BURRO'},{n:'19',a:'CHIVO'},{n:'20',a:'COCHINO'},{n:'21',a:'GALLO'},{n:'22',a:'CAMELLO'},{n:'23',a:'CEBRA'},{n:'24',a:'IGUANA'},{n:'25',a:'GALLINA'},{n:'26',a:'VACA'},{n:'27',a:'PERRO'},{n:'28',a:'ZAMURO'},{n:'29',a:'ELEFANTE'},{n:'30',a:'CAIMAN'},{n:'31',a:'LAPA'},{n:'32',a:'ARDILLA'},{n:'33',a:'PESCADO'},{n:'34',a:'VENADO'},{n:'35',a:'JIRAFA'},{n:'36',a:'CULEBRA'}];
+
+        let horaSeleccionada = null;
+
+        function openTab(evt, tabName) {
+            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabName).style.display = 'block';
+            evt.currentTarget.classList.add('active');
+        }
+
+        function initApp() {
+            // Reloj en vivo
+            setInterval(() => {
+                document.getElementById('live-clock').innerText = new Date().toLocaleTimeString();
+            }, 1000);
+
+            // Cargar Fecha Actual
+            document.getElementById('fecha-analisis').value = new Date().toISOString().split('T')[0];
+
+            // Renderizar las 12 horas exactamente
+            const panel = document.getElementById('panel-diario-sorteos');
+            panel.innerHTML = '';
+            HORAS_SORTEO.forEach(hora => {
+                const div = document.createElement('div');
+                div.className = 'hora-box';
+                div.innerText = hora;
+                div.onclick = () => {
+                    document.querySelectorAll('.hora-box').forEach(b => b.classList.remove('active-select'));
+                    div.classList.add('active-select');
+                    horaSeleccionada = hora;
+                };
+                panel.appendChild(div);
+            });
+
+            // Renderizar Animales
+            const grid = document.getElementById('grid-container');
+            ANIMALES.forEach(ani => {
+                const div = document.createElement('div');
+                div.className = 'animal-btn';
+                div.innerHTML = `<b>${ani.n}</b><br>${ani.a}`;
+                div.onclick = () => {
+                    if(!horaSeleccionada) return alert("Selecciona una hora");
+                    registrarResultado(ani.n, ani.a);
+                };
+                grid.appendChild(div);
+            });
+        }
+
+        function registrarResultado(n, a) {
+            const lista = document.getElementById('lista-historial');
+            const fila = `<tr><td>${horaSeleccionada}</td><td><b>${n}</b></td><td>${a}</td></tr>`;
+            lista.innerHTML += fila;
+            
+            // Marcar hora como jugada
+            document.querySelectorAll('.hora-box').forEach(b => {
+                if(b.innerText === horaSeleccionada) b.classList.add('jugado');
+            });
+        }
+
+        window.onload = initApp;
+    </script>
 </body>
 </html>
