@@ -81,10 +81,10 @@ function actualizarInterfaz() {
 
 function generarTripletasFijas() {
     const cont = document.getElementById('seccion-tripletas');
+    if(!cont) return;
     const t1 = ["05", "12", "25"];
     const t2 = ["07", "20", "17"];
     const t3 = ["09", "33", "02"];
-
     cont.innerHTML = `
         <div class="card-tripleta"><small>🔥 TRIPLETA FIJA</small><div class="tripleta-nums">${t1.join('-')}</div></div>
         <div class="card-tripleta"><small>🎯 SECTOR CALIENTE</small><div class="tripleta-nums">${t2.join('-')}</div></div>
@@ -142,8 +142,8 @@ function generarGridBotones() {
     cont.innerHTML = '';
     listaAnimales.forEach(a => {
         const d = document.createElement('div');
-        d.className = `animal-btn ${a.e === 'Agua' ? 'el-agua' : a.e === 'Tierra' ? 'el-tierra' : 'el-aire'}`;
-        d.style.borderLeft = `3px solid ${a.c === 'ROJO' ? '#ef4444' : '#000'}`;
+        d.className = "animal-btn";
+        d.style.borderLeft = `4px solid ${a.c === 'ROJO' ? '#ef4444' : a.c === 'AZUL' ? '#38bdf8' : '#000'}`;
         d.innerHTML = `<b>${a.n}</b><br>${a.a}`;
         d.onclick = () => { if(horaSeleccionadaActiva) registrarSorteo(a.n, a.a, a.c, horaSeleccionadaActiva); };
         cont.appendChild(d);
@@ -167,7 +167,14 @@ function actualizarTabla() {
     historial.filter(r => r.fecha === f).sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora)).forEach(r => {
         const ani = listaAnimales.find(a => a.n === r.num);
         if(ani) {
-            c.innerHTML += `<tr><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${ani.s}/${ani.e}</td><td>${r.tipo}</td></tr>`;
+            const colorClass = r.tipo === 'ROJO' ? 'txt-rojo' : r.tipo === 'AZUL' ? 'txt-azul' : 'txt-negro';
+            c.innerHTML += `<tr>
+                <td>${r.hora}</td>
+                <td><b style="font-size:1rem;">${r.num}</b></td>
+                <td>${r.animal}</td>
+                <td>${ani.s} / ${ani.e}</td>
+                <td class="${colorClass}">${r.tipo}</td>
+            </tr>`;
         }
     });
 }
