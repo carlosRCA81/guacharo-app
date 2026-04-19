@@ -29,13 +29,14 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historial = [];
 let horaSeleccionadaActiva = null;
 
-// Lógica de Atracción (Tus reglas)
+// Lógica de Atracción (Tus reglas corregidas)
 const reglasAtraccion = {
     '35': ['25', '08', '09'],
     '00': ['29', '26', '01'],
     '0': ['09'],
     '20': ['17'],
     '25': ['07'],
+    '07': ['25', '11', '20'], // Ahora el 07 tiene compañeros definidos
     '03': ['30', '36', '26'],
     '30': ['03', '36', '26'],
     '36': ['03', '30', '26'],
@@ -57,7 +58,7 @@ async function cargarHistorialRemoto() {
     try {
         const { data } = await _supabase.from('historial_sorteos').select('*').order('fecha', { ascending: false });
         if (data) { historial = data; actualizarInterfaz(); }
-    } catch (e) { }
+    } catch (e) { console.error("Error cargando historial"); }
 }
 
 function generarPanelDiario() {
@@ -95,10 +96,13 @@ function actualizarJugadaSniper() {
     const titulo = document.getElementById('sniper-titulo');
     const aviso = document.getElementById('aviso-tripleta');
     const fechaHoy = document.getElementById('fecha-analisis').value;
+    
     const hoy = historial.filter(r => r.fecha === fechaHoy).sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
     
     if (hoy.length === 0) return;
     const ultimo = hoy[hoy.length - 1];
+    
+    // Sugerencia de Jugada
     let sugeridos = reglasAtraccion[ultimo.num] || [];
     let esAlertaCaliente = sugeridos.length > 0;
 
@@ -115,6 +119,12 @@ function actualizarJugadaSniper() {
 
     panel.className = `panel-sniper ${esAlertaCaliente ? 'alerta-caliente' : ''}`;
     display.innerHTML = sugeridos.slice(0, 4).map(n => `<span style="background:#0f172a; padding: 5px 12px; border-radius: 5px; border: 1px solid #fbbf24; color:white; font-weight:bold; margin-right:5px;">${n}</span>`).join('');
+
+    // --- FUNCIÓN: NÚMERO FUERA ---
+    const fueraDisplay = document.getElementById('aviso-tripleta'); 
+    // Analizamos los últimos 4 resultados para ver qué sector está "bloqueado" o qué número salió recientemente
+    const bloqueado = hoy.length >= 2 ? hoy[hoy.length - 2].num : "--";
+    fueraDisplay.innerHTML += `<div style="margin-top:8px; color:#ff4d4d; border-top:1px solid #334155; padding-top:5px;">🚫 NÚMERO FUERA: <b>${bloqueado}</b> (Baja probabilidad)</div>`;
 }
 
 function estudiarAtraccion() {
@@ -122,10 +132,24 @@ function estudiarAtraccion() {
     const res = document.getElementById('resultado-atraccion');
     if (!val) return res.innerHTML = "";
     
-    const comp = reglasAtraccion[val] || ["Sin datos específicos aún"];
-    res.innerHTML = `<div style="margin-top:10px;"><b>Atrae a:</b><br><div class="compañeros-grid">
-        ${comp.map(n => `<span class="badge bg-azul">${n}</span>`).join('')}
-    </div></div>`;
+    const comp = reglasAtraccion[val];
+    const ani = listaAnimales.find(a => a.n === val);
+    
+    if (comp) {
+        res.innerHTML = `
+            <div style="margin-top:10px; border: 1px solid #22c55e; padding: 10px; border-radius: 8px;">
+                <b style="color: #22c55e;">🔥 Vínculos de Atracción:</b><br>
+                <div class="compañeros-grid" style="display:flex; gap:5px; justify-content:center; margin-top:10px;">
+                    ${comp.map(n => `<span class="badge bg-rojo" style="padding:10px; font-size:1rem;">${n}</span>`).join('')}
+                </div>
+            </div>`;
+    } else {
+        res.innerHTML = `
+            <div style="margin-top:10px; border: 1px solid #38bdf8; padding: 10px; border-radius: 8px;">
+                <b style="color: #38bdf8;">📊 Análisis de Sector (${ani.s}):</b><br>
+                <p style="font-size:0.75rem; color:#f8fafc;">Este número no tiene familia fija, pero pertenece al Sector ${ani.s}. Se recomienda observar espejos del Sector B o D.</p>
+            </div>`;
+    }
 }
 
 function generarGridBotones() {
@@ -172,7 +196,7 @@ function openTab(evt, n) {
 
 function llenarSelectorEstudio() {
     const s = document.getElementById('select-estudio-animal');
-    s.innerHTML = '<option value="">-- Seleccionar --</option>';
+    s.innerHTML = '<option value="">-- Seleccionar Animal --</option>';
     listaAnimales.forEach(a => s.innerHTML += `<option value="${a.n}">${a.n} - ${a.a}</option>`);
 }
 
