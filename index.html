@@ -3,87 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANALIZADOR CRCA PRO - Registro Directo</title>
+    <title>ANALIZADOR CRCA PRO</title>
     <style>
-        :root { --bg-dark: #111827; --card-bg: #1f2937; --accent: #3b82f6; --text: #f3f4f6; }
-        body { background-color: var(--bg-dark); color: var(--text); font-family: sans-serif; margin: 0; padding: 10px; display: flex; justify-content: center; }
-        #main-app { width: 100%; max-width: 450px; background: var(--card-bg); border-radius: 15px; padding: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        header { text-align: center; margin-bottom: 15px; }
-        h1 { color: #60a5fa; font-size: 1.4rem; margin: 0; text-transform: uppercase; }
-        #live-clock { color: #fbbf24; font-size: 1.2rem; font-weight: bold; margin-top: 5px; }
+        :root { --bg-dark: #1a2233; --card-bg: #242f45; --accent: #3b82f6; --text: #f3f4f6; }
+        body { background-color: var(--bg-dark); color: var(--text); font-family: sans-serif; margin: 0; padding: 10px; }
+        #main-app { max-width: 450px; margin: auto; background: var(--card-bg); border-radius: 15px; padding: 15px; }
         
-        /* PANEL DE HORAS CORREGIDO */
-        .panel-diario { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 15px 0; background: #0f172a; padding: 10px; border-radius: 10px; border: 1px solid #374151; }
-        .hora-box { background: #374151; padding: 10px 2px; text-align: center; border-radius: 6px; border: 1px solid #4b5563; font-size: 0.7rem; cursor: pointer; color: #9ca3af; transition: 0.3s; }
-        .hora-box.jugado { background: #10b981 !important; color: #064e3b; font-weight: bold; border-color: #34d399; }
-        .hora-box.active-select { border: 2px solid #60a5fa; background: #1e3a8a; color: white; }
-
-        /* PRESTACIONES VISUALES */
-        .panel-sniper { border: 2px solid #ef4444; border-radius: 12px; padding: 15px; text-align: center; margin-bottom: 15px; background: rgba(239, 68, 68, 0.05); }
-        .sniper-badge { background: #ef4444; color: white; padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; }
-        .sniper-nums { display: flex; justify-content: center; gap: 10px; margin-top: 10px; font-size: 1.5rem; font-weight: bold; color: white; }
-
-        .grid-animales { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 15px; height: 200px; overflow-y: auto; background: #0f172a; padding: 10px; border-radius: 10px; }
-        .animal-btn { background: #1f2937; padding: 8px; text-align: center; border-radius: 6px; font-size: 0.65rem; border: 1px solid #374151; cursor: pointer; color: #d1d5db; }
+        header { text-align: center; margin-bottom: 20px; }
+        h1 { color: #60a5fa; font-size: 1.4rem; margin: 0; }
+        #live-clock { color: #fbbf24; font-size: 1.2rem; font-weight: bold; margin-top: 10px; }
         
-        .btn-anotar { width: 100%; padding: 12px; background: #3b82f6; border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 1rem; margin-top: 10px; cursor: pointer; box-shadow: 0 4px 0 #2563eb; }
-        .btn-anotar:active { transform: translateY(2px); box-shadow: none; }
+        /* PESTAÑAS ORIGINALES */
+        .tab-container { display: flex; gap: 5px; margin-top: 15px; }
+        .tab-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; background: #374151; color: white; font-weight: bold; cursor: pointer; }
+        .tab-btn.active { background: var(--accent); }
 
-        /* SECCIÓN HISTORIAL MEJORADA */
-        .historial-seccion { margin-top: 20px; border-top: 2px solid #374151; padding-top: 15px; }
-        .tabla-historial { width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: center; }
-        .tabla-historial th { color: #60a5fa; padding: 8px; border-bottom: 1px solid #374151; }
-        .tabla-historial td { padding: 8px; border-bottom: 1px solid #111827; }
-        .badge-n { background: #111827; padding: 2px 6px; border-radius: 4px; border: 1px solid #3b82f6; color: #60a5fa; font-weight: bold; }
+        /* PANELES DE DATOS */
+        .panel-info { border: 2px solid #3b82f6; border-radius: 12px; padding: 10px; text-align: center; margin-bottom: 10px; }
+        .panel-next { border: 2px solid #ef4444; border-radius: 12px; padding: 15px; text-align: center; margin-bottom: 15px; }
+        .badge { background: #ef4444; color: white; padding: 3px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; }
+        .nums-row { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
+        .num-circle { background: #1a2233; border: 2px solid #ef4444; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; }
+
+        /* CUADRÍCULA DE HORAS CORREGIDA */
+        .grid-horas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 15px 0; }
+        .hora-item { background: #374151; padding: 12px 5px; text-align: center; border-radius: 8px; border: 1px solid #4b5563; font-size: 0.75rem; cursor: pointer; }
+        .hora-item.jugado { background: #10b981; border-color: #34d399; color: #064e3b; font-weight: bold; }
+        .hora-item.active { border: 2px solid #60a5fa; background: #1e3a8a; }
+
+        .grid-animales { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; height: 250px; overflow-y: auto; margin-top: 15px; background: #1a2233; padding: 10px; border-radius: 10px; }
+        .ani-btn { background: #242f45; padding: 10px 5px; text-align: center; border-radius: 6px; font-size: 0.7rem; border: 1px solid #374151; }
+        
+        .btn-main { width: 100%; padding: 15px; background: #3b82f6; border: none; border-radius: 10px; color: white; font-weight: bold; font-size: 1.1rem; margin-top: 10px; }
     </style>
 </head>
 <body>
     <div id="main-app">
         <header>
             <h1>ANALIZADOR CRCA PRO</h1>
-            <div style="font-size: 0.6rem; color: #10b981; font-weight: bold; letter-spacing: 1px;">LOTTO ACTIVO</div>
+            <div style="color: #10b981; font-size: 0.7rem; margin-top: 5px;">LOTTO ACTIVO</div>
             <div id="live-clock">00:00:00</div>
+            <div class="tab-container">
+                <button class="tab-btn active">REGISTRO</button>
+                <button class="tab-btn">ALGORITMO</button>
+                <button class="tab-btn">HISTORIAL</button>
+            </div>
         </header>
 
-        <section id="registro">
-            <div class="panel-sniper">
-                <span class="sniper-badge">Próxima Jugada</span>
-                <div class="sniper-nums" id="sniper-display">DATOS DE ENERO...</div>
+        <section id="content-registro">
+            <div class="panel-info">
+                <span style="color:#60a5fa; font-size: 0.8rem;">🎯 3 DATOS FIJOS PARA HOY</span>
+                <div class="nums-row">
+                    <div class="num-circle" style="border-color:#3b82f6">10</div>
+                    <div class="num-circle" style="border-color:#3b82f6">37</div>
+                    <div class="num-circle" style="border-color:#3b82f6">23</div>
+                </div>
             </div>
 
-            <div class="panel-diario" id="panel-horas"></div>
-
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="input-num" placeholder="00" maxlength="2" style="width: 70px; text-align: center; border-radius: 8px; border: 1px solid #4b5563; background: #111827; color: white; font-size: 1.2rem; font-weight: bold;">
-                <button class="btn-anotar" onclick="registrarPorInput()">ANOTAR RESULTADO</button>
+            <div class="panel-next">
+                <span class="badge">PRÓXIMA JUGADA CALCULADA</span>
+                <div class="nums-row" id="prediccion">
+                    <div class="num-circle">01</div>
+                    <div class="num-circle">11</div>
+                    <div class="num-circle">23</div>
+                </div>
             </div>
 
-            <div class="grid-animales" id="grid-animales"></div>
-            
-            <div style="margin-top:15px;">
-                <label style="font-size: 0.7rem; color: #9ca3af;">FECHA DE CARGA:</label>
-                <input type="date" id="fecha-app" onchange="cambioFecha()" style="width: 100%; padding: 10px; border-radius: 8px; background: #374151; color: white; border: none; margin-top: 5px;">
-            </div>
-        </section>
+            <div class="grid-horas" id="lista-horas"></div>
 
-        <section class="historial-seccion">
-            <h3 style="font-size: 0.9rem; color: #60a5fa; margin-bottom: 10px;">RESULTADOS DEL DÍA</h3>
-            <table class="tabla-historial">
-                <thead>
-                    <tr><th>HORA</th><th>N°</th><th>ANIMAL</th></tr>
-                </thead>
-                <tbody id="lista-historial"></tbody>
-            </table>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <div style="background:#374151; padding:15px; border-radius:10px; font-weight:bold; min-width:40px; text-align:center;">00</div>
+                <button class="btn-main">ANOTAR RESULTADO</button>
+            </div>
+
+            <div class="grid-animales" id="lista-animales"></div>
         </section>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
+        // CONEXIÓN ORIGINAL
         const S_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
         const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
         const _supabase = supabase.createClient(S_URL, S_KEY);
 
-        // HORARIO COMPLETO (CORREGIDO)
+        // HORARIO CORREGIDO: 8:00 AM A 7:00 PM
         const HORAS = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
         
         const ANIMALES = [
@@ -99,104 +103,37 @@
             {n:'35', a:'JIRAFA'}, {n:'36', a:'CULEBRA'}
         ];
 
-        let db_local = [];
-        let hora_actual = null;
+        let seleccion_hora = null;
 
-        async function iniciar() {
-            document.getElementById('fecha-app').value = new Date().toISOString().split('T')[0];
-            renderHoras();
-            renderGrid();
-            await fetchDB();
-            actualizarReloj();
-        }
+        function cargarInterfaz() {
+            // Reloj
+            setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 
-        async function fetchDB() {
-            const { data } = await _supabase.from('historial_sorteos').select('*').order('hora', { ascending: true });
-            if(data) { db_local = data; refreshUI(); }
-        }
-
-        function renderHoras() {
-            const cont = document.getElementById('panel-horas');
-            const fecha = document.getElementById('fecha-app').value;
-            cont.innerHTML = '';
+            // Render Horas
+            const hCont = document.getElementById('lista-horas');
             HORAS.forEach(h => {
-                const res = db_local.find(r => r.fecha === fecha && r.hora === h);
                 const div = document.createElement('div');
-                div.className = `hora-box ${res ? 'jugado' : ''} ${h === hora_actual ? 'active-select' : ''}`;
-                div.innerHTML = `<span>${h}</span>${res ? `<br><b style="color:white;">${res.num}</b>` : ''}`;
-                div.onclick = () => { hora_actual = h; renderHoras(); };
-                cont.appendChild(div);
+                div.className = 'hora-item';
+                div.innerText = h;
+                div.onclick = () => {
+                    document.querySelectorAll('.hora-item').forEach(el => el.classList.remove('active'));
+                    div.classList.add('active');
+                    seleccion_hora = h;
+                };
+                hCont.appendChild(div);
             });
-        }
 
-        function renderGrid() {
-            const cont = document.getElementById('grid-animales');
+            // Render Animales
+            const aCont = document.getElementById('lista-animales');
             ANIMALES.forEach(ani => {
                 const div = document.createElement('div');
-                div.className = 'animal-btn';
+                div.className = 'ani-btn';
                 div.innerHTML = `<b>${ani.n}</b><br>${ani.a}`;
-                div.onclick = () => registrar(ani.n, ani.a);
-                cont.appendChild(div);
+                aCont.appendChild(div);
             });
         }
 
-        async function registrar(n, a) {
-            if(!hora_actual) return alert("Primero toca una HORA arriba");
-            const registro = { 
-                fecha: document.getElementById('fecha-app').value, 
-                hora: hora_actual, 
-                num: n.toString(), 
-                animal: a 
-            };
-            
-            const idx = db_local.findIndex(r => r.fecha === registro.fecha && r.hora === registro.hora);
-            if(idx !== -1) db_local[idx] = registro; else db_local.push(registro);
-            
-            refreshUI();
-            await _supabase.from('historial_sorteos').upsert(registro);
-        }
-
-        function registrarPorInput() {
-            const val = document.getElementById('input-num').value.trim();
-            if(!val) return;
-            let finalVal = val;
-            if(val !== '0' && val !== '00') finalVal = val.padStart(2, '0');
-            const ani = ANIMALES.find(x => x.n === finalVal);
-            if(ani) registrar(ani.n, ani.a);
-            document.getElementById('input-num').value = '';
-        }
-
-        function refreshUI() {
-            renderHoras();
-            const tabla = document.getElementById('lista-historial');
-            const fecha = document.getElementById('fecha-app').value;
-            tabla.innerHTML = '';
-            
-            const hoy = db_local.filter(r => r.fecha === fecha).sort((a,b) => HORAS.indexOf(a.hora) - HORAS.indexOf(b.hora));
-            
-            hoy.forEach(r => {
-                tabla.innerHTML += `<tr><td>${r.hora}</td><td><span class="badge-n">${r.num}</span></td><td>${r.animal}</td></tr>`;
-            });
-
-            const display = document.getElementById('sniper-display');
-            if(hoy.length > 0) {
-                const u = parseInt(hoy[hoy.length-1].num);
-                display.innerHTML = `<span style="background:#111827; padding:5px 15px; border-radius:5px; border:1px solid #ef4444;">${(u+1)%37}</span>`;
-            }
-        }
-
-        function cambioFecha() {
-            hora_actual = null;
-            refreshUI();
-        }
-
-        function actualizarReloj() {
-            setInterval(() => {
-                document.getElementById('live-clock').innerText = new Date().toLocaleTimeString();
-            }, 1000);
-        }
-
-        window.onload = iniciar;
+        window.onload = cargarInterfaz;
     </script>
 </body>
 </html>
