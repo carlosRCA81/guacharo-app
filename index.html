@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRCA PRO V2</title>
+    <title>CRCA PRO V2 - Ordenado</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,10 +11,11 @@
 
     <div id="main-app">
         <header>
-            <h1>CRCA PRO <span style="color: #22c55e;">V2.0</span></h1>
+            <h1>CRCA PRO <span style="color: #22c55e;">V2</span></h1>
             <div id="live-clock">00:00:00</div>
             <div class="tab-container">
                 <button class="tab-btn active" onclick="openTab(event, 'registro')">REGISTRO</button>
+                <button class="tab-btn" onclick="openTab(event, 'tripletas-tab')">TRIPLETAS</button>
                 <button class="tab-btn" onclick="openTab(event, 'estudio-avanzado')">ALGORITMO</button>
                 <button class="tab-btn" onclick="openTab(event, 'historial')">HISTORIAL</button>
             </div>
@@ -22,37 +23,40 @@
 
         <section id="registro" class="tab-content active">
             <div class="panel-sniper" id="panel-proxima-jugada">
-                <span style="font-size: 0.6rem; font-weight: bold;" id="sniper-titulo">🎯 PRÓXIMA JUGADA</span>
+                <span class="sniper-badge" id="sniper-titulo">🎯 PRÓXIMA JUGADA</span>
                 <div class="sniper-nums" id="numeros-sugeridos-directos">...</div>
-                <div id="aviso-tripleta" style="font-size: 0.7rem; margin-top: 5px;"></div>
+                <div id="aviso-fuera" style="color: #ff4d4d; font-size: 0.75rem; margin-top: 5px; font-weight: bold;"></div>
             </div>
 
-            <div id="seccion-tripletas" class="tripleta-container"></div>
+            <div class="panel-diario" id="panel-diario-sorteos"></div>
 
-            <div class="panel-diario" id="panel-diario-sorteos" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:4px; margin-bottom:10px;"></div>
-
-            <div style="display:flex; gap:5px; margin-bottom:10px;">
-                <input type="text" id="num-rapido" maxlength="2" placeholder="Nro" style="width:50px; text-align:center;">
-                <button onclick="registrarPorNumero()" style="flex:1;">REGISTRAR</button>
+            <div class="entrada-rapida">
+                <input type="text" id="num-rapido" maxlength="2" placeholder="00">
+                <button onclick="registrarPorNumero()">ANOTAR</button>
             </div>
             
             <div class="grid-animales" id="grid-container"></div>
-            <input type="date" id="fecha-analisis" style="width:100%; margin-top:10px;">
+            <input type="date" id="fecha-analisis" class="fecha-input">
+        </section>
+
+        <section id="tripletas-tab" class="tab-content">
+            <h2 style="text-align:center; color: #fbbf24; font-size: 1rem;">🔥 TRIPLETAS DEL DÍA</h2>
+            <div id="seccion-tripletas" class="tripleta-list"></div>
         </section>
 
         <section id="estudio-avanzado" class="tab-content">
-            <div style="background:#0f172a; padding:15px; border-radius:10px; border:1px solid #38bdf8;">
-                <h3 style="text-align:center; color:#38bdf8;">📡 RADAR DE ATRACCIÓN</h3>
-                <select id="select-estudio-animal" onchange="estudiarAtraccion()" style="width:100%; padding:10px;"></select>
-                <div id="resultado-atraccion" style="text-align:center;"></div>
+            <div class="radar-container">
+                <h3>📡 RADAR DE ATRACCIÓN</h3>
+                <select id="select-estudio-animal" onchange="estudiarAtraccion()"></select>
+                <div id="resultado-atraccion"></div>
             </div>
         </section>
 
         <section id="historial" class="tab-content">
-            <input type="date" id="fecha-busqueda-historial" onchange="actualizarTabla()" style="width:100%; margin-bottom:10px;">
+            <input type="date" id="fecha-busqueda-historial" onchange="actualizarTabla()" class="fecha-input">
             <div class="tabla-contenedor">
                 <table>
-                    <thead><tr><th>Hora</th><th>Nro</th><th>Animal</th><th>Sec</th><th>Col</th></tr></thead>
+                    <thead><tr><th>Hora</th><th>Nro</th><th>Animal</th><th>Sec/Elt</th><th>Color</th></tr></thead>
                     <tbody id="lista-historial"></tbody>
                 </table>
             </div>
