@@ -66,7 +66,7 @@
             <div class="grid-animales" id="grid-animales"></div>
             
             <div style="margin-top:15px;">
-                <label style="font-size:0.65rem; color:var(--accent)">SELECCIONAR FECHA (ENERO ABRIL):</label>
+                <label style="font-size:0.65rem; color:var(--accent)">SELECCIONAR FECHA (ENERO - ABRIL):</label>
                 <input type="date" id="fecha-app" onchange="cambioFecha()" style="width:100%; padding:8px; background:#334155; color:white; border:none; border-radius:4px; margin-top:5px;">
             </div>
         </section>
@@ -96,7 +96,13 @@
         const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
         const _supabase = supabase.createClient(S_URL, S_KEY);
 
-        const HORAS = ['9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
+        // HORAS CORREGIDAS: Se agregaron las 2:00 PM y 3:00 PM
+        const HORAS = [
+            '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', 
+            '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', 
+            '5:00 PM', '6:00 PM', '7:00 PM'
+        ];
+
         const ANIMALES = [{n:'0', a:'DELFIN'}, {n:'00', a:'BALLENA'}, {n:'01', a:'CARNERO'}, {n:'02', a:'TORO'}, {n:'03', a:'CIEMPIES'}, {n:'04', a:'ALACRAN'}, {n:'05', a:'LEON'}, {n:'06', a:'RANA'}, {n:'07', a:'PERICO'}, {n:'08', a:'RATON'}, {n:'09', a:'AGUILA'}, {n:'10', a:'TIGRE'}, {n:'11', a:'GATO'}, {n:'12', a:'CABALLO'}, {n:'13', a:'MONO'}, {n:'14', a:'PALOMA'}, {n:'15', a:'ZORRO'}, {n:'16', a:'OSO'}, {n:'17', a:'PAVO'}, {n:'18', a:'BURRO'}, {n:'19', a:'CHIVO'}, {n:'20', a:'COCHINO'}, {n:'21', a:'GALLO'}, {n:'22', a:'CAMELLO'}, {n:'23', a:'CEBRA'}, {n:'24', a:'IGUANA'}, {n:'25', a:'GALLINA'}, {n:'26', a:'VACA'}, {n:'27', a:'PERRO'}, {n:'28', a:'ZAMURO'}, {n:'29', a:'ELEFANTE'}, {n:'30', a:'CAIMAN'}, {n:'31', a:'LAPA'}, {n:'32', a:'ARDILLA'}, {n:'33', a:'PESCADO'}, {n:'34', a:'VENADO'}, {n:'35', a:'JIRAFA'}, {n:'36', a:'CULEBRA'}];
 
         let db_memoria = [];
