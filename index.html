@@ -3,137 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANALIZADOR CRCA PRO</title>
+    <title>Analizador CRCA PRO - Lotto Activo</title>
+    <link rel="stylesheet" href="style.css">
     <style>
-        :root { --bg-dark: #1a2233; --card-bg: #242f45; --accent: #3b82f6; --text: #f3f4f6; }
-        body { background-color: var(--bg-dark); color: var(--text); font-family: sans-serif; margin: 0; padding: 10px; }
-        #main-app { max-width: 450px; margin: auto; background: var(--card-bg); border-radius: 15px; padding: 15px; }
+        .panel-diario { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 15px; background: #0f172a; padding: 10px; border-radius: 8px; }
+        .hora-box { background: #334155; padding: 8px; text-align: center; border-radius: 4px; border: 1px solid #475569; color: #f8fafc; cursor: pointer; font-size: 0.65rem;}
+        .hora-box.jugado { background: #22c55e !important; color: #0f172a; font-weight: bold;}
+        .hora-box.active-select { border: 2px solid #38bdf8 !important; background: #1e293b; }
         
-        header { text-align: center; margin-bottom: 20px; }
-        h1 { color: #60a5fa; font-size: 1.4rem; margin: 0; }
-        #live-clock { color: #fbbf24; font-size: 1.2rem; font-weight: bold; margin-top: 10px; }
+        /* ALERTAS DE FAMILIAS Y SEGUIDILLAS */
+        @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .alerta-caliente { background: #22c55e !important; box-shadow: 0 0 15px #22c55e; animation: parpadeo 1s infinite; border: 2px solid white !important; }
+        .alerta-oro { background: #fbbf24 !important; box-shadow: 0 0 15px #fbbf24; border: 2px solid white !important; }
+
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; margin-right: 5px; color: white; margin-top: 5px; display: inline-block; }
+        .bg-rojo { background: #ef4444; }
+        .bg-negro { background: #1e293b; border: 1px solid #475569; }
+        .bg-azul { background: #38bdf8; }
+
+        .animal-btn { background:#334155; padding:5px; text-align:center; border-radius:4px; cursor:pointer; font-size:0.65rem; color:white; border: 1px solid #475569;}
+        .card-prediccion { background: #1e293b; border-radius: 8px; padding: 12px; margin-bottom: 10px; border: 1px solid #38bdf8; }
+        .dato-fijo { background: #0f172a; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #38bdf8; border: 2px solid #38bdf8; }
         
-        /* PESTAÑAS ORIGINALES */
-        .tab-container { display: flex; gap: 5px; margin-top: 15px; }
-        .tab-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; background: #374151; color: white; font-weight: bold; cursor: pointer; }
-        .tab-btn.active { background: var(--accent); }
-
-        /* PANELES DE DATOS */
-        .panel-info { border: 2px solid #3b82f6; border-radius: 12px; padding: 10px; text-align: center; margin-bottom: 10px; }
-        .panel-next { border: 2px solid #ef4444; border-radius: 12px; padding: 15px; text-align: center; margin-bottom: 15px; }
-        .badge { background: #ef4444; color: white; padding: 3px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; }
-        .nums-row { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
-        .num-circle { background: #1a2233; border: 2px solid #ef4444; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; }
-
-        /* CUADRÍCULA DE HORAS CORREGIDA */
-        .grid-horas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 15px 0; }
-        .hora-item { background: #374151; padding: 12px 5px; text-align: center; border-radius: 8px; border: 1px solid #4b5563; font-size: 0.75rem; cursor: pointer; }
-        .hora-item.jugado { background: #10b981; border-color: #34d399; color: #064e3b; font-weight: bold; }
-        .hora-item.active { border: 2px solid #60a5fa; background: #1e3a8a; }
-
-        .grid-animales { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; height: 250px; overflow-y: auto; margin-top: 15px; background: #1a2233; padding: 10px; border-radius: 10px; }
-        .ani-btn { background: #242f45; padding: 10px 5px; text-align: center; border-radius: 6px; font-size: 0.7rem; border: 1px solid #374151; }
-        
-        .btn-main { width: 100%; padding: 15px; background: #3b82f6; border: none; border-radius: 10px; color: white; font-weight: bold; font-size: 1.1rem; margin-top: 10px; }
+        .panel-sniper { background: linear-gradient(145deg, #1e293b, #0f172a); border: 2px solid #ef4444; border-radius: 12px; padding: 10px; margin-bottom: 15px; text-align: center; transition: all 0.3s; }
+        .sniper-badge { background: #ef4444; color: white; font-size: 0.6rem; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; font-weight: bold; }
+        .sniper-nums { display: flex; justify-content: center; gap: 10px; margin-top: 8px; font-size: 1.1rem; font-weight: bold; color: #fff; flex-wrap: wrap; }
     </style>
 </head>
 <body>
+    <audio id="snd-alerta" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+
     <div id="main-app">
         <header>
-            <h1>ANALIZADOR CRCA PRO</h1>
-            <div style="color: #10b981; font-size: 0.7rem; margin-top: 5px;">LOTTO ACTIVO</div>
+            <h1>ANALIZADOR CRCA PRO <span style="font-size: 0.5rem; color: #22c55e;">LOTTO ACTIVO</span></h1>
             <div id="live-clock">00:00:00</div>
             <div class="tab-container">
-                <button class="tab-btn active">REGISTRO</button>
-                <button class="tab-btn">ALGORITMO</button>
-                <button class="tab-btn">HISTORIAL</button>
+                <button class="tab-btn active" onclick="openTab(event, 'registro')">REGISTRO</button>
+                <button class="tab-btn" onclick="openTab(event, 'estudio-avanzado')">ALGORITMO</button>
+                <button class="tab-btn" onclick="openTab(event, 'historial')">HISTORIAL</button>
             </div>
         </header>
 
-        <section id="content-registro">
-            <div class="panel-info">
-                <span style="color:#60a5fa; font-size: 0.8rem;">🎯 3 DATOS FIJOS PARA HOY</span>
-                <div class="nums-row">
-                    <div class="num-circle" style="border-color:#3b82f6">10</div>
-                    <div class="num-circle" style="border-color:#3b82f6">37</div>
-                    <div class="num-circle" style="border-color:#3b82f6">23</div>
-                </div>
+        <section id="registro" class="tab-content active">
+            <div class="card-prediccion">
+                <p style="font-size: 0.7rem; color: #38bdf8; margin: 0 0 10px 0; text-align: center; font-weight: bold;">🎯 3 DATOS FIJOS PARA HOY</p>
+                <div style="display: flex; justify-content: space-around;" id="contenedor-fijos"></div>
             </div>
 
-            <div class="panel-next">
-                <span class="badge">PRÓXIMA JUGADA CALCULADA</span>
-                <div class="nums-row" id="prediccion">
-                    <div class="num-circle">01</div>
-                    <div class="num-circle">11</div>
-                    <div class="num-circle">23</div>
-                </div>
+            <div class="panel-sniper" id="panel-proxima-jugada">
+                <span class="sniper-badge" id="sniper-titulo">🎯 Próxima Jugada Calculada</span>
+                <div class="sniper-nums" id="numeros-sugeridos-directos">INGRESANDO DATOS...</div>
             </div>
 
-            <div class="grid-horas" id="lista-horas"></div>
+            <div class="panel-diario" id="panel-diario-sorteos"></div>
+            <div id="alertas-algoritmo" style="margin-bottom: 10px;"></div>
 
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <div style="background:#374151; padding:15px; border-radius:10px; font-weight:bold; min-width:40px; text-align:center;">00</div>
-                <button class="btn-main">ANOTAR RESULTADO</button>
+            <div class="entrada-rapida-container" style="display:flex; gap:10px; margin-bottom:15px;">
+                <input type="text" id="num-rapido" maxlength="2" placeholder="00" style="width:60px; text-align:center; font-weight:bold;">
+                <button onclick="registrarPorNumero()" style="flex-grow:1;">ANOTAR RESULTADO</button>
             </div>
+            <div class="grid-animales" id="grid-container" style="display:grid; grid-template-columns: repeat(5, 1fr); gap:5px;"></div>
+            
+            <input type="date" id="fecha-analisis" style="width:100%; margin-top:15px; background:#1e293b; color:white; border:none; padding:8px;">
+        </section>
 
-            <div class="grid-animales" id="lista-animales"></div>
+        <section id="estudio-avanzado" class="tab-content" style="display:none;">
+            <div id="resultado-patron-avanzado"></div>
+            <select id="select-estudio-animal" onchange="estudiarAnimalPatron()" style="width:100%; padding:10px; margin:15px 0;"></select>
+        </section>
+
+        <section id="historial" class="tab-content" style="display:none;">
+            <input type="date" id="fecha-busqueda-historial" onchange="actualizarTabla()" style="width:100%; margin-bottom:10px;">
+            <div class="tabla-contenedor" style="max-height: 400px; overflow-y: auto;">
+                <table style="width:100%; text-align:center; font-size:0.75rem; border-collapse:collapse;">
+                    <thead><tr style="background:#1e293b; color:#38bdf8;"><th>Hora</th><th>Nro</th><th>Animal</th><th>Color</th></tr></thead>
+                    <tbody id="lista-historial"></tbody>
+                </table>
+            </div>
         </section>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        // CONEXIÓN ORIGINAL
-        const S_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
-        const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
-        const _supabase = supabase.createClient(S_URL, S_KEY);
-
-        // HORARIO CORREGIDO: 8:00 AM A 7:00 PM
-        const HORAS = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
-        
-        const ANIMALES = [
-            {n:'0', a:'DELFIN'}, {n:'00', a:'BALLENA'}, {n:'01', a:'CARNERO'}, {n:'02', a:'TORO'},
-            {n:'03', a:'CIEMPIES'}, {n:'04', a:'ALACRAN'}, {n:'05', a:'LEON'}, {n:'06', a:'RANA'},
-            {n:'07', a:'PERICO'}, {n:'08', a:'RATON'}, {n:'09', a:'AGUILA'}, {n:'10', a:'TIGRE'},
-            {n:'11', a:'GATO'}, {n:'12', a:'CABALLO'}, {n:'13', a:'MONO'}, {n:'14', a:'PALOMA'},
-            {n:'15', a:'ZORRO'}, {n:'16', a:'OSO'}, {n:'17', a:'PAVO'}, {n:'18', a:'BURRO'},
-            {n:'19', a:'CHIVO'}, {n:'20', a:'COCHINO'}, {n:'21', a:'GALLO'}, {n:'22', a:'CAMELLO'},
-            {n:'23', a:'CEBRA'}, {n:'24', a:'IGUANA'}, {n:'25', a:'GALLINA'}, {n:'26', a:'VACA'},
-            {n:'27', a:'PERRO'}, {n:'28', a:'ZAMURO'}, {n:'29', a:'ELEFANTE'}, {n:'30', a:'CAIMAN'},
-            {n:'31', a:'LAPA'}, {n:'32', a:'ARDILLA'}, {n:'33', a:'PESCADO'}, {n:'34', a:'VENADO'},
-            {n:'35', a:'JIRAFA'}, {n:'36', a:'CULEBRA'}
-        ];
-
-        let seleccion_hora = null;
-
-        function cargarInterfaz() {
-            // Reloj
-            setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
-
-            // Render Horas
-            const hCont = document.getElementById('lista-horas');
-            HORAS.forEach(h => {
-                const div = document.createElement('div');
-                div.className = 'hora-item';
-                div.innerText = h;
-                div.onclick = () => {
-                    document.querySelectorAll('.hora-item').forEach(el => el.classList.remove('active'));
-                    div.classList.add('active');
-                    seleccion_hora = h;
-                };
-                hCont.appendChild(div);
-            });
-
-            // Render Animales
-            const aCont = document.getElementById('lista-animales');
-            ANIMALES.forEach(ani => {
-                const div = document.createElement('div');
-                div.className = 'ani-btn';
-                div.innerHTML = `<b>${ani.n}</b><br>${ani.a}`;
-                aCont.appendChild(div);
-            });
-        }
-
-        window.onload = cargarInterfaz;
-    </script>
+    <script src="logic.js"></script>
 </body>
 </html>
