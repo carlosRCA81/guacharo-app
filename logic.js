@@ -24,8 +24,13 @@ const listaAnimales = [
     {n:'35', a:'JIRAFA', c:'NEGRO', s:'A'}, {n:'36', a:'CULEBRA', c:'ROJO', s:'D'}
 ];
 
-// HORARIO COMPLETO CORREGIDO
-const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
+// LISTA DE 12 HORAS CORREGIDA (DE 8:00 AM A 7:00 PM SIN FALTAR 2 Y 3)
+const horasSorteo = [
+    '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', 
+    '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', 
+    '6:00 PM', '7:00 PM'
+];
+
 let historial = [];
 let horaSeleccionadaActiva = null;
 
@@ -41,10 +46,39 @@ async function cargarHistorialRemoto() {
     try {
         const { data } = await _supabase.from('historial_sorteos').select('*').order('fecha', { ascending: false });
         if (data) { 
-            historial = data.filter(r => listaAnimales.some(a => a.n === r.num)); 
+            historial = data; 
             actualizarInterfaz(); 
         }
     } catch (e) { console.error("Error Supabase"); }
+}
+
+function generarPanelDiario() {
+    const p = document.getElementById('panel-diario-sorteos');
+    const f = document.getElementById('fecha-analisis').value;
+    p.innerHTML = '';
+    horasSorteo.forEach(h => {
+        const r = historial.find(x => x.fecha === f && x.hora === h);
+        const b = document.createElement('div');
+        b.className = `hora-box ${r?'jugado':''} ${h===horaSeleccionadaActiva?'active-select':''}`;
+        b.innerHTML = r ? `${h}<br><b>${r.num}</b>` : h;
+        b.onclick = () => { horaSeleccionadaActiva = h; generarPanelDiario(); };
+        p.appendChild(b);
+    });
+}
+
+function registrarSorteo(num, animal, color, hora) {
+    const fecha = document.getElementById('fecha-analisis').value;
+    const nuevo = { fecha, hora, num: num.toString(), animal, tipo: color };
+    const idx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
+    if(idx !== -1) historial[idx] = nuevo; else historial.unshift(nuevo);
+    actualizarInterfaz();
+    _supabase.from('historial_sorteos').upsert(nuevo).then();
+}
+
+function actualizarInterfaz() {
+    generarPanelDiario();
+    actualizarTabla();
+    actualizarJugadaSniper();
 }
 
 function actualizarJugadaSniper() {
@@ -68,7 +102,7 @@ function actualizarJugadaSniper() {
         sugeridos = familias[ultimo.num];
         esAlertaCaliente = true;
         titulo.innerText = "🔥 FAMILIA DETECTADA";
-        document.getElementById('snd-alerta').play();
+        try { document.getElementById('snd-alerta').play(); } catch(e){}
     } else {
         let n = parseInt(ultimo.num);
         sugeridos = [(n + 1).toString().padStart(2, '0'), (n === 0 ? 36 : n - 1).toString().padStart(2, '0'), '11'];
@@ -76,7 +110,7 @@ function actualizarJugadaSniper() {
     }
 
     panel.className = `panel-sniper ${esAlertaCaliente ? 'alerta-caliente' : ''}`;
-    display.innerHTML = sugeridos.filter(n => parseInt(n) <= 36 || n === '00' || n === '0').map(n => `<span style="background:#0f172a; padding: 5px 12px; border-radius: 5px; border: 1px solid white; color:white; font-weight:bold; margin-right:5px;">${n}</span>`).join('');
+    display.innerHTML = sugeridos.map(n => `<span style="background:#0f172a; padding: 5px 12px; border-radius: 5px; border: 1px solid white; color:white; font-weight:bold; margin-right:5px;">${n}</span>`).join('');
 }
 
 function generarGridBotones() {
@@ -89,35 +123,6 @@ function generarGridBotones() {
         d.innerHTML = `<b>${a.n}</b><br>${a.a}<br><small>${a.s}</small>`;
         d.onclick = () => { if(horaSeleccionadaActiva) registrarSorteo(a.n, a.a, a.c, horaSeleccionadaActiva); };
         cont.appendChild(d);
-    });
-}
-
-async function registrarSorteo(num, animal, color, hora) {
-    const fecha = document.getElementById('fecha-analisis').value;
-    const nuevo = { fecha, hora, num: num.toString(), animal, tipo: color };
-    const idx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
-    if(idx !== -1) historial[idx] = nuevo; else historial.unshift(nuevo);
-    actualizarInterfaz();
-    try { await _supabase.from('historial_sorteos').upsert(nuevo, { onConflict: 'fecha,hora' }); } catch (e) { }
-}
-
-function actualizarInterfaz() {
-    actualizarJugadaSniper(); 
-    generarPanelDiario();
-    actualizarTabla();
-}
-
-function generarPanelDiario() {
-    const p = document.getElementById('panel-diario-sorteos');
-    const f = document.getElementById('fecha-analisis').value;
-    p.innerHTML = '';
-    horasSorteo.forEach(h => {
-        const r = historial.find(x => x.fecha === f && x.hora === h);
-        const b = document.createElement('div');
-        b.className = `hora-box ${r?'jugado':''} ${h===horaSeleccionadaActiva?'active-select':''}`;
-        b.innerHTML = r ? `${h}<br><b>${r.num}</b>` : h;
-        b.onclick = () => { horaSeleccionadaActiva = h; generarPanelDiario(); };
-        p.appendChild(b);
     });
 }
 
@@ -136,7 +141,9 @@ function actualizarTabla() {
     c.innerHTML = '';
     historial.filter(r => r.fecha === f).sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora)).forEach(r => {
         const ani = listaAnimales.find(a => a.n === r.num);
-        c.innerHTML += `<tr><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td><span class="badge ${ani.c === 'ROJO' ? 'bg-rojo' : ani.c === 'NEGRO' ? 'bg-negro' : 'bg-azul'}">${ani.c}</span></td></tr>`;
+        if(ani) {
+            c.innerHTML += `<tr><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td><span class="badge ${ani.c === 'ROJO' ? 'bg-rojo' : ani.c === 'NEGRO' ? 'bg-negro' : 'bg-azul'}">${ani.c}</span></td></tr>`;
+        }
     });
 }
 
