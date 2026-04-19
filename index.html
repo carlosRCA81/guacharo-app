@@ -3,31 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador CRCA - Algoritmo 100%</title>
+    <title>Analizador CRCA PRO - Lotto Activo</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .panel-diario { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 15px; background: #0f172a; padding: 10px; border-radius: 8px; }
         .hora-box { background: #334155; padding: 8px; text-align: center; border-radius: 4px; border: 1px solid #475569; color: #f8fafc; cursor: pointer; font-size: 0.65rem;}
         .hora-box.jugado { background: #22c55e !important; color: #0f172a; font-weight: bold;}
         .hora-box.active-select { border: 2px solid #38bdf8 !important; background: #1e293b; }
+        
+        /* ALERTAS DE FAMILIAS Y SEGUIDILLAS */
+        @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .alerta-caliente { background: #22c55e !important; box-shadow: 0 0 15px #22c55e; animation: parpadeo 1s infinite; border: 2px solid white !important; }
+        .alerta-oro { background: #fbbf24 !important; box-shadow: 0 0 15px #fbbf24; border: 2px solid white !important; }
+
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; margin-right: 5px; color: white; margin-top: 5px; display: inline-block; }
-        .bg-espejo { background: #a855f7; }
-        .bg-escalera { background: #f59e0b; }
-        .bg-repetido { background: #ef4444; }
-        .row-guacharo { background: rgba(251, 191, 36, 0.2) !important; color: #fbbf24; }
+        .bg-rojo { background: #ef4444; }
+        .bg-negro { background: #1e293b; border: 1px solid #475569; }
+        .bg-azul { background: #38bdf8; }
+
         .animal-btn { background:#334155; padding:5px; text-align:center; border-radius:4px; cursor:pointer; font-size:0.65rem; color:white; border: 1px solid #475569;}
         .card-prediccion { background: #1e293b; border-radius: 8px; padding: 12px; margin-bottom: 10px; border: 1px solid #38bdf8; }
         .dato-fijo { background: #0f172a; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #38bdf8; border: 2px solid #38bdf8; }
-        /* Estilo para el nuevo Panel Francotirador */
-        .panel-sniper { background: linear-gradient(145deg, #1e293b, #0f172a); border: 2px solid #ef4444; border-radius: 12px; padding: 10px; margin-bottom: 15px; text-align: center; box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); }
+        
+        .panel-sniper { background: linear-gradient(145deg, #1e293b, #0f172a); border: 2px solid #ef4444; border-radius: 12px; padding: 10px; margin-bottom: 15px; text-align: center; transition: all 0.3s; }
         .sniper-badge { background: #ef4444; color: white; font-size: 0.6rem; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; font-weight: bold; }
-        .sniper-nums { display: flex; justify-content: center; gap: 15px; margin-top: 8px; font-size: 1.2rem; font-weight: bold; color: #fff; }
+        .sniper-nums { display: flex; justify-content: center; gap: 10px; margin-top: 8px; font-size: 1.1rem; font-weight: bold; color: #fff; flex-wrap: wrap; }
     </style>
 </head>
 <body>
+    <audio id="snd-alerta" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+
     <div id="main-app">
         <header>
-            <h1>ANALIZADOR CRCA PRO</h1>
+            <h1>ANALIZADOR CRCA PRO <span style="font-size: 0.5rem; color: #22c55e;">LOTTO ACTIVO</span></h1>
             <div id="live-clock">00:00:00</div>
             <div class="tab-container">
                 <button class="tab-btn active" onclick="openTab(event, 'registro')">REGISTRO</button>
@@ -39,65 +47,37 @@
         <section id="registro" class="tab-content active">
             <div class="card-prediccion">
                 <p style="font-size: 0.7rem; color: #38bdf8; margin: 0 0 10px 0; text-align: center; font-weight: bold;">🎯 3 DATOS FIJOS PARA HOY</p>
-                <div style="display: flex; justify-content: space-around;" id="contenedor-fijos">
-                    <div class="dato-fijo">--</div>
-                    <div class="dato-fijo">--</div>
-                    <div class="dato-fijo">--</div>
-                </div>
+                <div style="display: flex; justify-content: space-around;" id="contenedor-fijos"></div>
             </div>
 
             <div class="panel-sniper" id="panel-proxima-jugada">
-                <span class="sniper-badge">🎯 Próxima Jugada Calculada</span>
-                <div class="sniper-nums" id="numeros-sugeridos-directos">ESPERANDO DATOS...</div>
+                <span class="sniper-badge" id="sniper-titulo">🎯 Próxima Jugada Calculada</span>
+                <div class="sniper-nums" id="numeros-sugeridos-directos">INGRESANDO DATOS...</div>
             </div>
 
             <div class="panel-diario" id="panel-diario-sorteos"></div>
-            
             <div id="alertas-algoritmo" style="margin-bottom: 10px;"></div>
-
-            <div class="controls-row">
-                <input type="date" id="fecha-analisis" style="width:100%; margin-bottom:10px;">
-            </div>
 
             <div class="entrada-rapida-container" style="display:flex; gap:10px; margin-bottom:15px;">
                 <input type="text" id="num-rapido" maxlength="2" placeholder="00" style="width:60px; text-align:center; font-weight:bold;">
                 <button onclick="registrarPorNumero()" style="flex-grow:1;">ANOTAR RESULTADO</button>
             </div>
             <div class="grid-animales" id="grid-container" style="display:grid; grid-template-columns: repeat(5, 1fr); gap:5px;"></div>
+            
+            <input type="date" id="fecha-analisis" style="width:100%; margin-top:15px; background:#1e293b; color:white; border:none; padding:8px;">
         </section>
 
         <section id="estudio-avanzado" class="tab-content" style="display:none;">
-            <h3>Sugerencias por Elemento</h3>
-            <div id="sugerencias-elemento" style="margin-bottom: 20px;"></div>
-
-            <h3>ESTUDIO DE PATRONES</h3>
-            <select id="select-estudio-animal" onchange="estudiarAnimalPatron()" style="width:100%; padding:10px; margin-bottom:15px;">
-                <option value="">-- Selecciona Animal --</option>
-            </select>
             <div id="resultado-patron-avanzado"></div>
-            
-            <hr style="border: 0.5px solid #334155; margin: 20px 0;">
-            
-            <h3>ESTADO GUACHARO (75)</h3>
-            <div class="card-stats" style="text-align:center; padding:15px; background:#0f172a; border-radius:10px; border:1px solid #fbbf24;">
-                <p style="color:#fbbf24; margin:0;">SORTEOS SIN SALIR</p>
-                <div id="dias-sin-75" style="font-size:2.5rem; font-weight:bold;">0</div>
-            </div>
+            <select id="select-estudio-animal" onchange="estudiarAnimalPatron()" style="width:100%; padding:10px; margin:15px 0;"></select>
         </section>
 
         <section id="historial" class="tab-content" style="display:none;">
-            <div style="background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-                <label style="font-size: 0.7rem; color: #38bdf8;">FILTRAR POR FECHA:</label>
-                <input type="date" id="fecha-busqueda-historial" onchange="actualizarTabla()" style="width:100%;">
-            </div>
+            <input type="date" id="fecha-busqueda-historial" onchange="actualizarTabla()" style="width:100%; margin-bottom:10px;">
             <div class="tabla-contenedor" style="max-height: 400px; overflow-y: auto;">
-                <table style="width:100%; border-collapse: collapse; font-size: 0.75rem;">
-                    <thead>
-                        <tr style="background:#1e293b; color:#38bdf8;">
-                            <th>Fecha</th><th>Hora</th><th>Nro</th><th>Animal</th>
-                        </tr>
-                    </thead>
-                    <tbody id="lista-historial" style="text-align:center;"></tbody>
+                <table style="width:100%; text-align:center; font-size:0.75rem; border-collapse:collapse;">
+                    <thead><tr style="background:#1e293b; color:#38bdf8;"><th>Hora</th><th>Nro</th><th>Animal</th><th>Color</th></tr></thead>
+                    <tbody id="lista-historial"></tbody>
                 </table>
             </div>
         </section>
