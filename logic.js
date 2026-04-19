@@ -39,7 +39,10 @@ async function inicializarSistema() {
 async function cargarHistorialRemoto() {
     try {
         const { data } = await _supabase.from('historial_sorteos').select('*').order('fecha', { ascending: false });
-        if (data) { historial = data; actualizarInterfaz(); }
+        if (data) { 
+            historial = data; 
+            actualizarInterfaz(); 
+        }
     } catch (e) { console.error("Error Supabase"); }
 }
 
