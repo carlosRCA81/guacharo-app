@@ -1,9 +1,7 @@
-// CONFIGURACIÓN SUPABASE - SE MANTIENE IGUAL
 const SUPABASE_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// MAPA OFICIAL LOTTO ACTIVO (00-36) CON COLORES Y SECTORES
 const listaAnimales = [
     {n:'0', a:'DELFIN', c:'AZUL', s:'A'}, {n:'00', a:'BALLENA', c:'AZUL', s:'D'},
     {n:'01', a:'CARNERO', c:'ROJO', s:'D'}, {n:'02', a:'TORO', c:'NEGRO', s:'A'},
@@ -26,7 +24,8 @@ const listaAnimales = [
     {n:'35', a:'JIRAFA', c:'NEGRO', s:'A'}, {n:'36', a:'CULEBRA', c:'ROJO', s:'D'}
 ];
 
-const horasSorteo = ['9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
+// HORARIO COMPLETO CORREGIDO
+const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
 let historial = [];
 let horaSeleccionadaActiva = null;
 
@@ -42,7 +41,6 @@ async function cargarHistorialRemoto() {
     try {
         const { data } = await _supabase.from('historial_sorteos').select('*').order('fecha', { ascending: false });
         if (data) { 
-            // Filtrar para que solo entren números del 00 al 36
             historial = data.filter(r => listaAnimales.some(a => a.n === r.num)); 
             actualizarInterfaz(); 
         }
@@ -61,14 +59,9 @@ function actualizarJugadaSniper() {
     let sugeridos = [];
     let esAlertaCaliente = false;
 
-    // FAMILIAS Y JALES CONFIGURADOS POR LARA
     const familias = {
-        '35': ['08', '12', '09'], // Jirafa llama Raton
-        '25': ['07', '21', '10'], // Gallina llama Perico
-        '00': ['26', '29', '01'], // Ballena llama Vaca/Elefante
-        '03': ['30', '36', '24'], // Ciempies llama Caiman
-        '36': ['37', '01', '10'], // Culebra llama Carnero/Tigre
-        '08': ['12', '05', '0']   // Raton llama Caballo/Delfin
+        '35': ['08', '12', '09'], '25': ['07', '21', '10'], '00': ['26', '29', '01'],
+        '03': ['30', '36', '24'], '36': ['01', '10', '25'], '08': ['12', '05', '0']
     };
 
     if (familias[ultimo.num]) {
@@ -77,20 +70,15 @@ function actualizarJugadaSniper() {
         titulo.innerText = "🔥 FAMILIA DETECTADA";
         document.getElementById('snd-alerta').play();
     } else {
-        // Lógica de seguidilla simple si no es familia
         let n = parseInt(ultimo.num);
         sugeridos = [(n + 1).toString().padStart(2, '0'), (n === 0 ? 36 : n - 1).toString().padStart(2, '0'), '11'];
         titulo.innerText = "🎯 Próxima Jugada Calculada";
     }
 
-    // Limpiar sugeridos que se pasen de 36
-    sugeridos = sugeridos.filter(n => parseInt(n) <= 36 || n === '00' || n === '0');
-
     panel.className = `panel-sniper ${esAlertaCaliente ? 'alerta-caliente' : ''}`;
-    display.innerHTML = sugeridos.map(n => `<span style="background:#0f172a; padding: 5px 12px; border-radius: 5px; border: 1px solid white; color:white; font-weight:bold; margin-right:5px;">${n}</span>`).join('');
+    display.innerHTML = sugeridos.filter(n => parseInt(n) <= 36 || n === '00' || n === '0').map(n => `<span style="background:#0f172a; padding: 5px 12px; border-radius: 5px; border: 1px solid white; color:white; font-weight:bold; margin-right:5px;">${n}</span>`).join('');
 }
 
-// FUNCIONES DE INTERFAZ FILTRADAS PARA LOTTO ACTIVO
 function generarGridBotones() {
     const cont = document.getElementById('grid-container');
     cont.innerHTML = '';
@@ -117,7 +105,6 @@ function actualizarInterfaz() {
     actualizarJugadaSniper(); 
     generarPanelDiario();
     actualizarTabla();
-    // Aquí puedes llamar a buscarDiaGemelo() si quieres la predicción por fecha
 }
 
 function generarPanelDiario() {
@@ -137,7 +124,7 @@ function generarPanelDiario() {
 function registrarPorNumero() {
     if(!horaSeleccionadaActiva) return alert("Selecciona una hora primero");
     let v = document.getElementById('num-rapido').value;
-    if(v === '0' || v === '00') { /* ok */ } else { v = v.padStart(2, '0'); }
+    if(v !== '0' && v !== '00') v = v.padStart(2, '0');
     const ani = listaAnimales.find(a => a.n === v);
     if(ani) registrarSorteo(ani.n, ani.a, ani.c, horaSeleccionadaActiva);
     document.getElementById('num-rapido').value = '';
