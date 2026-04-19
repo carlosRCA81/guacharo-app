@@ -6,23 +6,22 @@ const listaAnimales = [
     {n:'0', a:'DELFIN', c:'AZUL', s:'A', e:'Agua'}, {n:'00', a:'BALLENA', c:'AZUL', s:'D', e:'Agua'},
     {n:'01', a:'CARNERO', c:'ROJO', s:'D', e:'Tierra'}, {n:'02', a:'TORO', c:'NEGRO', s:'A', e:'Tierra'},
     {n:'03', a:'CIEMPIES', c:'ROJO', s:'C', e:'Tierra'}, {n:'04', a:'ALACRAN', c:'ROJO', s:'F', e:'Tierra'},
-    {n:'05', a:'LEON', c:'ROJO', s:'C', e:'Tierra'}, // CORREGIDO A ROJO
-    {n:'06', a:'RANA', c:'NEGRO', s:'F', e:'Agua'}, {n:'07', a:'PERICO', c:'ROJO', s:'B', e:'Aire'},
-    {n:'08', a:'RATON', c:'NEGRO', s:'E', e:'Tierra'}, {n:'09', a:'AGUILA', c:'ROJO', s:'A', e:'Aire'},
-    {n:'10', a:'TIGRE', c:'NEGRO', s:'D', e:'Tierra'}, {n:'11', a:'GATO', c:'NEGRO', s:'B', e:'Tierra'},
-    {n:'12', a:'CABALLO', c:'ROJO', s:'E', e:'Tierra'}, {n:'13', a:'MONO', c:'NEGRO', s:'D', e:'Tierra'},
-    {n:'14', a:'PALOMA', c:'ROJO', s:'A', e:'Aire'}, {n:'15', a:'ZORRO', c:'NEGRO', s:'C', e:'Tierra'},
-    {n:'16', a:'OSO', c:'ROJO', s:'F', e:'Tierra'}, {n:'17', a:'PAVO', c:'NEGRO', s:'B', e:'Aire'},
-    {n:'18', a:'BURRO', c:'ROJO', s:'E', e:'Tierra'}, {n:'19', a:'CHIVO', c:'ROJO', s:'E', e:'Tierra'},
-    {n:'20', a:'COCHINO', c:'NEGRO', s:'B', e:'Tierra'}, {n:'21', a:'GALLO', c:'ROJO', s:'F', e:'Aire'},
-    {n:'22', a:'CAMELLO', c:'NEGRO', s:'C', e:'Tierra'}, {n:'23', a:'CEBRA', c:'ROJO', s:'F', e:'Tierra'},
-    {n:'24', a:'IGUANA', c:'NEGRO', s:'C', e:'Tierra'}, {n:'25', a:'GALLINA', c:'ROJO', s:'D', e:'Aire'},
-    {n:'26', a:'VACA', c:'NEGRO', s:'A', e:'Tierra'}, {n:'27', a:'PERRO', c:'ROJO', s:'D', e:'Tierra'},
-    {n:'28', a:'ZAMURO', c:'NEGRO', s:'A', e:'Aire'}, {n:'29', a:'ELEFANTE', c:'NEGRO', s:'E', e:'Tierra'},
-    {n:'30', a:'CAIMAN', c:'ROJO', s:'B', e:'Agua'}, {n:'31', a:'LAPA', c:'NEGRO', s:'E', e:'Tierra'},
-    {n:'32', a:'ARDILLA', c:'ROJO', s:'B', e:'Tierra'}, {n:'33', a:'PESCADO', c:'NEGRO', s:'F', e:'Agua'},
-    {n:'34', a:'VENADO', c:'ROJO', s:'C', e:'Tierra'}, {n:'35', a:'JIRAFA', c:'NEGRO', s:'A', e:'Tierra'},
-    {n:'36', a:'CULEBRA', c:'ROJO', s:'D', e:'Tierra'}
+    {n:'05', a:'LEON', c:'ROJO', s:'C', e:'Tierra'}, {n:'06', a:'RANA', c:'NEGRO', s:'F', e:'Agua'},
+    {n:'07', a:'PERICO', c:'ROJO', s:'B', e:'Aire'}, {n:'08', a:'RATON', c:'NEGRO', s:'E', e:'Tierra'},
+    {n:'09', a:'AGUILA', c:'ROJO', s:'A', e:'Aire'}, {n:'10', a:'TIGRE', c:'NEGRO', s:'D', e:'Tierra'},
+    {n:'11', a:'GATO', c:'NEGRO', s:'B', e:'Tierra'}, {n:'12', a:'CABALLO', c:'ROJO', s:'E', e:'Tierra'},
+    {n:'13', a:'MONO', c:'NEGRO', s:'D', e:'Tierra'}, {n:'14', a:'PALOMA', c:'ROJO', s:'A', e:'Aire'},
+    {n:'15', a:'ZORRO', c:'NEGRO', s:'C', e:'Tierra'}, {n:'16', a:'OSO', c:'ROJO', s:'F', e:'Tierra'},
+    {n:'17', a:'PAVO', c:'NEGRO', s:'B', e:'Aire'}, {n:'18', a:'BURRO', c:'ROJO', s:'E', e:'Tierra'},
+    {n:'19', a:'CHIVO', c:'ROJO', s:'E', e:'Tierra'}, {n:'20', a:'COCHINO', c:'NEGRO', s:'B', e:'Tierra'},
+    {n:'21', a:'GALLO', c:'ROJO', s:'F', e:'Aire'}, {n:'22', a:'CAMELLO', c:'NEGRO', s:'C', e:'Tierra'},
+    {n:'23', a:'CEBRA', c:'ROJO', s:'F', e:'Tierra'}, {n:'24', a:'IGUANA', c:'NEGRO', s:'C', e:'Tierra'},
+    {n:'25', a:'GALLINA', c:'ROJO', s:'D', e:'Aire'}, {n:'26', a:'VACA', c:'NEGRO', s:'A', e:'Tierra'},
+    {n:'27', a:'PERRO', c:'ROJO', s:'D', e:'Tierra'}, {n:'28', a:'ZAMURO', c:'NEGRO', s:'A', e:'Aire'},
+    {n:'29', a:'ELEFANTE', c:'NEGRO', s:'E', e:'Tierra'}, {n:'30', a:'CAIMAN', c:'ROJO', s:'B', e:'Agua'},
+    {n:'31', a:'LAPA', c:'NEGRO', s:'E', e:'Tierra'}, {n:'32', a:'ARDILLA', c:'ROJO', s:'B', e:'Tierra'},
+    {n:'33', a:'PESCADO', c:'NEGRO', s:'F', e:'Agua'}, {n:'34', a:'VENADO', c:'ROJO', s:'C', e:'Tierra'},
+    {n:'35', a:'JIRAFA', c:'NEGRO', s:'A', e:'Tierra'}, {n:'36', a:'CULEBRA', c:'ROJO', s:'D', e:'Tierra'}
 ];
 
 const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
@@ -47,7 +46,7 @@ async function cargarHistorialRemoto() {
     try {
         const { data } = await _supabase.from('historial_sorteos').select('*').order('fecha', { ascending: false });
         if (data) { historial = data; actualizarInterfaz(); }
-    } catch (e) { console.error("Error BD"); }
+    } catch (e) { }
 }
 
 function generarPanelDiario() {
@@ -82,20 +81,14 @@ function actualizarInterfaz() {
 
 function generarTripletasFijas() {
     const cont = document.getElementById('seccion-tripletas');
-    const hoy = historial.filter(r => r.fecha === document.getElementById('fecha-analisis').value);
-    
-    // Algoritmo de Tripleta basado en Sectores calientes del día
-    const sectoresDia = hoy.map(r => listaAnimales.find(a => a.n === r.num)?.s);
-    const sectorFrecuente = sectoresDia.sort((a,b) => sectoresDia.filter(v => v===a).length - sectoresDia.filter(v => v===b).length).pop() || 'A';
-    
-    const t1 = ["05", "12", "25"]; // Fija por atracción histórica
-    const t2 = listaAnimales.filter(a => a.s === sectorFrecuente).slice(0, 3).map(a => a.n); // Por sector caliente
-    const t3 = ["07", "20", "17"]; // La jugada del espejo
+    const t1 = ["05", "12", "25"];
+    const t2 = ["07", "20", "17"];
+    const t3 = ["09", "33", "02"];
 
     cont.innerHTML = `
-        <div class="card-tripleta"><small>🔥 TRIPLETA FIJA 1</small><div class="tripleta-nums">${t1.join(' - ')}</div></div>
-        <div class="card-tripleta"><small>🎯 SECTOR EXPLOSIVO</small><div class="tripleta-nums">${t2.join(' - ')}</div></div>
-        <div class="card-tripleta"><small>💎 JUGADA MAESTRA</small><div class="tripleta-nums">${t3.join(' - ')}</div></div>
+        <div class="card-tripleta"><small>🔥 TRIPLETA FIJA</small><div class="tripleta-nums">${t1.join('-')}</div></div>
+        <div class="card-tripleta"><small>🎯 SECTOR CALIENTE</small><div class="tripleta-nums">${t2.join('-')}</div></div>
+        <div class="card-tripleta"><small>💎 JUGADA MAESTRA</small><div class="tripleta-nums">${t3.join('-')}</div></div>
     `;
 }
 
@@ -103,42 +96,40 @@ function actualizarJugadaSniper() {
     const display = document.getElementById('numeros-sugeridos-directos');
     const panel = document.getElementById('panel-proxima-jugada');
     const titulo = document.getElementById('sniper-titulo');
-    const aviso = document.getElementById('aviso-tripleta');
+    const aviso = document.getElementById('aviso-fuera');
     const fHoy = document.getElementById('fecha-analisis').value;
     const hoy = historial.filter(r => r.fecha === fHoy).sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
     
     if (hoy.length === 0) {
-        display.innerHTML = "INICIANDO JUGADA...";
+        display.innerHTML = "ESPERANDO DATOS";
         return;
     }
 
     const ultimo = hoy[hoy.length - 1];
     let sugeridos = reglasAtraccion[ultimo.num] || [];
-    let esAlerta = sugeridos.length > 0;
-
-    // Lógica Proximidad Siguiente Día
+    
     if (ultimo.hora === "7:00 PM") {
-        titulo.innerText = "🌅 PROYECCIÓN MAÑANA (APERTURA)";
-        sugeridos = ["01", "10", "36"]; // Números típicos de arranque lunes/mañana
+        titulo.innerText = "🌅 PROYECCIÓN MAÑANA";
+        sugeridos = ["01", "10", "36"];
         panel.classList.remove('alerta-caliente');
-    } else if (esAlerta) {
+    } else if (sugeridos.length > 0) {
         titulo.innerText = "🔥 FAMILIA DETECTADA";
         panel.classList.add('alerta-caliente');
         try { document.getElementById('snd-alerta').play(); } catch(e){}
     } else {
-        titulo.innerText = "🎯 Próxima Jugada Calculada";
+        titulo.innerText = "🎯 PRÓXIMA JUGADA";
         sugeridos = [(parseInt(ultimo.num)+1).toString().padStart(2,'0'), "11", "25"];
         panel.classList.remove('alerta-caliente');
     }
 
-    display.innerHTML = sugeridos.map(n => `<span style="background:#0f172a; padding: 5px 12px; border-radius: 5px; border: 1px solid #fbbf24; margin:2px;">${n}</span>`).join('');
+    display.innerHTML = sugeridos.map(n => `<span style="background:#1e293b; padding: 4px 10px; border-radius: 4px; border: 1px solid #fbbf24; margin:2px;">${n}</span>`).join('');
     
     const bloqueado = hoy.length >= 2 ? hoy[hoy.length - 2].num : "--";
-    aviso.innerHTML = `<div style="color:#ff4d4d;">🚫 FUERA: ${bloqueado}</div>`;
+    aviso.innerHTML = `🚫 NÚMERO FUERA: ${bloqueado}`;
 }
 
 function registrarPorNumero() {
-    if(!horaSeleccionadaActiva) return alert("Selecciona una hora primero");
+    if(!horaSeleccionadaActiva) return alert("Selecciona una hora");
     let v = document.getElementById('num-rapido').value;
     if(v !== '0' && v !== '00') v = v.padStart(2, '0');
     const ani = listaAnimales.find(a => a.n === v);
@@ -146,28 +137,27 @@ function registrarPorNumero() {
     document.getElementById('num-rapido').value = '';
 }
 
-function estudiarAtraccion() {
-    const val = document.getElementById('select-estudio-animal').value;
-    const res = document.getElementById('resultado-atraccion');
-    if (!val) return res.innerHTML = "";
-    const comp = reglasAtraccion[val] || ["Análisis de Sector"];
-    res.innerHTML = `<div style="margin-top:10px;"><b>Atrae a:</b><br><div style="display:flex; justify-content:center; gap:5px; margin-top:5px;">
-        ${comp.map(n => `<span class="badge bg-rojo" style="padding:8px;">${n}</span>`).join('')}
-    </div></div>`;
-}
-
 function generarGridBotones() {
     const cont = document.getElementById('grid-container');
     cont.innerHTML = '';
     listaAnimales.forEach(a => {
         const d = document.createElement('div');
-        const eltClass = a.e === 'Agua' ? 'el-agua' : a.e === 'Tierra' ? 'el-tierra' : 'el-aire';
-        d.className = `animal-btn ${eltClass}`;
-        d.style.borderLeft = `4px solid ${a.c === 'ROJO' ? '#ef4444' : a.c === 'NEGRO' ? '#000' : '#38bdf8'}`;
+        d.className = `animal-btn ${a.e === 'Agua' ? 'el-agua' : a.e === 'Tierra' ? 'el-tierra' : 'el-aire'}`;
+        d.style.borderLeft = `3px solid ${a.c === 'ROJO' ? '#ef4444' : '#000'}`;
         d.innerHTML = `<b>${a.n}</b><br>${a.a}`;
         d.onclick = () => { if(horaSeleccionadaActiva) registrarSorteo(a.n, a.a, a.c, horaSeleccionadaActiva); };
         cont.appendChild(d);
     });
+}
+
+function estudiarAtraccion() {
+    const val = document.getElementById('select-estudio-animal').value;
+    const res = document.getElementById('resultado-atraccion');
+    if (!val) return res.innerHTML = "";
+    const comp = reglasAtraccion[val] || ["Sin datos fijos"];
+    res.innerHTML = `<div style="margin-top:10px;"><b>Atracción directa:</b><br><div style="display:flex; justify-content:center; gap:5px; margin-top:5px;">
+        ${comp.map(n => `<span style="background:#ef4444; padding:5px 10px; border-radius:4px; font-weight:bold;">${n}</span>`).join('')}
+    </div></div>`;
 }
 
 function actualizarTabla() {
@@ -177,7 +167,7 @@ function actualizarTabla() {
     historial.filter(r => r.fecha === f).sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora)).forEach(r => {
         const ani = listaAnimales.find(a => a.n === r.num);
         if(ani) {
-            c.innerHTML += `<tr><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${ani.s}/${ani.e}</td><td><span class="badge ${ani.c === 'ROJO' ? 'bg-rojo' : 'bg-negro'}">${ani.c}</span></td></tr>`;
+            c.innerHTML += `<tr><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>${ani.s}/${ani.e}</td><td>${r.tipo}</td></tr>`;
         }
     });
 }
@@ -191,13 +181,9 @@ function openTab(evt, n) {
 
 function llenarSelectorEstudio() {
     const s = document.getElementById('select-estudio-animal');
-    s.innerHTML = '<option value="">-- Analizar --</option>';
+    s.innerHTML = '<option value="">-- Seleccionar --</option>';
     listaAnimales.forEach(a => s.innerHTML += `<option value="${a.n}">${a.n} - ${a.a}</option>`);
 }
 
-setInterval(() => { 
-    const c = document.getElementById('live-clock');
-    if(c) c.innerText = new Date().toLocaleTimeString(); 
-}, 1000);
-
+setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 window.onload = inicializarSistema;
