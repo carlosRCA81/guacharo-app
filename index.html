@@ -11,7 +11,6 @@
         .hora-box.jugado { background: #22c55e !important; color: #0f172a; font-weight: bold;}
         .hora-box.active-select { border: 2px solid #38bdf8 !important; background: #1e293b; }
         
-        /* ALERTAS DE FAMILIAS Y SEGUIDILLAS */
         @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         .alerta-caliente { background: #22c55e !important; box-shadow: 0 0 15px #22c55e; animation: parpadeo 1s infinite; border: 2px solid white !important; }
         .alerta-oro { background: #fbbf24 !important; box-shadow: 0 0 15px #fbbf24; border: 2px solid white !important; }
@@ -37,7 +36,7 @@
         <header>
             <h1>ANALIZADOR CRCA PRO <span style="font-size: 0.5rem; color: #22c55e;">LOTTO ACTIVO</span></h1>
             <div id="live-clock">00:00:00</div>
-            <div class="tab-container">
+            <div class="tab-container" style="display:flex; justify-content:center; gap:5px; margin-bottom:10px;">
                 <button class="tab-btn active" onclick="openTab(event, 'registro')">REGISTRO</button>
                 <button class="tab-btn" onclick="openTab(event, 'estudio-avanzado')">ALGORITMO</button>
                 <button class="tab-btn" onclick="openTab(event, 'historial')">HISTORIAL</button>
@@ -55,20 +54,7 @@
                 <div class="sniper-nums" id="numeros-sugeridos-directos">INGRESANDO DATOS...</div>
             </div>
 
-            <div class="panel-diario" id="panel-diario-sorteos">
-                <div class="hora-box" onclick="seleccionarHora(this)">8:00 AM</div>
-                <div class="hora-box" onclick="seleccionarHora(this)">9:00 AM</div>
-                <div class="hora-box" onclick="seleccionarHora(this)">10:00 AM</div>
-                <div class="hora-box" onclick="seleccionarHora(this)">11:00 AM</div>
-                <div class="hora-box" onclick="seleccionarHora(this)">12:00 PM</div>
-                <div class="hora-box" onclick="seleccionarHora(this)">1:00 PM</div>
-                <div class="hora-box" onclick="seleccionarHora(this)">2:00 PM</div>
-                <div class="hora-box" onclick="seleccionarHora(this)">3:00 PM</div>
-                <div class="hora-box" onclick="seleccionarHora(this)">4:00 PM</div>
-                <div class="hora-box" onclick="seleccionarHora(this)">5:00 PM</div>
-                <div class="hora-box" onclick="seleccionarHora(this)">6:00 PM</div>
-                <div class="hora-box" onclick="seleccionarHora(this)">7:00 PM</div>
-            </div>
+            <div class="panel-diario" id="panel-diario-sorteos"></div>
 
             <div id="alertas-algoritmo" style="margin-bottom: 10px;"></div>
 
