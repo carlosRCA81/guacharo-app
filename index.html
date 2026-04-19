@@ -3,194 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador CRCA PRO - Lotto Activo</title>
+    <title>Analizador CRCA PRO</title>
     <style>
-        :root { --bg-dark: #0f172a; --card-bg: #1e293b; --accent: #38bdf8; --text: #f8fafc; }
-        body { background-color: var(--bg-dark); color: var(--text); font-family: sans-serif; margin: 0; padding: 10px; }
-        #main-app { max-width: 450px; margin: auto; background: var(--card-bg); border-radius: 12px; padding: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --text: #f8fafc; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding: 10px; display: flex; justify-content: center; }
+        #app { width: 100%; max-width: 400px; background: var(--card); border-radius: 12px; padding: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         
         header { text-align: center; margin-bottom: 15px; }
-        h1 { color: var(--accent); font-size: 1.2rem; margin: 0; }
-        #live-clock { color: #fbbf24; font-size: 1.1rem; font-weight: bold; margin: 5px 0; }
-
-        /* PESTAÑAS */
-        .tab-container { display: flex; gap: 5px; margin: 15px 0; }
-        .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 6px; background: #334155; color: white; font-weight: bold; cursor: pointer; font-size: 0.75rem; }
+        .clock { color: #fbbf24; font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; }
+        
+        .tabs { display: flex; gap: 5px; margin-bottom: 15px; }
+        .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 6px; background: #334155; color: white; cursor: pointer; font-weight: bold; font-size: 0.7rem; }
         .tab-btn.active { background: var(--accent); color: #0f172a; }
 
-        /* REGISTRO Y HORAS CORREGIDAS (8AM A 7PM) */
-        .panel-diario { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 15px; background: #0f172a; padding: 10px; border-radius: 8px; border: 1px solid #334155; }
-        .hora-box { background: #334155; padding: 10px 2px; text-align: center; border-radius: 4px; border: 1px solid #475569; color: #f8fafc; cursor: pointer; font-size: 0.65rem; }
-        .hora-box.jugado { background: #22c55e !important; color: #0f172a; font-weight: bold; }
-        .hora-box.active-select { border: 2px solid var(--accent) !important; background: #0f172a; }
+        /* REGISTRO */
+        .status-box { border: 2px solid #ef4444; border-radius: 8px; padding: 10px; text-align: center; margin-bottom: 15px; }
+        .grid-horas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 15px; }
+        .hora-item { background: #334155; padding: 8px 2px; text-align: center; border-radius: 4px; font-size: 0.65rem; cursor: pointer; border: 1px solid transparent; }
+        .hora-item.selected { border-color: var(--accent); background: #0f172a; }
+        .hora-item.has-data { background: #22c55e; color: #0f172a; font-weight: bold; }
 
-        .panel-sniper { border: 2px solid #ef4444; border-radius: 10px; padding: 10px; text-align: center; margin-bottom: 15px; }
-        .sniper-badge { background: #ef4444; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.6rem; font-weight: bold; }
-        
-        .grid-animales { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; height: 200px; overflow-y: auto; background: #0f172a; padding: 10px; border-radius: 8px; }
-        .animal-btn { background: #334155; padding: 8px; text-align: center; border-radius: 4px; font-size: 0.65rem; cursor: pointer; border: 1px solid #475569; }
+        .animal-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; height: 180px; overflow-y: auto; background: #0f172a; padding: 8px; border-radius: 8px; }
+        .animal-btn { background: #334155; padding: 10px 5px; text-align: center; border-radius: 4px; font-size: 0.6rem; cursor: pointer; border: 1px solid #475569; }
 
-        /* TABLA HISTORIAL */
-        .tabla-contenedor { max-height: 350px; overflow-y: auto; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
-        th { background: #0f172a; color: var(--accent); padding: 10px; position: sticky; top: 0; }
-        td { padding: 10px; border-bottom: 1px solid #334155; text-align: center; }
-        .badge-n { background: #0f172a; border: 1px solid var(--accent); padding: 2px 6px; border-radius: 4px; color: var(--accent); font-weight: bold; }
+        .date-picker { width: 100%; padding: 10px; margin-top: 10px; background: #334155; border: none; color: white; border-radius: 5px; }
+
+        /* TABLA HISTORIAL LIMPIA */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.8rem; }
+        th { color: var(--accent); border-bottom: 1px solid #334155; padding: 8px; text-align: center; }
+        td { padding: 8px; border-bottom: 1px solid #334155; text-align: center; }
     </style>
 </head>
 <body>
-    <div id="main-app">
-        <header>
-            <h1>ANALIZADOR CRCA PRO <span style="font-size: 0.5rem; color: #22c55e;">LOTTO ACTIVO</span></h1>
-            <div id="live-clock">00:00:00</div>
-            <div class="tab-container">
-                <button class="tab-btn active" onclick="openTab(event, 'registro')">REGISTRO</button>
-                <button class="tab-btn" onclick="openTab(event, 'algoritmo')">ALGORITMO</button>
-                <button class="tab-btn" onclick="openTab(event, 'historial-tab')">HISTORIAL</button>
-            </div>
-        </header>
 
-        <section id="registro" class="tab-content">
-            <div class="panel-sniper">
-                <span class="sniper-badge">PRÓXIMA JUGADA</span>
-                <div id="display-datos" style="margin-top:8px; font-weight:bold;">DATOS DE ENERO...</div>
-            </div>
+<div id="app">
+    <header>
+        <div id="clock" class="clock">00:00:00</div>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('registro')">REGISTRO</button>
+            <button class="tab-btn" onclick="showTab('algoritmo')">ALGORITMO</button>
+            <button class="tab-btn" onclick="showTab('historial')">HISTORIAL</button>
+        </div>
+    </header>
 
-            <div class="panel-diario" id="panel-horas"></div>
+    <section id="registro" class="content">
+        <div class="status-box">
+            <span style="font-size: 0.6rem; font-weight: bold; color: #ef4444;">PRÓXIMA JUGADA CALCULADA</span>
+            <div style="font-size: 0.9rem; margin-top: 5px;">DATOS DE ENERO...</div>
+        </div>
+        <div class="grid-horas" id="grid-horas"></div>
+        <div class="animal-grid" id="animal-grid"></div>
+        <input type="date" id="main-date" class="date-picker" onchange="refreshAll()">
+    </section>
 
-            <div style="display:flex; gap:10px; margin-bottom:15px;">
-                <input type="text" id="num-input" placeholder="00" maxlength="2" style="width:60px; text-align:center; background:#0f172a; border:1px solid var(--accent); color:white; font-weight:bold; border-radius:6px;">
-                <button onclick="registrarPorInput()" style="flex-grow:1; background:var(--accent); border:none; border-radius:6px; font-weight:bold; cursor:pointer;">ANOTAR RESULTADO</button>
-            </div>
+    <section id="algoritmo" class="content" style="display:none;">
+        <h3 style="text-align:center; color:var(--accent); font-size:0.9rem;">ESTUDIO DE PATRONES ACTIVADO</h3>
+        <div style="background:#0f172a; padding:20px; border-radius:8px; text-align:center; color:#94a3b8; font-size: 0.8rem;">
+            Analizando secuencias de sorteos anteriores...
+        </div>
+    </section>
 
-            <div class="grid-animales" id="grid-animales"></div>
-            
-            <div style="margin-top:15px;">
-                <label style="font-size:0.65rem; color:var(--accent)">SELECCIONAR FECHA (ENERO - ABRIL):</label>
-                <input type="date" id="fecha-app" onchange="cambioFecha()" style="width:100%; padding:8px; background:#334155; color:white; border:none; border-radius:4px; margin-top:5px;">
-            </div>
-        </section>
+    <section id="historial" class="content" style="display:none;">
+        <table>
+            <thead>
+                <tr><th>HORA</th><th>N°</th><th>ANIMAL</th></tr>
+            </thead>
+            <tbody id="historial-body"></tbody>
+        </table>
+    </section>
+</div>
 
-        <section id="algoritmo" class="tab-content" style="display:none;">
-            <div style="padding:20px; text-align:center;">
-                <p style="color:#fbbf24;">ESTUDIO DE PATRONES ACTIVADO</p>
-                <select id="sel-estudio" style="width:100%; padding:10px; background:#334155; color:white;"></select>
-            </div>
-        </section>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const S_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
+    const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
+    const _supabase = supabase.createClient(S_URL, S_KEY);
 
-        <section id="historial-tab" class="tab-content" style="display:none;">
-            <div class="tabla-contenedor">
-                <table>
-                    <thead>
-                        <tr><th>HORA</th><th>N°</th><th>ANIMAL</th></tr>
-                    </thead>
-                    <tbody id="lista-historial"></tbody>
-                </table>
-            </div>
-        </section>
-    </div>
+    const HORAS = ["8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM", "6:00 PM", "7:00 PM"];
+    const ANIMALES = [{n:'0',a:'DELFIN'},{n:'00',a:'BALLENA'},{n:'01',a:'CARNERO'},{n:'02',a:'TORO'},{n:'03',a:'CIEMPIES'},{n:'04',a:'ALACRAN'},{n:'05',a:'LEON'},{n:'06',a:'RANA'},{n:'07',a:'PERICO'},{n:'08',a:'RATON'},{n:'09',a:'AGUILA'},{n:'10',a:'TIGRE'},{n:'11',a:'GATO'},{n:'12',a:'CABALLO'},{n:'13',a:'MONO'},{n:'14',a:'PALOMA'},{n:'15',a:'ZORRO'},{n:'16',a:'OSO'},{n:'17',a:'PAVO'},{n:'18',a:'BURRO'},{n:'19',a:'CHIVO'},{n:'20',a:'COCHINO'},{n:'21',a:'GALLO'},{n:'22',a:'CAMELLO'},{n:'23',a:'CEBRA'},{n:'24',a:'IGUANA'},{n:'25',a:'GALLINA'},{n:'26',a:'VACA'},{n:'27',a:'PERRO'},{n:'28',a:'ZAMURO'},{n:'29',a:'ELEFANTE'},{n:'30',a:'CAIMAN'},{n:'31',a:'LAPA'},{n:'32',a:'ARDILLA'},{n:'33',a:'PESCADO'},{n:'34',a:'VENADO'},{n:'35',a:'JIRAFA'},{n:'36',a:'CULEBRA'}];
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        const S_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
-        const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
-        const _supabase = supabase.createClient(S_URL, S_KEY);
+    let selectedHora = null;
+    let dataMemoria = [];
 
-        // LISTA DE HORAS TOTALMENTE CORREGIDA (8AM A 7PM)
-        const HORAS = [
-            '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', 
-            '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', 
-            '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'
-        ];
+    function showTab(tabId) {
+        document.querySelectorAll('.content').forEach(c => c.style.display = 'none');
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).style.display = 'block';
+        event.currentTarget.classList.add('active');
+    }
 
-        const ANIMALES = [{n:'0', a:'DELFIN'}, {n:'00', a:'BALLENA'}, {n:'01', a:'CARNERO'}, {n:'02', a:'TORO'}, {n:'03', a:'CIEMPIES'}, {n:'04', a:'ALACRAN'}, {n:'05', a:'LEON'}, {n:'06', a:'RANA'}, {n:'07', a:'PERICO'}, {n:'08', a:'RATON'}, {n:'09', a:'AGUILA'}, {n:'10', a:'TIGRE'}, {n:'11', a:'GATO'}, {n:'12', a:'CABALLO'}, {n:'13', a:'MONO'}, {n:'14', a:'PALOMA'}, {n:'15', a:'ZORRO'}, {n:'16', a:'OSO'}, {n:'17', a:'PAVO'}, {n:'18', a:'BURRO'}, {n:'19', a:'CHIVO'}, {n:'20', a:'COCHINO'}, {n:'21', a:'GALLO'}, {n:'22', a:'CAMELLO'}, {n:'23', a:'CEBRA'}, {n:'24', a:'IGUANA'}, {n:'25', a:'GALLINA'}, {n:'26', a:'VACA'}, {n:'27', a:'PERRO'}, {n:'28', a:'ZAMURO'}, {n:'29', a:'ELEFANTE'}, {n:'30', a:'CAIMAN'}, {n:'31', a:'LAPA'}, {n:'32', a:'ARDILLA'}, {n:'33', a:'PESCADO'}, {n:'34', a:'VENADO'}, {n:'35', a:'JIRAFA'}, {n:'36', a:'CULEBRA'}];
+    async function refreshAll() {
+        const { data } = await _supabase.from('historial_sorteos').select('*');
+        dataMemoria = data || [];
+        renderHoras();
+        renderHistorial();
+    }
 
-        let db_memoria = [];
-        let hora_sel = null;
+    function renderHoras() {
+        const grid = document.getElementById('grid-horas');
+        const fecha = document.getElementById('main-date').value;
+        grid.innerHTML = '';
+        HORAS.forEach(h => {
+            const res = dataMemoria.find(d => d.fecha === fecha && d.hora === h);
+            const div = document.createElement('div');
+            div.className = `hora-item ${res ? 'has-data' : ''} ${selectedHora === h ? 'selected' : ''}`;
+            div.innerHTML = `${h}${res ? `<br>${res.num}` : ''}`;
+            div.onclick = () => { selectedHora = h; renderHoras(); };
+            grid.appendChild(div);
+        });
+    }
 
-        function openTab(evt, tabName) {
-            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(tabName).style.display = 'block';
-            evt.currentTarget.classList.add('active');
-            if(tabName === 'historial-tab') renderHistorial();
-        }
+    function renderAnimales() {
+        const grid = document.getElementById('animal-grid');
+        ANIMALES.forEach(ani => {
+            const div = document.createElement('div');
+            div.className = 'animal-btn';
+            div.innerHTML = `<strong>${ani.n}</strong><br>${ani.a}`;
+            div.onclick = () => guardar(ani.n, ani.a);
+            grid.appendChild(div);
+        });
+    }
 
-        async function init() {
-            const hoy = new Date().toISOString().split('T')[0];
-            document.getElementById('fecha-app').value = hoy;
-            renderHoras();
-            renderAnimales();
-            await fetchSupabase();
-            setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
-        }
+    async function guardar(n, a) {
+        if (!selectedHora) return alert("Selecciona una hora primero");
+        const entry = { fecha: document.getElementById('main-date').value, hora: selectedHora, num: n, animal: a };
+        await _supabase.from('historial_sorteos').upsert(entry);
+        refreshAll();
+    }
 
-        async function fetchSupabase() {
-            const { data } = await _supabase.from('historial_sorteos').select('*');
-            if(data) { db_memoria = data; renderHoras(); renderHistorial(); }
-        }
+    function renderHistorial() {
+        const body = document.getElementById('historial-body');
+        const fecha = document.getElementById('main-date').value;
+        body.innerHTML = '';
+        const hoy = dataMemoria.filter(d => d.fecha === fecha).sort((a,b) => HORAS.indexOf(a.hora) - HORAS.indexOf(b.hora));
+        hoy.forEach(r => {
+            body.innerHTML += `<tr><td>${r.hora}</td><td><b>${r.num}</b></td><td>${r.animal}</td></tr>`;
+        });
+    }
 
-        function renderHoras() {
-            const cont = document.getElementById('panel-horas');
-            const fecha = document.getElementById('fecha-app').value;
-            cont.innerHTML = '';
-            HORAS.forEach(h => {
-                const existe = db_memoria.find(r => r.fecha === fecha && r.hora === h);
-                const div = document.createElement('div');
-                div.className = `hora-box ${existe ? 'jugado' : ''} ${h === hora_sel ? 'active-select' : ''}`;
-                div.innerHTML = `${h}${existe ? `<br><span style="color:white">${existe.num}</span>` : ''}`;
-                div.onclick = () => { hora_sel = h; renderHoras(); };
-                cont.appendChild(div);
-            });
-        }
-
-        function renderAnimales() {
-            const cont = document.getElementById('grid-animales');
-            ANIMALES.forEach(ani => {
-                const div = document.createElement('div');
-                div.className = 'animal-btn';
-                div.innerHTML = `<b>${ani.n}</b><br>${ani.a}`;
-                div.onclick = () => registrar(ani.n, ani.a);
-                cont.appendChild(div);
-            });
-        }
-
-        async function registrar(n, a) {
-            if(!hora_sel) return alert("Selecciona una hora primero");
-            const registro = { fecha: document.getElementById('fecha-app').value, hora: hora_sel, num: n, animal: a };
-            const { error } = await _supabase.from('historial_sorteos').upsert(registro);
-            if(!error) {
-                const idx = db_memoria.findIndex(r => r.fecha === registro.fecha && r.hora === registro.hora);
-                if(idx !== -1) db_memoria[idx] = registro; else db_memoria.push(registro);
-                renderHoras();
-                renderHistorial();
-            }
-        }
-
-        function renderHistorial() {
-            const tabla = document.getElementById('lista-historial');
-            const fecha = document.getElementById('fecha-app').value;
-            tabla.innerHTML = '';
-            const filtrados = db_memoria.filter(r => r.fecha === fecha).sort((a,b) => HORAS.indexOf(a.hora) - HORAS.indexOf(b.hora));
-            filtrados.forEach(r => {
-                tabla.innerHTML += `<tr><td>${r.hora}</td><td><span class="badge-n">${r.num}</span></td><td>${r.animal}</td></tr>`;
-            });
-        }
-
-        function registrarPorInput() {
-            const val = document.getElementById('num-input').value;
-            const ani = ANIMALES.find(x => x.n === val);
-            if(ani) registrar(ani.n, ani.a);
-            document.getElementById('num-input').value = '';
-        }
-
-        function cambioFecha() {
-            hora_sel = null;
-            renderHoras();
-            renderHistorial();
-        }
-
-        window.onload = init;
-    </script>
+    window.onload = () => {
+        document.getElementById('main-date').value = new Date().toISOString().split('T')[0];
+        setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
+        renderAnimales();
+        refreshAll();
+    };
+</script>
 </body>
 </html>
