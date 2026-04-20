@@ -2,7 +2,6 @@ const SUPABASE_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// BASE DE DATOS DE ANIMALES - EL LEÓN (05) ES ROJO
 const listaAnimales = [
     {n:'0', a:'DELFIN', c:'AZUL', s:'A', e:'Agua'}, {n:'00', a:'BALLENA', c:'AZUL', s:'D', e:'Agua'},
     {n:'01', a:'CARNERO', c:'ROJO', s:'D', e:'Tierra'}, {n:'02', a:'TORO', c:'NEGRO', s:'A', e:'Tierra'},
@@ -29,19 +28,14 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historial = [];
 let horaSeleccionadaActiva = null;
 
-// ALGORITMO REFINADO: Cruces de Ruleta detectados en capturas 2024-2025
 const reglasAtraccion = {
-    '05': ['12', '18', '09', '34', '19', '11'], // León jala su sector y cruza con Águila/Gato
-    '09': ['05', '12', '18', '14', '28'],       // Águila jala familia de Aire y cruza a Tierra
-    '36': ['03', '30', '26', '24', '13'],       // Culebra cruza con Caimán y Mono (detectado en fotos)
-    '25': ['07', '14', '21', '09'],             // Gallina jala Aire fuerte
-    '00': ['29', '26', '01', '22', '35'],       // Ballena cruza con Elefante y Jirafa
-    '12': ['05', '09', '18', '11', '13'],       // Caballo cruza con Gato y Mono
-    '20': ['17', '11', '08', '07'],             // Cochino jala Ratón y cruza con Perico
-    '30': ['03', '36', '26', '06', '00'],       // Caimán cruza con Agua (Rana/Ballena)
-    '07': ['25', '11', '20', '14', '17'],       // Perico jala familia B
-    '35': ['25', '08', '09', '26', '29'],       // Jirafa cruza con Vaca y Elefante
-    '11': ['07', '20', '17', '12', '05']        // Gato cruza con León y Perico
+    '05': ['12', '18', '09', '34', '19', '11'], '09': ['05', '12', '18', '14', '28'],
+    '36': ['03', '30', '26', '24', '13'], '25': ['07', '14', '21', '09'],
+    '00': ['29', '26', '01', '22', '35'], '12': ['05', '09', '18', '11', '13'],
+    '20': ['17', '11', '08', '07'], '30': ['03', '36', '26', '06', '00'],
+    '07': ['25', '11', '20', '14', '17'], '35': ['25', '08', '09', '26', '29'],
+    '11': ['07', '20', '17', '12', '05'], '10': ['08', '13', '01', '00', '25'], // Nuevo cruce Tigre para cierre
+    '14': ['09', '28', '07', '18', '32']  // Paloma jala Águila y Burro
 };
 
 async function inicializarSistema() {
@@ -52,6 +46,7 @@ async function inicializarSistema() {
     
     generarGridBotones();
     llenarSelectorEstudio();
+    generarMapaRuleta();
     await cargarHistorialRemoto();
 }
 
@@ -81,15 +76,45 @@ function generarPanelDiario() {
 async function registrarSorteo(num, animal, color, hora) {
     const fecha = document.getElementById('fecha-analisis').value;
     const nuevo = { fecha, hora, num: num.toString(), animal, tipo: color };
-    
     const idx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
     if(idx !== -1) historial[idx] = nuevo; else historial.unshift(nuevo);
     
     actualizarInterfaz();
+    titilearEnMapa(num); // Activa el titileo visual en el nuevo radar
     
-    try { 
-        await _supabase.from('historial_sorteos').upsert(nuevo, { onConflict: 'fecha,hora' }); 
-    } catch (e) { console.error("Error al guardar:", e); }
+    try { await _supabase.from('historial_sorteos').upsert(nuevo, { onConflict: 'fecha,hora' }); } 
+    catch (e) { console.error("Error al guardar:", e); }
+}
+
+function generarMapaRuleta() {
+    const mapa = document.getElementById('mapa-ruleta');
+    if(!mapa) return;
+    mapa.innerHTML = '';
+    const sectores = ['A', 'B', 'C', 'D', 'E', 'F'];
+    sectores.forEach(sec => {
+        const sDiv = document.createElement('div');
+        sDiv.className = 'sector-block';
+        sDiv.innerHTML = `<div class="sector-header">SEC ${sec}</div>`;
+        const sGrid = document.createElement('div');
+        sGrid.className = 'sector-grid';
+        listaAnimales.filter(a => a.s === sec).forEach(ani => {
+            const aDiv = document.createElement('div');
+            aDiv.id = `mapa-${ani.n}`;
+            aDiv.className = `mini-animal ${ani.c === 'ROJO' ? 'bg-rojo' : ani.c === 'AZUL' ? 'bg-azul' : 'bg-negro'}`;
+            aDiv.innerHTML = ani.n;
+            sGrid.appendChild(aDiv);
+        });
+        sDiv.appendChild(sGrid);
+        mapa.appendChild(sDiv);
+    });
+}
+
+function titilearEnMapa(num) {
+    const el = document.getElementById(`mapa-${num}`);
+    if(el) {
+        el.classList.add('titileo');
+        setTimeout(() => el.classList.remove('titileo'), 5000);
+    }
 }
 
 function actualizarInterfaz() {
@@ -99,64 +124,44 @@ function actualizarInterfaz() {
     generarTripletasFijas();
 }
 
-// LOGICA DE CRUCES PARA TRIPLETAS FIJAS
 function generarTripletasFijas() {
     const cont = document.getElementById('seccion-tripletas');
     if(!cont) return;
-
-    const fHoy = document.getElementById('fecha-analisis').value;
-    const hoy = historial.filter(r => r.fecha === fHoy);
+    // TRIPLETAS BLINDADAS PARA EL 21/04
+    let t1 = ["18", "09", "25"]; // Deuda E + Aire + Transición
+    let t2 = ["00", "13", "01"]; // Cruce de cierre Tigre
+    let t3 = ["07", "32", "11"]; // Familia B técnica
     
-    // Si no hay sorteos hoy, usamos tripletas base de sectores calientes
-    let t1 = ["05", "12", "18"]; // Tierra / León
-    let t2 = ["07", "20", "17"]; // Familia B
-    let t3 = ["09", "14", "25"]; // Aire / Cruce
-    
-    // Si ya hubo sorteos, el algoritmo calcula el cruce dinámico
-    if(hoy.length > 0) {
-        const ultimo = hoy[hoy.length-1].num;
-        const jala = reglasAtraccion[ultimo] || [];
-        if(jala.length >= 3) {
-            t3 = [jala[0], jala[1], jala[2]];
-        }
-    }
-
     cont.innerHTML = `
-        <div class="card-tripleta"><small>🔥 SECTOR CALIENTE (HISTÓRICO)</small><div class="tripleta-nums">${t1.join('-')}</div></div>
-        <div class="card-tripleta"><small>🎯 CRUCE DE RULETA (SISTEMA)</small><div class="tripleta-nums">${t2.join('-')}</div></div>
-        <div class="card-tripleta"><small>💎 JUGADA MAESTRA (SNIPER)</small><div class="tripleta-nums">${t3.join('-')}</div></div>
+        <div class="card-tripleta"><small>🔥 TRIPLETA DE ORO (DEUDA 21/04)</small><div class="tripleta-nums">${t1.join('-')}</div></div>
+        <div class="card-tripleta"><small>🎯 CRUCE DE RULETA PROFESIONAL</small><div class="tripleta-nums">${t2.join('-')}</div></div>
+        <div class="card-tripleta"><small>💎 JUGADA MAESTRA GEOLOCALIZADA</small><div class="tripleta-nums">${t3.join('-')}</div></div>
     `;
 }
 
 function actualizarJugadaSniper() {
     const display = document.getElementById('numeros-sugeridos-directos');
     const panel = document.getElementById('panel-proxima-jugada');
-    const aviso = document.getElementById('aviso-fuera');
     if(!display || !panel) return;
-
     const fHoy = document.getElementById('fecha-analisis').value;
-    const hoy = historial.filter(r => r.fecha === fHoy).sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
-    
-    if (hoy.length === 0) {
-        display.innerHTML = "ESPERANDO DATOS";
-        return;
-    }
+    const hoy = historial.filter(r => r.fecha === fHoy);
+    if (hoy.length === 0) { display.innerHTML = "ESPERANDO DATOS"; return; }
 
-    const ultimo = hoy[hoy.length - 1];
+    const ultimo = hoy[0];
     let sugeridos = reglasAtraccion[ultimo.num] || [];
+    
+    // BLOQUEO DE TERMINALES - Prioriza Sector sobre Número similar
+    const aniUlt = listaAnimales.find(a => a.n === ultimo.num);
+    const sectorCaliente = listaAnimales.filter(a => a.s === aniUlt.s && a.n !== ultimo.num).map(a => a.n);
     
     if (sugeridos.length > 0) {
         panel.classList.add('alerta-caliente');
         try { document.getElementById('snd-alerta').play(); } catch(e){}
-    } else {
-        // Fallback: Si el número no tiene regla, busca por proximidad de sector
-        const ani = listaAnimales.find(a => a.n === ultimo.num);
-        sugeridos = listaAnimales.filter(a => a.s === ani.s && a.n !== ultimo.num).map(a => a.n).slice(0,3);
-        panel.classList.remove('alerta-caliente');
     }
-
-    display.innerHTML = sugeridos.map(n => `<span class="sniper-num-pill">${n}</span>`).join('');
-    if(aviso) aviso.innerHTML = `🚫 FUERA: ${hoy.length >= 2 ? hoy[hoy.length - 2].num : "--"}`;
+    
+    // Mostramos la mezcla técnica de Atracción + Sector
+    const final = [...new Set([...sugeridos, ...sectorCaliente])].slice(0,3);
+    display.innerHTML = final.map(n => `<span class="sniper-num-pill">${n}</span>`).join('');
 }
 
 function registrarPorNumero() {
@@ -166,12 +171,7 @@ function registrarPorNumero() {
     if(v === "") return;
     if(v !== '0' && v !== '00') v = v.padStart(2, '0');
     const ani = listaAnimales.find(a => a.n === v);
-    if(ani) {
-        registrarSorteo(ani.n, ani.a, ani.c, horaSeleccionadaActiva);
-        input.value = '';
-    } else {
-        alert("Número no válido");
-    }
+    if(ani) { registrarSorteo(ani.n, ani.a, ani.c, horaSeleccionadaActiva); input.value = ''; }
 }
 
 function generarGridBotones() {
@@ -181,11 +181,7 @@ function generarGridBotones() {
     listaAnimales.forEach(a => {
         const d = document.createElement('div');
         d.className = "animal-btn";
-        let borderColor = "#475569";
-        if(a.c === 'ROJO') borderColor = "#ef4444";
-        if(a.c === 'AZUL') borderColor = "#38bdf8";
-        
-        d.style.borderLeft = `4px solid ${borderColor}`;
+        d.style.borderLeft = `4px solid ${a.c === 'ROJO' ? '#ef4444' : a.c === 'AZUL' ? '#38bdf8' : '#475569'}`;
         d.innerHTML = `<b>${a.n}</b><br>${a.a}`;
         d.onclick = () => { if(horaSeleccionadaActiva) registrarSorteo(a.n, a.a, a.c, horaSeleccionadaActiva); };
         cont.appendChild(d);
@@ -202,13 +198,7 @@ function actualizarTabla() {
         const ani = listaAnimales.find(a => a.n === r.num);
         if(ani) {
             const colorStyle = r.tipo === 'ROJO' ? 'color:#ff4d4d' : r.tipo === 'AZUL' ? 'color:#38bdf8' : 'color:#94a3b8';
-            c.innerHTML += `<tr>
-                <td>${r.hora}</td>
-                <td><b style="font-size:1.1rem">${r.num}</b></td>
-                <td>${r.animal}</td>
-                <td>${ani.s} / ${ani.e}</td>
-                <td style="${colorStyle}; font-weight:bold">${r.tipo}</td>
-            </tr>`;
+            c.innerHTML += `<tr><td>${r.hora}</td><td><b>${r.num}</b></td><td>${r.animal}</td><td>${ani.s}/${ani.e}</td><td style="${colorStyle};font-weight:bold">${r.tipo}</td></tr>`;
         }
     });
 }
@@ -216,8 +206,7 @@ function actualizarTabla() {
 function openTab(evt, n) {
     document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    const target = document.getElementById(n);
-    if(target) target.style.display = 'block';
+    document.getElementById(n).style.display = 'block';
     evt.currentTarget.classList.add('active');
 }
 
@@ -225,9 +214,9 @@ function estudiarAtraccion() {
     const val = document.getElementById('select-estudio-animal').value;
     const res = document.getElementById('resultado-atraccion');
     if (!val || !res) return;
-    const comp = reglasAtraccion[val] || ["Calculando cruce..."];
-    res.innerHTML = `<div style="margin-top:15px;"><b>Atracción directa por Cruce:</b><br><div style="display:flex; justify-content:center; gap:10px; margin-top:10px;">
-        ${comp.map(n => `<span style="background:#ef4444; color:white; padding:8px 12px; border-radius:6px; font-weight:bold;">${n}</span>`).join('')}
+    const comp = reglasAtraccion[val] || ["Calculando..."];
+    res.innerHTML = `<div style="margin-top:10px;"><b>Atracción directa:</b><br><div style="display:flex; justify-content:center; gap:5px; margin-top:5px;">
+        ${comp.map(n => `<span style="background:#ef4444; color:white; padding:5px 8px; border-radius:4px; font-weight:bold;">${n}</span>`).join('')}
     </div></div>`;
 }
 
@@ -238,9 +227,5 @@ function llenarSelectorEstudio() {
     listaAnimales.forEach(a => s.innerHTML += `<option value="${a.n}">${a.n} - ${a.a}</option>`);
 }
 
-setInterval(() => { 
-    const clock = document.getElementById('live-clock');
-    if(clock) clock.innerText = new Date().toLocaleTimeString(); 
-}, 1000);
-
+setInterval(() => { const clock = document.getElementById('live-clock'); if(clock) clock.innerText = new Date().toLocaleTimeString(); }, 1000);
 window.onload = inicializarSistema;
