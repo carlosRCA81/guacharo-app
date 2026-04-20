@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRCA PRO V2 - PROFESIONAL</title>
+    <title>SISTEMA LARA - ALGORITMO PRO</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,7 +11,7 @@
 
     <div id="main-app">
         <header>
-            <h1>CRCA PRO <span style="color: #22c55e;">V2</span></h1>
+            <h1>SISTEMA <span style="color: #22c55e;">LARA</span></h1>
             <div id="live-clock">00:00:00</div>
             <div class="tab-container">
                 <button class="tab-btn active" onclick="openTab(event, 'registro')">REGISTRO</button>
@@ -31,7 +31,7 @@
             <div class="panel-diario" id="panel-diario-sorteos"></div>
 
             <div class="entrada-rapida">
-                <input type="text" id="num-rapido" maxlength="2" placeholder="00">
+                <input type="text" id="num-rapido" maxlength="2" placeholder="Nro">
                 <button onclick="registrarPorNumero()">ANOTAR</button>
             </div>
             
@@ -40,13 +40,14 @@
         </section>
 
         <section id="tripletas-tab" class="tab-content">
-            <h2 style="text-align:center; color: #fbbf24; font-size: 1rem;">🔥 TRIPLETAS DEL DÍA</h2>
+            <div class="info-label">ESTUDIO DE SECTORES SEMANALES</div>
             <div id="seccion-tripletas" class="tripleta-list"></div>
         </section>
 
         <section id="estudio-avanzado" class="tab-content">
             <div class="radar-container">
                 <h3>📡 RADAR DE ATRACCIÓN</h3>
+                <p style="font-size:0.6rem; color:#94a3b8;">Selecciona un animal para ver qué otros "jala" según el algoritmo.</p>
                 <select id="select-estudio-animal" onchange="estudiarAtraccion()"></select>
                 <div id="resultado-atraccion"></div>
             </div>
@@ -54,7 +55,6 @@
 
         <section id="historial" class="tab-content">
             <div class="historial-header">
-                <label>BUSCAR FECHA:</label>
                 <input type="date" id="fecha-busqueda-historial" onchange="actualizarTabla()" class="fecha-input">
             </div>
             <div class="tabla-contenedor">
