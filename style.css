@@ -21,15 +21,23 @@ body { background: var(--bg-profundo); color: white; font-family: 'Segoe UI', sa
 .alerta-caliente { border-color: var(--verde) !important; box-shadow: 0 0 15px rgba(34, 197, 94, 0.4); }
 .sniper-num-pill { background: #1e293b; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--oro); font-size: 1.3rem; font-weight: bold; color: var(--oro); }
 
-/* NUEVO: Mapa de Sectores */
+/* Mapa de Sectores */
 .mapa-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; background: #080c14; padding: 10px; border-radius: 10px; }
 .sector-block { border: 1px solid #334155; border-radius: 8px; padding: 5px; }
 .sector-header { font-size: 0.6rem; color: var(--celeste); text-align: center; margin-bottom: 5px; font-weight: bold; }
 .sector-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
-.mini-animal { padding: 4px; border-radius: 4px; font-size: 0.7rem; text-align: center; font-weight: bold; }
+.mini-animal { padding: 4px; border-radius: 4px; font-size: 0.7rem; text-align: center; font-weight: bold; border: 1px solid transparent; }
 .bg-rojo { background: var(--rojo); color: white; }
 .bg-negro { background: #000; color: white; border: 1px solid #334155; }
 .bg-azul { background: #2563eb; color: white; }
+
+/* ESTO ES LO QUE HACÍA FALTA: Luz fija para los que ya salieron */
+.sensor-fijo { 
+    background-color: var(--verde) !important; 
+    color: #000 !important; 
+    box-shadow: 0 0 12px var(--verde); 
+    border: 1px solid white !important;
+}
 
 /* Efecto Titileo */
 @keyframes flash { 
@@ -49,8 +57,3 @@ body { background: var(--bg-profundo); color: white; font-family: 'Segoe UI', sa
 
 .card-tripleta { background: rgba(251, 191, 36, 0.05); border: 1px solid var(--oro); border-radius: 12px; padding: 15px; margin-bottom: 10px; text-align: center; }
 .tripleta-nums { font-size: 1.5rem; color: var(--oro); font-weight: bold; letter-spacing: 4px; }
-
-.entrada-rapida { display: flex; gap: 10px; margin-bottom: 15px; }
-#num-rapido { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--celeste); background: #080c14; color: white; text-align: center; }
-.fecha-input { width: 100%; padding: 10px; background: #080c14; border: 1px solid #334155; color: white; border-radius: 8px; }
-.info-label { text-align: center; font-size: 0.7rem; color: #94a3b8; margin-bottom: 10px; }
