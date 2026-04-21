@@ -3,40 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA LARA - ALGORITMO PRO</title>
+    <title>SISTEMA LARA PRO V3</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        /* Mantenemos tus ajustes de tabla intactos */
-        .tabla-contenedor table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        .tabla-contenedor th, .tabla-contenedor td { padding: 10px 5px; text-align: center; font-size: 0.75rem; border-bottom: 1px solid #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .tabla-contenedor th:nth-child(1), .tabla-contenedor td:nth-child(1) { width: 20%; }
-        .tabla-contenedor th:nth-child(2), .tabla-contenedor td:nth-child(2) { width: 15%; font-weight: bold; }
-        .tabla-contenedor th:nth-child(3), .tabla-contenedor td:nth-child(3) { width: 25%; }
-        .tabla-contenedor th:nth-child(4), .tabla-contenedor td:nth-child(4) { width: 20%; }
-        .tabla-contenedor th:nth-child(5), .tabla-contenedor td:nth-child(5) { width: 20%; font-weight: bold; }
-        .tabla-contenedor thead { background-color: #0f172a; color: #38bdf8; }
-        #lista-historial tr:nth-child(even) { background-color: #1e293b1a; }
-    </style>
 </head>
 <body>
     <audio id="snd-alerta" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
     <div id="main-app">
         <header>
-            <h1>SISTEMA <span style="color: #22c55e;">LARA</span></h1>
+            <h1>SISTEMA <span style="color: #22c55e;">LARA</span> <small style="font-size:0.5rem; color:#fbbf24;">PRO</small></h1>
             <div id="live-clock">00:00:00</div>
             <div class="tab-container">
                 <button class="tab-btn active" onclick="openTab(event, 'registro')">REGISTRO</button>
                 <button class="tab-btn" onclick="openTab(event, 'sectores-tab')">SECTORES</button>
                 <button class="tab-btn" onclick="openTab(event, 'tripletas-tab')">TRIPLETAS</button>
                 <button class="tab-btn" onclick="openTab(event, 'estudio-avanzado')">ALGORITMO</button>
-                <button class="tab-btn" onclick="event.preventDefault(); openTab(event, 'historial')">HISTORIAL</button>
+                <button class="tab-btn" onclick="openTab(event, 'historial')">HISTORIAL</button>
             </div>
         </header>
 
         <section id="registro" class="tab-content active">
-            <div class="panel-sniper" id="panel-proxima-jugada">
-                <span class="sniper-badge" id="sniper-titulo">🎯 PRÓXIMA JUGADA</span>
+            <div class="panel-sniper">
+                <span class="sniper-badge">🎯 PRÓXIMA JUGADA</span>
                 <div class="sniper-nums" id="numeros-sugeridos-directos">...</div>
                 <div id="aviso-fuera" style="color: #fbbf24; font-size: 0.75rem; margin-top: 5px; font-weight: bold;"></div>
             </div>
@@ -53,28 +41,31 @@
         </section>
 
         <section id="sectores-tab" class="tab-content" style="display:none;">
+            <div class="info-label">MAPA DE RULETA (SENSORES ACTIVOS)</div>
             <div id="mapa-ruleta" class="mapa-container"></div>
         </section>
 
         <section id="tripletas-tab" class="tab-content" style="display:none;">
+            <div class="info-label">TRIPLETAS CALCULADAS (DEUDA Y CIERRE)</div>
             <div id="seccion-tripletas" class="tripleta-list"></div>
         </section>
 
         <section id="estudio-avanzado" class="tab-content" style="display:none;">
             <div class="radar-container">
+                <h3>📡 RADAR DE ATRACCIÓN</h3>
                 <select id="select-estudio-animal" onchange="estudiarAtraccion()"></select>
                 <div id="resultado-atraccion"></div>
             </div>
         </section>
 
         <section id="historial" class="tab-content" style="display:none;">
-            <input type="date" id="fecha-busqueda-historial" onchange="actualizarTabla()" class="fecha-input">
+            <div class="historial-header">
+                <input type="date" id="fecha-busqueda-historial" onchange="actualizarTabla()" class="fecha-input">
+            </div>
             <div class="tabla-contenedor">
                 <table>
                     <thead>
-                        <tr>
-                            <th>HORA</th><th>NRO</th><th>ANIMAL</th><th>SEC/ELT</th><th>COLOR</th>
-                        </tr>
+                        <tr><th>HORA</th><th>NRO</th><th>ANIMAL</th><th>SEC</th><th>COLOR</th></tr>
                     </thead>
                     <tbody id="lista-historial"></tbody>
                 </table>
