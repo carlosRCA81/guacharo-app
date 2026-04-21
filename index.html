@@ -3,46 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA CRCA - ALGORITMO PRO</title>
+    <title>SISTEMA LARA PRO - ALGORITMO MAESTRO</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        /* ESTO ACOMODA TU HISTORIAL PARA QUE NO SE DESORDENE */
-        .tabla-contenedor table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed; /* Esto hace que las columnas no se muevan */
-        }
-        .tabla-contenedor th, .tabla-contenedor td {
-            padding: 10px 5px;
-            text-align: center;
-            font-size: 0.75rem; /* Tamaño ideal para celular */
-            border-bottom: 1px solid #1e293b;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        /* Anchos específicos para cada columna */
-        .tabla-contenedor th:nth-child(1), .tabla-contenedor td:nth-child(1) { width: 20%; } /* HORA */
-        .tabla-contenedor th:nth-child(2), .tabla-contenedor td:nth-child(2) { width: 15%; font-weight: bold; } /* NRO */
-        .tabla-contenedor th:nth-child(3), .tabla-contenedor td:nth-child(3) { width: 25%; } /* ANIMAL */
-        .tabla-contenedor th:nth-child(4), .tabla-contenedor td:nth-child(4) { width: 20%; } /* SEC/ELT */
-        .tabla-contenedor th:nth-child(5), .tabla-contenedor td:nth-child(5) { width: 20%; font-weight: bold; } /* COLOR */
-        
-        .tabla-contenedor thead {
-            background-color: #0f172a;
-            color: #38bdf8;
-        }
-        #lista-historial tr:nth-child(even) {
-            background-color: #1e293b1a; /* Un toque de color intercalado */
-        }
-    </style>
 </head>
 <body>
     <audio id="snd-alerta" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
     <div id="main-app">
         <header>
-            <h1>SISTEMA <span style="color: #22c55e;">LARA</span></h1>
+            <h1>SISTEMA <span style="color: #22c55e;">LARA</span> <small style="font-size:0.5rem; vertical-align:middle; color:#fbbf24;">V3.0 PRO</small></h1>
             <div id="live-clock">00:00:00</div>
             <div class="tab-container">
                 <button class="tab-btn active" onclick="openTab(event, 'registro')">REGISTRO</button>
@@ -55,16 +24,16 @@
 
         <section id="registro" class="tab-content active">
             <div class="panel-sniper" id="panel-proxima-jugada">
-                <span class="sniper-badge" id="sniper-titulo">🎯 PRÓXIMA JUGADA</span>
-                <div class="sniper-nums" id="numeros-sugeridos-directos">...</div>
-                <div id="aviso-fuera" style="color: #ff4d4d; font-size: 0.75rem; margin-top: 5px; font-weight: bold;"></div>
+                <span class="sniper-badge" id="sniper-titulo">🎯 PREDICCIÓN IA</span>
+                <div class="sniper-nums" id="numeros-sugeridos-directos">ESPERANDO DATOS...</div>
+                <div id="aviso-fuera" style="color: #fbbf24; font-size: 0.7rem; margin-top: 5px; font-weight: bold;"></div>
             </div>
 
             <div class="panel-diario" id="panel-diario-sorteos"></div>
 
             <div class="entrada-rapida">
-                <input type="text" id="num-rapido" maxlength="2" placeholder="Nro">
-                <button onclick="registrarPorNumero()">ANOTAR</button>
+                <input type="text" id="num-rapido" maxlength="2" placeholder="Nro" autofocus>
+                <button id="btn-anotar-pro" onclick="registrarPorNumero()">ANOTAR</button>
             </div>
             
             <div class="grid-animales" id="grid-container"></div>
@@ -72,21 +41,19 @@
         </section>
 
         <section id="sectores-tab" class="tab-content">
-            <div class="info-label">MAPA GEOLOCALIZADO DE RULETA</div>
-            <div id="mapa-ruleta" class="mapa-container">
-                </div>
-            <div id="status-presion" style="margin-top:10px; font-size:0.7rem; text-align:center;"></div>
+            <div class="info-label">MAPA DE PRESIÓN POR SECTORES</div>
+            <div id="mapa-ruleta" class="mapa-container"></div>
         </section>
 
         <section id="tripletas-tab" class="tab-content">
-            <div class="info-label">ESTUDIO DE SECTORES SEMANALES</div>
-            <div id="seccion-tripletas" class="tripleta-list"></div>
+            <div class="info-label">TRIPLETAS DE PRECISIÓN PARA MAÑANA</div>
+            <div id="seccion-tripletas" class="tripleta-list">
+                </div>
         </section>
 
         <section id="estudio-avanzado" class="tab-content">
             <div class="radar-container">
                 <h3>📡 RADAR DE ATRACCIÓN</h3>
-                <p style="font-size:0.6rem; color:#94a3b8;">Selecciona un animal para ver qué otros "jala" según el algoritmo.</p>
                 <select id="select-estudio-animal" onchange="estudiarAtraccion()"></select>
                 <div id="resultado-atraccion"></div>
             </div>
@@ -103,7 +70,7 @@
                             <th>HORA</th>
                             <th>NRO</th>
                             <th>ANIMAL</th>
-                            <th>SEC/ELT</th>
+                            <th>SEC</th>
                             <th>COLOR</th>
                         </tr>
                     </thead>
