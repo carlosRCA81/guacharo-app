@@ -1,155 +1,99 @@
-// --- CONFIGURACIÓN DE CONEXIÓN (INTACTA) ---
 const SUPABASE_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// --- ESTRUCTURA DE DATOS (INTACTA) ---
 const listaAnimales = [
-    {n:'0', a:'DELFIN', c:'AZUL', s:'A', e:'Agua'}, {n:'00', a:'BALLENA', c:'AZUL', s:'D', e:'Agua'},
-    {n:'01', a:'CARNERO', c:'ROJO', s:'D', e:'Tierra'}, {n:'02', a:'TORO', c:'NEGRO', s:'A', e:'Tierra'},
-    {n:'03', a:'CIEMPIES', c:'ROJO', s:'C', e:'Tierra'}, {n:'04', a:'ALACRAN', c:'ROJO', s:'F', e:'Tierra'},
-    {n:'05', a:'LEON', c:'ROJO', s:'C', e:'Tierra'}, {n:'06', a:'RANA', c:'NEGRO', s:'F', e:'Agua'},
-    {n:'07', a:'PERICO', c:'ROJO', s:'B', e:'Aire'}, {n:'08', a:'RATON', c:'NEGRO', s:'E', e:'Tierra'},
-    {n:'09', a:'AGUILA', c:'ROJO', s:'A', e:'Aire'}, {n:'10', a:'TIGRE', c:'NEGRO', s:'D', e:'Tierra'},
-    {n:'11', a:'GATO', c:'NEGRO', s:'B', e:'Tierra'}, {n:'12', a:'CABALLO', c:'ROJO', s:'E', e:'Tierra'},
-    {n:'13', a:'MONO', c:'NEGRO', s:'D', e:'Tierra'}, {n:'14', a:'PALOMA', c:'ROJO', s:'A', e:'Aire'},
-    {n:'15', a:'ZORRO', c:'NEGRO', s:'C', e:'Tierra'}, {n:'16', a:'OSO', c:'ROJO', s:'F', e:'Tierra'},
-    {n:'17', a:'PAVO', c:'NEGRO', s:'B', e:'Aire'}, {n:'18', a:'BURRO', c:'ROJO', s:'E', e:'Tierra'},
-    {n:'19', a:'CHIVO', c:'ROJO', s:'E', e:'Tierra'}, {n:'20', a:'COCHINO', c:'NEGRO', s:'B', e:'Tierra'},
-    {n:'21', a:'GALLO', c:'ROJO', s:'F', e:'Aire'}, {n:'22', a:'CAMELLO', c:'NEGRO', s:'C', e:'Tierra'},
-    {n:'23', a:'CEBRA', c:'ROJO', s:'F', e:'Tierra'}, {n:'24', a:'IGUANA', c:'NEGRO', s:'C', e:'Tierra'},
-    {n:'25', a:'GALLINA', c:'ROJO', s:'D', e:'Aire'}, {n:'26', a:'VACA', c:'NEGRO', s:'A', e:'Tierra'},
-    {n:'27', a:'PERRO', c:'ROJO', s:'D', e:'Tierra'}, {n:'28', a:'ZAMURO', c:'NEGRO', s:'A', e:'Aire'},
-    {n:'29', a:'ELEFANTE', c:'NEGRO', s:'E', e:'Tierra'}, {n:'30', a:'CAIMAN', c:'ROJO', s:'B', e:'Agua'},
-    {n:'31', a:'LAPA', c:'NEGRO', s:'E', e:'Tierra'}, {n:'32', a:'ARDILLA', c:'ROJO', s:'B', e:'Tierra'},
-    {n:'33', a:'PESCADO', c:'NEGRO', s:'F', e:'Agua'}, {n:'34', a:'VENADO', c:'ROJO', s:'C', e:'Tierra'},
-    {n:'35', a:'JIRAFA', c:'NEGRO', s:'A', e:'Tierra'}, {n:'36', a:'CULEBRA', c:'ROJO', s:'D', e:'Tierra'}
+    {n:'0', a:'DELFIN', c:'AZUL', s:'A'}, {n:'00', a:'BALLENA', c:'AZUL', s:'D'},
+    {n:'01', a:'CARNERO', c:'ROJO', s:'D'}, {n:'02', a:'TORO', c:'NEGRO', s:'A'},
+    {n:'03', a:'CIEMPIES', c:'ROJO', s:'C'}, {n:'04', a:'ALACRAN', c:'ROJO', s:'F'},
+    {n:'05', a:'LEON', c:'ROJO', s:'C'}, {n:'06', a:'RANA', c:'NEGRO', s:'F'},
+    {n:'07', a:'PERICO', c:'ROJO', s:'B'}, {n:'08', a:'RATON', c:'NEGRO', s:'E'},
+    {n:'09', a:'AGUILA', c:'ROJO', s:'A'}, {n:'10', a:'TIGRE', c:'NEGRO', s:'D'},
+    {n:'11', a:'GATO', c:'NEGRO', s:'B'}, {n:'12', a:'CABALLO', c:'ROJO', s:'E'},
+    {n:'13', a:'MONO', c:'NEGRO', s:'D'}, {n:'14', a:'PALOMA', c:'ROJO', s:'A'},
+    {n:'15', a:'ZORRO', c:'NEGRO', s:'C'}, {n:'16', a:'OSO', c:'ROJO', s:'F'},
+    {n:'17', a:'PAVO', c:'NEGRO', s:'B'}, {n:'18', a:'BURRO', c:'ROJO', s:'E'},
+    {n:'19', a:'CHIVO', c:'ROJO', s:'E'}, {n:'20', a:'COCHINO', c:'NEGRO', s:'B'},
+    {n:'21', a:'GALLO', c:'ROJO', s:'F'}, {n:'22', a:'CAMELLO', c:'NEGRO', s:'C'},
+    {n:'23', a:'CEBRA', c:'ROJO', s:'F'}, {n:'24', a:'IGUANA', c:'NEGRO', s:'C'},
+    {n:'25', a:'GALLINA', c:'ROJO', s:'D'}, {n:'26', a:'VACA', c:'NEGRO', s:'A'},
+    {n:'27', a:'PERRO', c:'ROJO', s:'D'}, {n:'28', a:'ZAMURO', c:'NEGRO', s:'A'},
+    {n:'29', a:'ELEFANTE', c:'NEGRO', s:'E'}, {n:'30', a:'CAIMAN', c:'ROJO', s:'B'},
+    {n:'31', a:'LAPA', c:'NEGRO', s:'E'}, {n:'32', a:'ARDILLA', c:'ROJO', s:'B'},
+    {n:'33', a:'PESCADO', c:'NEGRO', s:'F'}, {n:'34', a:'VENADO', c:'ROJO', s:'C'},
+    {n:'35', a:'JIRAFA', c:'NEGRO', s:'A'}, {n:'36', a:'CULEBRA', c:'ROJO', s:'D'}
 ];
 
 const reglasAtraccion = {
-    '05': ['12', '18', '09', '34', '19', '11'], '09': ['05', '12', '18', '14', '28'],
-    '36': ['03', '30', '26', '24', '13'], '25': ['07', '14', '21', '09'],
-    '00': ['29', '26', '01', '22', '35'], '12': ['05', '09', '18', '11', '13'],
-    '20': ['17', '11', '08', '07'], '30': ['03', '36', '26', '06', '00'],
-    '07': ['25', '11', '20', '14', '17'], '35': ['25', '08', '09', '26', '29'],
-    '11': ['07', '20', '17', '12', '05'], '10': ['08', '13', '01', '00', '25'], 
-    '14': ['09', '28', '07', '18', '32'], '18': ['05', '12', '09', '19', '31']
+    '00': ['29', '26', '01'], '07': ['25', '14', '17'], '12': ['05', '09', '18'], 
+    '14': ['09', '28', '07'], '36': ['03', '30', '26'], '05': ['12', '18', '09']
 };
 
 const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
 let historial = [];
 let horaSeleccionadaActiva = null;
 
-// --- INICIALIZACIÓN ---
 async function inicializarSistema() {
-    const fechaInput = document.getElementById('fecha-analisis');
-    if(fechaInput) fechaInput.value = new Date().toISOString().split('T')[0];
+    document.getElementById('fecha-analisis').value = new Date().toISOString().split('T')[0];
     generarGridBotones();
     llenarSelectorEstudio();
     await cargarHistorialRemoto();
 }
 
 async function cargarHistorialRemoto() {
-    try {
-        const { data, error } = await _supabase.from('historial_sorteos').select('*').order('fecha', { ascending: false });
-        if (data) { historial = data; actualizarInterfaz(); }
-    } catch (e) { console.error(e); }
+    const { data } = await _supabase.from('historial_sorteos').select('*').order('fecha', { ascending: false });
+    if (data) { historial = data; actualizarInterfaz(); }
 }
 
-// --- LOGICA DE SECTORES (CON LUZ FIJA) ---
-function generarMapaRuleta() {
-    const mapa = document.getElementById('mapa-ruleta');
-    if(!mapa) return;
-    mapa.innerHTML = '';
-    const fHoy = document.getElementById('fecha-analisis').value;
-    const jugadosHoy = historial.filter(r => r.fecha === fHoy).map(r => r.num);
-
-    const sectores = ['A', 'B', 'C', 'D', 'E', 'F'];
-    sectores.forEach(sec => {
-        const sDiv = document.createElement('div');
-        sDiv.className = 'sector-block';
-        sDiv.innerHTML = `<div class="sector-header">SEC ${sec}</div>`;
-        const sGrid = document.createElement('div');
-        sGrid.className = 'sector-grid';
-        listaAnimales.filter(a => a.s === sec).forEach(ani => {
-            const aDiv = document.createElement('div');
-            const esGanador = jugadosHoy.includes(ani.n) ? 'sensor-fijo' : '';
-            aDiv.className = `mini-animal ${ani.c === 'ROJO' ? 'bg-rojo' : ani.c === 'AZUL' ? 'bg-azul' : 'bg-negro'} ${esGanador}`;
-            aDiv.innerHTML = ani.n;
-            sGrid.appendChild(aDiv);
-        });
-        sDiv.appendChild(sGrid);
-        mapa.appendChild(sDiv);
-    });
+function registrarPorNumero() {
+    const val = document.getElementById('num-rapido').value.padStart(2, '0').replace('000','00');
+    const animal = listaAnimales.find(a => a.n === val);
+    if (animal && horaSeleccionadaActiva) registrarSorteo(animal.n, animal.a, animal.c, horaSeleccionadaActiva);
 }
 
-// --- PRÓXIMA JUGADA (REGISTRO) ---
-function actualizarJugadaSniper() {
-    const display = document.getElementById('numeros-sugeridos-directos');
-    if(!display) return;
-    const fHoy = document.getElementById('fecha-analisis').value;
-    const hoy = historial.filter(r => r.fecha === fHoy);
-    if (hoy.length === 0) { display.innerHTML = "ESPERANDO DATOS"; return; }
-    const ultimo = hoy[0];
-    let sug = reglasAtraccion[ultimo.num] || [];
-    display.innerHTML = sug.slice(0,3).map(n => `<span class="sniper-num-pill">${n}</span>`).join(' ');
-}
-
-// --- HISTORIAL ORDENADO Y CON COLORES ---
-function actualizarTabla() {
-    const c = document.getElementById('lista-historial');
-    const fInput = document.getElementById('fecha-busqueda-historial');
-    if(!c || !fInput) return;
-    const f = fInput.value;
-    c.innerHTML = '';
-    historial.filter(r => r.fecha === f)
-        .sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora))
-        .forEach(r => {
-            const colorTxt = r.tipo === 'ROJO' ? '#ef4444' : r.tipo === 'AZUL' ? '#38bdf8' : '#94a3b8';
-            c.innerHTML += `
-                <tr style="border-bottom: 1px solid #1e293b;">
-                    <td style="padding:10px;">${r.hora}</td>
-                    <td style="padding:10px; font-weight:bold; color:${colorTxt}">${r.num}</td>
-                    <td style="padding:10px;">${r.animal}</td>
-                    <td style="padding:10px; font-weight:bold; color:${colorTxt}">${r.tipo}</td>
-                </tr>`;
-        });
-}
-
-// --- RADAR DE ATRACCIÓN (ALGORITMO) ---
-function estudiarAtraccion() {
-    const val = document.getElementById('select-estudio-animal').value;
-    const res = document.getElementById('resultado-atraccion');
-    if (!val || !res) return;
-    const acompañantes = reglasAtraccion[val] || [];
-    res.innerHTML = `
-        <div style="margin-top:15px; color:#94a3b8; font-size:0.9rem;">Atracción directa para el ${val}:</div>
-        <div style="display:flex; justify-content:center; gap:8px; margin-top:10px;">
-            ${acompañantes.map(n => `<span class="sniper-num-pill">${n}</span>`).join('')}
-        </div>`;
-}
-
-// --- FUNCIONES DE SOPORTE (INTACTAS) ---
 async function registrarSorteo(num, animal, color, hora) {
     const fecha = document.getElementById('fecha-analisis').value;
-    const nuevo = { fecha, hora, num: num.toString(), animal, tipo: color };
-    const idx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
-    if(idx !== -1) historial[idx] = nuevo; else historial.unshift(nuevo);
-    actualizarInterfaz();
-    try { await _supabase.from('historial_sorteos').upsert(nuevo, { onConflict: 'fecha,hora' }); } catch (e) {}
+    const nuevo = { fecha, hora, num, animal, tipo: color };
+    await _supabase.from('historial_sorteos').upsert(nuevo, { onConflict: 'fecha,hora' });
+    document.getElementById('snd-alerta').play();
+    await cargarHistorialRemoto();
 }
 
 function actualizarInterfaz() {
     generarPanelDiario();
     actualizarTabla();
     actualizarJugadaSniper();
-    generarTripletasFijas();
     generarMapaRuleta();
+    calcularTripletasIA();
+}
+
+function calcularTripletasIA() {
+    const cont = document.getElementById('seccion-tripletas');
+    const hoy = historial.filter(r => r.fecha === document.getElementById('fecha-analisis').value);
+    const jugados = hoy.map(r => r.num);
+    const faltantes = listaAnimales.filter(a => !jugados.includes(a.n));
+    
+    cont.innerHTML = `
+        <div class="card-tripleta"><small>🔥 DEUDA DEL DÍA</small><div class="tripleta-nums">${faltantes[0]?.n || '05'}-${faltantes[1]?.n || '17'}-${faltantes[2]?.n || '25'}</div></div>
+        <div class="card-tripleta"><small>🎯 CRUCE PROFESIONAL</small><div class="tripleta-nums">00-13-29</div></div>
+    `;
+}
+
+function generarMapaRuleta() {
+    const mapa = document.getElementById('mapa-ruleta');
+    mapa.innerHTML = '';
+    const hoy = historial.filter(r => r.fecha === document.getElementById('fecha-analisis').value).map(r => r.num);
+    ['A','B','C','D','E','F'].forEach(s => {
+        let div = `<div class="sector-block"><div class="sector-header">SEC ${s}</div><div class="sector-grid">`;
+        listaAnimales.filter(a => a.s === s).forEach(a => {
+            div += `<div class="mini-animal ${hoy.includes(a.n) ? 'sensor-fijo' : (a.c==='ROJO'?'bg-rojo':a.c==='AZUL'?'bg-azul':'bg-negro')}">${a.n}</div>`;
+        });
+        mapa.innerHTML += div + `</div></div>`;
+    });
 }
 
 function generarPanelDiario() {
     const p = document.getElementById('panel-diario-sorteos');
-    if(!p) return;
     const f = document.getElementById('fecha-analisis').value;
     p.innerHTML = '';
     horasSorteo.forEach(h => {
@@ -162,28 +106,22 @@ function generarPanelDiario() {
     });
 }
 
-function generarTripletasFijas() {
-    const cont = document.getElementById('seccion-tripletas');
-    if(!cont) return;
-    cont.innerHTML = `
-        <div class="card-tripleta"><small>🔥 TRIPLETA DE ORO (DEUDA 21/04)</small><div class="tripleta-nums">18-09-25</div></div>
-        <div class="card-tripleta"><small>🎯 CRUCE DE RULETA PROFESIONAL</small><div class="tripleta-nums">00-13-01</div></div>
-        <div class="card-tripleta"><small>💎 JUGADA MAESTRA GEOLOCALIZADA</small><div class="tripleta-nums">07-32-11</div></div>
-    `;
+function actualizarTabla() {
+    const f = document.getElementById('fecha-busqueda-historial').value || document.getElementById('fecha-analisis').value;
+    const body = document.getElementById('lista-historial');
+    body.innerHTML = '';
+    historial.filter(r => r.fecha === f).sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora)).forEach(r => {
+        body.innerHTML += `<tr><td>${r.hora}</td><td><b>${r.num}</b></td><td>${r.animal}</td><td>${listaAnimales.find(a=>a.n===r.num).s}</td><td style="color:${r.tipo==='ROJO'?'#ef4444':r.tipo==='AZUL'?'#38bdf8':'#fff'}">${r.tipo}</td></tr>`;
+    });
 }
 
-function generarGridBotones() {
-    const cont = document.getElementById('grid-container');
-    if(!cont) return;
-    cont.innerHTML = '';
-    listaAnimales.forEach(a => {
-        const d = document.createElement('div');
-        d.className = "animal-btn";
-        d.style.borderLeft = `4px solid ${a.c === 'ROJO' ? '#ef4444' : a.c === 'AZUL' ? '#38bdf8' : '#475569'}`;
-        d.innerHTML = `<b>${a.n}</b><br>${a.a}`;
-        d.onclick = () => { if(horaSeleccionadaActiva) registrarSorteo(a.n, a.a, a.c, horaSeleccionadaActiva); };
-        cont.appendChild(d);
-    });
+function actualizarJugadaSniper() {
+    const hoy = historial.filter(r => r.fecha === document.getElementById('fecha-analisis').value);
+    if (hoy.length > 0) {
+        const ult = hoy[0].num;
+        const sugeridos = reglasAtraccion[ult] || ['05', '17', '25'];
+        document.getElementById('numeros-sugeridos-directos').innerHTML = sugeridos.map(n => `<span class="sniper-num-pill">${n}</span>`).join('');
+    }
 }
 
 function openTab(evt, n) {
@@ -193,20 +131,21 @@ function openTab(evt, n) {
     evt.currentTarget.classList.add('active');
 }
 
+function generarGridBotones() {
+    const cont = document.getElementById('grid-container');
+    listaAnimales.forEach(a => {
+        const d = document.createElement('div');
+        d.className = "animal-btn";
+        d.innerHTML = `<b>${a.n}</b><br>${a.a}`;
+        d.onclick = () => { if(horaSeleccionadaActiva) registrarSorteo(a.n, a.a, a.c, horaSeleccionadaActiva); };
+        cont.appendChild(d);
+    });
+}
+
 function llenarSelectorEstudio() {
     const s = document.getElementById('select-estudio-animal');
-    if(!s) return;
-    s.innerHTML = '<option value="">-- Seleccionar --</option>';
     listaAnimales.forEach(a => s.innerHTML += `<option value="${a.n}">${a.n} - ${a.a}</option>`);
 }
 
-setInterval(() => { 
-    const ahora = new Date();
-    const clock = document.getElementById('live-clock'); 
-    if(clock) clock.innerText = ahora.toLocaleTimeString(); 
-    if(ahora.getHours() === 20 && ahora.getMinutes() === 0 && ahora.getSeconds() === 0) {
-        generarMapaRuleta();
-    }
-}, 1000);
-
+setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 window.onload = inicializarSistema;
