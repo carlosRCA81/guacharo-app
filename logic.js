@@ -1,8 +1,9 @@
-// CONFIGURACIÓN (INTACTA)
+// --- CONFIGURACIÓN DE CONEXIÓN (INTACTA) ---
 const SUPABASE_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// --- ESTRUCTURA DE DATOS (INTACTA) ---
 const listaAnimales = [
     {n:'0', a:'DELFIN', c:'AZUL', s:'A', e:'Agua'}, {n:'00', a:'BALLENA', c:'AZUL', s:'D', e:'Agua'},
     {n:'01', a:'CARNERO', c:'ROJO', s:'D', e:'Tierra'}, {n:'02', a:'TORO', c:'NEGRO', s:'A', e:'Tierra'},
@@ -25,7 +26,6 @@ const listaAnimales = [
     {n:'35', a:'JIRAFA', c:'NEGRO', s:'A', e:'Tierra'}, {n:'36', a:'CULEBRA', c:'ROJO', s:'D', e:'Tierra'}
 ];
 
-// REGLAS DEL ALGORITMO (REFORZADAS)
 const reglasAtraccion = {
     '05': ['12', '18', '09', '34', '19', '11'], '09': ['05', '12', '18', '14', '28'],
     '36': ['03', '30', '26', '24', '13'], '25': ['07', '14', '21', '09'],
@@ -40,6 +40,7 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historial = [];
 let horaSeleccionadaActiva = null;
 
+// --- INICIALIZACIÓN ---
 async function inicializarSistema() {
     const fechaInput = document.getElementById('fecha-analisis');
     if(fechaInput) fechaInput.value = new Date().toISOString().split('T')[0];
@@ -55,14 +56,12 @@ async function cargarHistorialRemoto() {
     } catch (e) { console.error(e); }
 }
 
-// LÓGICA DE SECTORES CON LUZ FIJA
+// --- LOGICA DE SECTORES (CON LUZ FIJA) ---
 function generarMapaRuleta() {
     const mapa = document.getElementById('mapa-ruleta');
     if(!mapa) return;
     mapa.innerHTML = '';
     const fHoy = document.getElementById('fecha-analisis').value;
-    
-    // Lista de números que ya salieron hoy
     const jugadosHoy = historial.filter(r => r.fecha === fHoy).map(r => r.num);
 
     const sectores = ['A', 'B', 'C', 'D', 'E', 'F'];
@@ -84,7 +83,40 @@ function generarMapaRuleta() {
     });
 }
 
-// FUNCIÓN PARA EL ALGORITMO (RADAR)
+// --- PRÓXIMA JUGADA (REGISTRO) ---
+function actualizarJugadaSniper() {
+    const display = document.getElementById('numeros-sugeridos-directos');
+    if(!display) return;
+    const fHoy = document.getElementById('fecha-analisis').value;
+    const hoy = historial.filter(r => r.fecha === fHoy);
+    if (hoy.length === 0) { display.innerHTML = "ESPERANDO DATOS"; return; }
+    const ultimo = hoy[0];
+    let sug = reglasAtraccion[ultimo.num] || [];
+    display.innerHTML = sug.slice(0,3).map(n => `<span class="sniper-num-pill">${n}</span>`).join(' ');
+}
+
+// --- HISTORIAL ORDENADO Y CON COLORES ---
+function actualizarTabla() {
+    const c = document.getElementById('lista-historial');
+    const fInput = document.getElementById('fecha-busqueda-historial');
+    if(!c || !fInput) return;
+    const f = fInput.value;
+    c.innerHTML = '';
+    historial.filter(r => r.fecha === f)
+        .sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora))
+        .forEach(r => {
+            const colorTxt = r.tipo === 'ROJO' ? '#ef4444' : r.tipo === 'AZUL' ? '#38bdf8' : '#94a3b8';
+            c.innerHTML += `
+                <tr style="border-bottom: 1px solid #1e293b;">
+                    <td style="padding:10px;">${r.hora}</td>
+                    <td style="padding:10px; font-weight:bold; color:${colorTxt}">${r.num}</td>
+                    <td style="padding:10px;">${r.animal}</td>
+                    <td style="padding:10px; font-weight:bold; color:${colorTxt}">${r.tipo}</td>
+                </tr>`;
+        });
+}
+
+// --- RADAR DE ATRACCIÓN (ALGORITMO) ---
 function estudiarAtraccion() {
     const val = document.getElementById('select-estudio-animal').value;
     const res = document.getElementById('resultado-atraccion');
@@ -93,18 +125,16 @@ function estudiarAtraccion() {
     res.innerHTML = `
         <div style="margin-top:15px; color:#94a3b8; font-size:0.9rem;">Atracción directa para el ${val}:</div>
         <div style="display:flex; justify-content:center; gap:8px; margin-top:10px;">
-            ${acompañantes.length > 0 
-                ? acompañantes.map(n => `<span class="sniper-num-pill" style="background:#ef4444; border:none;">${n}</span>`).join('') 
-                : '<span style="color:#64748b">Sin datos en algoritmo</span>'}
+            ${acompañantes.map(n => `<span class="sniper-num-pill">${n}</span>`).join('')}
         </div>`;
 }
 
+// --- FUNCIONES DE SOPORTE (INTACTAS) ---
 async function registrarSorteo(num, animal, color, hora) {
     const fecha = document.getElementById('fecha-analisis').value;
     const nuevo = { fecha, hora, num: num.toString(), animal, tipo: color };
     const idx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
     if(idx !== -1) historial[idx] = nuevo; else historial.unshift(nuevo);
-    
     actualizarInterfaz();
     try { await _supabase.from('historial_sorteos').upsert(nuevo, { onConflict: 'fecha,hora' }); } catch (e) {}
 }
@@ -142,17 +172,6 @@ function generarTripletasFijas() {
     `;
 }
 
-function actualizarJugadaSniper() {
-    const display = document.getElementById('numeros-sugeridos-directos');
-    if(!display) return;
-    const fHoy = document.getElementById('fecha-analisis').value;
-    const hoy = historial.filter(r => r.fecha === fHoy);
-    if (hoy.length === 0) { display.innerHTML = "ESPERANDO DATOS"; return; }
-    const ultimo = hoy[0];
-    let sug = reglasAtraccion[ultimo.num] || [];
-    display.innerHTML = sug.slice(0,3).map(n => `<span class="sniper-num-pill">${n}</span>`).join('');
-}
-
 function generarGridBotones() {
     const cont = document.getElementById('grid-container');
     if(!cont) return;
@@ -164,18 +183,6 @@ function generarGridBotones() {
         d.innerHTML = `<b>${a.n}</b><br>${a.a}`;
         d.onclick = () => { if(horaSeleccionadaActiva) registrarSorteo(a.n, a.a, a.c, horaSeleccionadaActiva); };
         cont.appendChild(d);
-    });
-}
-
-function actualizarTabla() {
-    const c = document.getElementById('lista-historial');
-    const fInput = document.getElementById('fecha-busqueda-historial');
-    if(!c || !fInput) return;
-    const f = fInput.value;
-    c.innerHTML = '';
-    historial.filter(r => r.fecha === f).sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora)).forEach(r => {
-        const colorStyle = r.tipo === 'ROJO' ? 'color:#ff4d4d' : r.tipo === 'AZUL' ? 'color:#38bdf8' : 'color:#94a3b8';
-        c.innerHTML += `<tr><td>${r.hora}</td><td><b>${r.num}</b></td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
     });
 }
 
@@ -193,7 +200,6 @@ function llenarSelectorEstudio() {
     listaAnimales.forEach(a => s.innerHTML += `<option value="${a.n}">${a.n} - ${a.a}</option>`);
 }
 
-// RELOJ Y RESET DE LAS 8:00 PM
 setInterval(() => { 
     const ahora = new Date();
     const clock = document.getElementById('live-clock'); 
