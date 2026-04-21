@@ -1,9 +1,8 @@
-// CONFIGURACIÓN DE BASE DE DATOS (INTACTA)
+// CONFIGURACIÓN (INTACTA)
 const SUPABASE_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// LISTA DE ANIMALES Y SECTORES (INTACTA)
 const listaAnimales = [
     {n:'0', a:'DELFIN', c:'AZUL', s:'A', e:'Agua'}, {n:'00', a:'BALLENA', c:'AZUL', s:'D', e:'Agua'},
     {n:'01', a:'CARNERO', c:'ROJO', s:'D', e:'Tierra'}, {n:'02', a:'TORO', c:'NEGRO', s:'A', e:'Tierra'},
@@ -26,11 +25,7 @@ const listaAnimales = [
     {n:'35', a:'JIRAFA', c:'NEGRO', s:'A', e:'Tierra'}, {n:'36', a:'CULEBRA', c:'ROJO', s:'D', e:'Tierra'}
 ];
 
-const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
-let historial = [];
-let horaSeleccionadaActiva = null;
-
-// TUS REGLAS DE ORO (INTACTAS)
+// REGLAS DEL ALGORITMO (REFORZADAS)
 const reglasAtraccion = {
     '05': ['12', '18', '09', '34', '19', '11'], '09': ['05', '12', '18', '14', '28'],
     '36': ['03', '30', '26', '24', '13'], '25': ['07', '14', '21', '09'],
@@ -38,8 +33,12 @@ const reglasAtraccion = {
     '20': ['17', '11', '08', '07'], '30': ['03', '36', '26', '06', '00'],
     '07': ['25', '11', '20', '14', '17'], '35': ['25', '08', '09', '26', '29'],
     '11': ['07', '20', '17', '12', '05'], '10': ['08', '13', '01', '00', '25'], 
-    '14': ['09', '28', '07', '18', '32']
+    '14': ['09', '28', '07', '18', '32'], '18': ['05', '12', '09', '19', '31']
 };
+
+const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
+let historial = [];
+let horaSeleccionadaActiva = null;
 
 async function inicializarSistema() {
     const fechaInput = document.getElementById('fecha-analisis');
@@ -56,15 +55,15 @@ async function cargarHistorialRemoto() {
     } catch (e) { console.error(e); }
 }
 
-// CORRECCIÓN CLAVE: Función de mapa que SI reconoce los anotados
+// LÓGICA DE SECTORES CON LUZ FIJA
 function generarMapaRuleta() {
     const mapa = document.getElementById('mapa-ruleta');
     if(!mapa) return;
     mapa.innerHTML = '';
-    
     const fHoy = document.getElementById('fecha-analisis').value;
-    // Extraemos solo los números que ya tienen resultado hoy
-    const numerosYaJugados = historial.filter(r => r.fecha === fHoy).map(r => r.num);
+    
+    // Lista de números que ya salieron hoy
+    const jugadosHoy = historial.filter(r => r.fecha === fHoy).map(r => r.num);
 
     const sectores = ['A', 'B', 'C', 'D', 'E', 'F'];
     sectores.forEach(sec => {
@@ -73,15 +72,10 @@ function generarMapaRuleta() {
         sDiv.innerHTML = `<div class="sector-header">SEC ${sec}</div>`;
         const sGrid = document.createElement('div');
         sGrid.className = 'sector-grid';
-
         listaAnimales.filter(a => a.s === sec).forEach(ani => {
             const aDiv = document.createElement('div');
-            aDiv.id = `mapa-${ani.n}`;
-            
-            // Si el número está en la lista de jugados, le ponemos el color sensor
-            const esActivo = numerosYaJugados.includes(ani.n) ? 'sensor-fijo' : '';
-            
-            aDiv.className = `mini-animal ${ani.c === 'ROJO' ? 'bg-rojo' : ani.c === 'AZUL' ? 'bg-azul' : 'bg-negro'} ${esActivo}`;
+            const esGanador = jugadosHoy.includes(ani.n) ? 'sensor-fijo' : '';
+            aDiv.className = `mini-animal ${ani.c === 'ROJO' ? 'bg-rojo' : ani.c === 'AZUL' ? 'bg-azul' : 'bg-negro'} ${esGanador}`;
             aDiv.innerHTML = ani.n;
             sGrid.appendChild(aDiv);
         });
@@ -90,30 +84,29 @@ function generarMapaRuleta() {
     });
 }
 
-function titilearEnMapa(num) {
-    const el = document.getElementById(`mapa-${num}`);
-    if(el) {
-        el.classList.add('titileo');
-        setTimeout(() => {
-            el.classList.remove('titileo');
-            el.classList.add('sensor-fijo');
-        }, 5000);
-    }
+// FUNCIÓN PARA EL ALGORITMO (RADAR)
+function estudiarAtraccion() {
+    const val = document.getElementById('select-estudio-animal').value;
+    const res = document.getElementById('resultado-atraccion');
+    if (!val || !res) return;
+    const acompañantes = reglasAtraccion[val] || [];
+    res.innerHTML = `
+        <div style="margin-top:15px; color:#94a3b8; font-size:0.9rem;">Atracción directa para el ${val}:</div>
+        <div style="display:flex; justify-content:center; gap:8px; margin-top:10px;">
+            ${acompañantes.length > 0 
+                ? acompañantes.map(n => `<span class="sniper-num-pill" style="background:#ef4444; border:none;">${n}</span>`).join('') 
+                : '<span style="color:#64748b">Sin datos en algoritmo</span>'}
+        </div>`;
 }
 
 async function registrarSorteo(num, animal, color, hora) {
     const fecha = document.getElementById('fecha-analisis').value;
     const nuevo = { fecha, hora, num: num.toString(), animal, tipo: color };
-    
-    // Actualizamos historial local inmediatamente
     const idx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
     if(idx !== -1) historial[idx] = nuevo; else historial.unshift(nuevo);
     
     actualizarInterfaz();
-    titilearEnMapa(num); 
-    
-    try { await _supabase.from('historial_sorteos').upsert(nuevo, { onConflict: 'fecha,hora' }); } 
-    catch (e) { console.error(e); }
+    try { await _supabase.from('historial_sorteos').upsert(nuevo, { onConflict: 'fecha,hora' }); } catch (e) {}
 }
 
 function actualizarInterfaz() {
@@ -121,10 +114,9 @@ function actualizarInterfaz() {
     actualizarTabla();
     actualizarJugadaSniper();
     generarTripletasFijas();
-    generarMapaRuleta(); // <--- Esto asegura que los colores se mantengan
+    generarMapaRuleta();
 }
 
-// RESTO DE FUNCIONES (INTACTAS)
 function generarPanelDiario() {
     const p = document.getElementById('panel-diario-sorteos');
     if(!p) return;
@@ -207,7 +199,6 @@ setInterval(() => {
     const clock = document.getElementById('live-clock'); 
     if(clock) clock.innerText = ahora.toLocaleTimeString(); 
     if(ahora.getHours() === 20 && ahora.getMinutes() === 0 && ahora.getSeconds() === 0) {
-        document.querySelectorAll('.mini-animal').forEach(el => el.classList.remove('sensor-fijo'));
         generarMapaRuleta();
     }
 }, 1000);
