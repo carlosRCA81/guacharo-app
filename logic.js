@@ -86,13 +86,10 @@ async function registrarSorteo(num, animal, color, hora) {
     catch (e) { console.error("Error al guardar:", e); }
 }
 
-// FUNCION MEJORADA: Ahora dibuja y verifica qué sensores deben estar prendidos
 function generarMapaRuleta() {
     const mapa = document.getElementById('mapa-ruleta');
     if(!mapa) return;
     mapa.innerHTML = '';
-    
-    // Obtenemos los números que ya salieron hoy para prender los sensores
     const fHoy = document.getElementById('fecha-analisis').value;
     const numerosDeHoy = historial.filter(r => r.fecha === fHoy).map(r => r.num);
 
@@ -106,10 +103,7 @@ function generarMapaRuleta() {
         listaAnimales.filter(a => a.s === sec).forEach(ani => {
             const aDiv = document.createElement('div');
             aDiv.id = `mapa-${ani.n}`;
-            
-            // Si el animal ya salió hoy, le ponemos la clase 'sensor-activo'
-            const estaActivo = numerosDeHoy.includes(ani.n) ? 'sensor-activo' : '';
-            
+            const estaActivo = numerosDeHoy.includes(ani.n) ? 'sensor-fijo' : '';
             aDiv.className = `mini-animal ${ani.c === 'ROJO' ? 'bg-rojo' : ani.c === 'AZUL' ? 'bg-azul' : 'bg-negro'} ${estaActivo}`;
             aDiv.innerHTML = ani.n;
             sGrid.appendChild(aDiv);
@@ -123,10 +117,9 @@ function titilearEnMapa(num) {
     const el = document.getElementById(`mapa-${num}`);
     if(el) {
         el.classList.add('titileo');
-        // Después de titilar, se queda con la clase sensor-activo permanentemente
         setTimeout(() => {
             el.classList.remove('titileo');
-            el.classList.add('sensor-activo');
+            el.classList.add('sensor-fijo');
         }, 5000);
     }
 }
@@ -136,7 +129,7 @@ function actualizarInterfaz() {
     actualizarTabla();
     actualizarJugadaSniper();
     generarTripletasFijas();
-    generarMapaRuleta(); // Actualiza los sensores cada vez que algo cambia
+    generarMapaRuleta();
 }
 
 function generarTripletasFijas() {
@@ -238,16 +231,12 @@ function llenarSelectorEstudio() {
     listaAnimales.forEach(a => s.innerHTML += `<option value="${a.n}">${a.n} - ${a.a}</option>`);
 }
 
-// RELOJ Y SISTEMA DE AUTO-RESET 8:00 PM
 setInterval(() => { 
     const ahora = new Date();
     const clock = document.getElementById('live-clock'); 
     if(clock) clock.innerText = ahora.toLocaleTimeString(); 
-
-    // Lógica de reset: Si son las 8:00 PM (20:00:00), limpiamos los sensores
     if(ahora.getHours() === 20 && ahora.getMinutes() === 0 && ahora.getSeconds() === 0) {
-        console.log("Limpiando sensores para el día siguiente...");
-        document.querySelectorAll('.mini-animal').forEach(el => el.classList.remove('sensor-activo'));
+        document.querySelectorAll('.mini-animal').forEach(el => el.classList.remove('sensor-fijo'));
     }
 }, 1000);
 
