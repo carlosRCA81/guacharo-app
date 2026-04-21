@@ -34,8 +34,8 @@ const reglasAtraccion = {
     '00': ['29', '26', '01', '22', '35'], '12': ['05', '09', '18', '11', '13'],
     '20': ['17', '11', '08', '07'], '30': ['03', '36', '26', '06', '00'],
     '07': ['25', '11', '20', '14', '17'], '35': ['25', '08', '09', '26', '29'],
-    '11': ['07', '20', '17', '12', '05'], '10': ['08', '13', '01', '00', '25'], // Nuevo cruce Tigre para cierre
-    '14': ['09', '28', '07', '18', '32']  // Paloma jala Águila y Burro
+    '11': ['07', '20', '17', '12', '05'], '10': ['08', '13', '01', '00', '25'], 
+    '14': ['09', '28', '07', '18', '32']
 };
 
 async function inicializarSistema() {
@@ -80,16 +80,22 @@ async function registrarSorteo(num, animal, color, hora) {
     if(idx !== -1) historial[idx] = nuevo; else historial.unshift(nuevo);
     
     actualizarInterfaz();
-    titilearEnMapa(num); // Activa el titileo visual en el nuevo radar
+    titilearEnMapa(num); 
     
     try { await _supabase.from('historial_sorteos').upsert(nuevo, { onConflict: 'fecha,hora' }); } 
     catch (e) { console.error("Error al guardar:", e); }
 }
 
+// FUNCION MEJORADA: Ahora dibuja y verifica qué sensores deben estar prendidos
 function generarMapaRuleta() {
     const mapa = document.getElementById('mapa-ruleta');
     if(!mapa) return;
     mapa.innerHTML = '';
+    
+    // Obtenemos los números que ya salieron hoy para prender los sensores
+    const fHoy = document.getElementById('fecha-analisis').value;
+    const numerosDeHoy = historial.filter(r => r.fecha === fHoy).map(r => r.num);
+
     const sectores = ['A', 'B', 'C', 'D', 'E', 'F'];
     sectores.forEach(sec => {
         const sDiv = document.createElement('div');
@@ -100,7 +106,11 @@ function generarMapaRuleta() {
         listaAnimales.filter(a => a.s === sec).forEach(ani => {
             const aDiv = document.createElement('div');
             aDiv.id = `mapa-${ani.n}`;
-            aDiv.className = `mini-animal ${ani.c === 'ROJO' ? 'bg-rojo' : ani.c === 'AZUL' ? 'bg-azul' : 'bg-negro'}`;
+            
+            // Si el animal ya salió hoy, le ponemos la clase 'sensor-activo'
+            const estaActivo = numerosDeHoy.includes(ani.n) ? 'sensor-activo' : '';
+            
+            aDiv.className = `mini-animal ${ani.c === 'ROJO' ? 'bg-rojo' : ani.c === 'AZUL' ? 'bg-azul' : 'bg-negro'} ${estaActivo}`;
             aDiv.innerHTML = ani.n;
             sGrid.appendChild(aDiv);
         });
@@ -113,7 +123,11 @@ function titilearEnMapa(num) {
     const el = document.getElementById(`mapa-${num}`);
     if(el) {
         el.classList.add('titileo');
-        setTimeout(() => el.classList.remove('titileo'), 5000);
+        // Después de titilar, se queda con la clase sensor-activo permanentemente
+        setTimeout(() => {
+            el.classList.remove('titileo');
+            el.classList.add('sensor-activo');
+        }, 5000);
     }
 }
 
@@ -122,15 +136,15 @@ function actualizarInterfaz() {
     actualizarTabla();
     actualizarJugadaSniper();
     generarTripletasFijas();
+    generarMapaRuleta(); // Actualiza los sensores cada vez que algo cambia
 }
 
 function generarTripletasFijas() {
     const cont = document.getElementById('seccion-tripletas');
     if(!cont) return;
-    // TRIPLETAS BLINDADAS PARA EL 21/04
-    let t1 = ["18", "09", "25"]; // Deuda E + Aire + Transición
-    let t2 = ["00", "13", "01"]; // Cruce de cierre Tigre
-    let t3 = ["07", "32", "11"]; // Familia B técnica
+    let t1 = ["18", "09", "25"]; 
+    let t2 = ["00", "13", "01"]; 
+    let t3 = ["07", "32", "11"]; 
     
     cont.innerHTML = `
         <div class="card-tripleta"><small>🔥 TRIPLETA DE ORO (DEUDA 21/04)</small><div class="tripleta-nums">${t1.join('-')}</div></div>
@@ -149,8 +163,6 @@ function actualizarJugadaSniper() {
 
     const ultimo = hoy[0];
     let sugeridos = reglasAtraccion[ultimo.num] || [];
-    
-    // BLOQUEO DE TERMINALES - Prioriza Sector sobre Número similar
     const aniUlt = listaAnimales.find(a => a.n === ultimo.num);
     const sectorCaliente = listaAnimales.filter(a => a.s === aniUlt.s && a.n !== ultimo.num).map(a => a.n);
     
@@ -159,7 +171,6 @@ function actualizarJugadaSniper() {
         try { document.getElementById('snd-alerta').play(); } catch(e){}
     }
     
-    // Mostramos la mezcla técnica de Atracción + Sector
     const final = [...new Set([...sugeridos, ...sectorCaliente])].slice(0,3);
     display.innerHTML = final.map(n => `<span class="sniper-num-pill">${n}</span>`).join('');
 }
@@ -227,5 +238,17 @@ function llenarSelectorEstudio() {
     listaAnimales.forEach(a => s.innerHTML += `<option value="${a.n}">${a.n} - ${a.a}</option>`);
 }
 
-setInterval(() => { const clock = document.getElementById('live-clock'); if(clock) clock.innerText = new Date().toLocaleTimeString(); }, 1000);
+// RELOJ Y SISTEMA DE AUTO-RESET 8:00 PM
+setInterval(() => { 
+    const ahora = new Date();
+    const clock = document.getElementById('live-clock'); 
+    if(clock) clock.innerText = ahora.toLocaleTimeString(); 
+
+    // Lógica de reset: Si son las 8:00 PM (20:00:00), limpiamos los sensores
+    if(ahora.getHours() === 20 && ahora.getMinutes() === 0 && ahora.getSeconds() === 0) {
+        console.log("Limpiando sensores para el día siguiente...");
+        document.querySelectorAll('.mini-animal').forEach(el => el.classList.remove('sensor-activo'));
+    }
+}, 1000);
+
 window.onload = inicializarSistema;
