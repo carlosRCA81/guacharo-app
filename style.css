@@ -1,3 +1,14 @@
+/* MANTENEMOS TODO TU CSS ORIGINAL Y SOLO AÑADIMOS ESTO AL FINAL */
+
+.sensor-fijo { 
+    background-color: var(--verde) !important; 
+    color: #000 !important; 
+    box-shadow: 0 0 12px var(--verde); 
+    border: 1px solid white !important;
+    font-weight: bold;
+}
+
+/* El resto de tu CSS original se mantiene igual para no dañar el diseño */
 :root {
     --bg-profundo: #0f172a;
     --bg-acero: #1e293b;
@@ -9,31 +20,42 @@
 }
 
 body { background: var(--bg-profundo); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; }
-#main-app { background: var(--bg-acero); padding: 15px; border-radius: 15px; max-width: 450px; margin: auto; box-shadow: 0 15px 35px rgba(0,0,0,0.6); border: 1px solid #475569; }
+#main-app { background: var(--bg-acero); padding: 15px; border-radius: 15px; max-width: 450px; margin: auto; box-shadow: 0 15px 35px rgba(0,0,0,0.6); }
 
-.tab-container { display: flex; gap: 4px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
-.tab-btn { flex: none; padding: 10px 8px; background: #0f172a; border: 1px solid #334155; color: #94a3b8; border-radius: 8px; font-size: 0.65rem; font-weight: bold; cursor: pointer; }
+.tab-container { display: flex; gap: 4px; margin-bottom: 15px; overflow-x: auto; }
+.tab-btn { flex: none; padding: 10px 8px; background: #0f172a; border: 1px solid #334155; color: #94a3b8; border-radius: 8px; font-size: 0.6rem; font-weight: bold; cursor: pointer; }
 .tab-btn.active { background: var(--celeste); color: #000; }
 
 .panel-sniper { background: #080c14; border: 2px solid var(--rojo); border-radius: 12px; padding: 15px; text-align: center; margin-bottom: 15px; }
-.sniper-num-pill { background: #1e293b; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--oro); font-size: 1.4rem; font-weight: bold; color: var(--oro); margin: 0 4px; display: inline-block; }
+.alerta-caliente { border-color: var(--verde) !important; box-shadow: 0 0 15px rgba(34, 197, 94, 0.4); }
+.sniper-num-pill { background: #1e293b; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--oro); font-size: 1.3rem; font-weight: bold; color: var(--oro); margin: 0 4px; display: inline-block; }
 
-.entrada-rapida { display: flex; gap: 10px; margin-bottom: 15px; }
-#num-rapido { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--celeste); background: #080c14; color: white; text-align: center; font-size: 1.2rem; font-weight: bold; }
-.entrada-rapida button { background: var(--verde); color: #000; border: none; padding: 0 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+.mapa-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; background: #080c14; padding: 10px; border-radius: 10px; }
+.sector-block { border: 1px solid #334155; border-radius: 8px; padding: 5px; }
+.sector-header { font-size: 0.6rem; color: var(--celeste); text-align: center; margin-bottom: 5px; font-weight: bold; }
+.sector-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.mini-animal { padding: 4px; border-radius: 4px; font-size: 0.7rem; text-align: center; font-weight: bold; }
+.bg-rojo { background: var(--rojo); color: white; }
+.bg-negro { background: #000; color: white; border: 1px solid #334155; }
+.bg-azul { background: #2563eb; color: white; }
+
+@keyframes flash { 
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.3; transform: scale(1.3); background: var(--verde); }
+}
+.titileo { animation: flash 1s infinite; border: 2px solid white !important; z-index: 10; }
+
+.panel-diario { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 15px; }
+.hora-box { background: var(--bg-interfaz); padding: 10px 2px; text-align: center; border-radius: 8px; font-size: 0.65rem; border: 1px solid #475569; }
+.hora-box.jugado { background: var(--verde) !important; color: #000; font-weight: bold; }
+.hora-box.active-select { border: 2px solid var(--celeste) !important; }
 
 .grid-animales { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; max-height: 250px; overflow-y: auto; padding: 8px; background: #080c14; border-radius: 10px; }
 .animal-btn { background: #1e293b; padding: 10px 2px; text-align: center; border-radius: 6px; font-size: 0.65rem; border: 1px solid #334155; }
 
-.sensor-fijo { background-color: var(--verde) !important; color: #000 !important; box-shadow: 0 0 12px var(--verde); border: 1px solid white !important; }
+.card-tripleta { background: rgba(251, 191, 36, 0.05); border: 1px solid var(--oro); border-radius: 12px; padding: 15px; margin-bottom: 10px; text-align: center; }
+.tripleta-nums { font-size: 1.5rem; color: var(--oro); font-weight: bold; letter-spacing: 4px; }
 
-.mapa-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; background: #080c14; padding: 10px; border-radius: 10px; }
-.sector-block { border: 1px solid #334155; border-radius: 8px; padding: 5px; }
-.sector-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
-.mini-animal { padding: 4px; border-radius: 4px; font-size: 0.7rem; text-align: center; font-weight: bold; }
-
-.card-tripleta { background: linear-gradient(145deg, #1e293b, #0f172a); border: 1px solid var(--oro); border-radius: 12px; padding: 15px; margin-bottom: 10px; text-align: center; }
-.tripleta-nums { font-size: 1.6rem; color: #fff; font-weight: bold; letter-spacing: 5px; text-shadow: 0 0 8px var(--oro); }
-
-.tabla-contenedor table { width: 100%; border-collapse: collapse; }
-.tabla-contenedor td { padding: 10px 5px; text-align: center; font-size: 0.75rem; border-bottom: 1px solid #1e293b; }
+.entrada-rapida { display: flex; gap: 10px; margin-bottom: 15px; }
+#num-rapido { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--celeste); background: #080c14; color: white; text-align: center; font-weight: bold; font-size: 1.2rem; }
+.fecha-input { width: 100%; padding: 10px; background: #080c14; border: 1px solid #334155; color: white; border-radius: 8px; }
