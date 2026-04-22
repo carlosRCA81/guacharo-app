@@ -124,7 +124,7 @@ function actualizarInterfaz() {
     generarPanelDiario();
     actualizarTabla();
     actualizarJugadaSniper();
-    generarTripletasDinamicas(); // Cambio a dinámico
+    generarTripletasDinamicas(); 
     generarMapaRuleta(); 
 }
 
@@ -134,16 +134,24 @@ function generarTripletasDinamicas() {
     const fHoy = document.getElementById('fecha-analisis').value;
     const hoy = historial.filter(r => r.fecha === fHoy);
     
-    let base = ["18", "09", "25"]; // Default
+    // Tripleta 1: Fija de hoy Miércoles
+    let t1 = "09-14-28"; 
+    
+    // Tripleta 2: Basada en el último resultado
+    let t2 = "18-05-12"; 
     if(hoy.length > 0) {
-        const ultimo = hoy[0].num;
-        const extra = reglasAtraccion[ultimo] || ["00", "01"];
-        base = [ultimo, extra[0], extra[1]].slice(0,3);
+        const ult = hoy[0].num;
+        const rel = reglasAtraccion[ult] || ["01", "36"];
+        t2 = `${ult}-${rel[0]}-${rel[1]}`;
     }
 
+    // Tripleta 3: Explosiva
+    let t3 = "11-25-20";
+
     cont.innerHTML = `
-        <div class="card-tripleta"><small>🔥 TRIPLETA POR ATRACCIÓN</small><div class="tripleta-nums">${base.join('-')}</div></div>
-        <div class="card-tripleta"><small>💎 TRIPLETA EXPLOSIVA</small><div class="tripleta-nums">05-12-36</div></div>
+        <div class="card-tripleta"><small>🔥 TRIPLETA DE ORO (MIÉRCOLES)</small><div class="tripleta-nums">${t1}</div></div>
+        <div class="card-tripleta"><small>📡 TRIPLETA POR ATRACCIÓN</small><div class="tripleta-nums">${t2}</div></div>
+        <div class="card-tripleta"><small>💎 TRIPLETA EXPLOSIVA</small><div class="tripleta-nums">${t3}</div></div>
     `;
 }
 
@@ -155,17 +163,25 @@ function actualizarJugadaSniper() {
     
     const fHoy = document.getElementById('fecha-analisis').value;
     const hoy = historial.filter(r => r.fecha === fHoy);
-    if (hoy.length === 0) { display.innerHTML = "ESPERANDO DATOS"; return; }
+    if (hoy.length === 0) { 
+        display.innerHTML = "ESPERANDO DATOS"; 
+        avisoRepetido.innerHTML = "";
+        return; 
+    }
 
     const ultimo = hoy[0];
     let sugeridos = reglasAtraccion[ultimo.num] || [];
     
-    // ANALIZAR REPETIDOS
+    // ANALIZAR REPETIDOS (Detección de patrones de hoy miércoles)
     const numsHoy = hoy.map(r => r.num);
     const repetidoEnPotencia = numsHoy.find((n, i) => numsHoy.indexOf(n) !== i);
     
     if (repetidoEnPotencia) {
         avisoRepetido.innerHTML = `⚠️ ALERTA: POSIBLE REPETICIÓN DE ${repetidoEnPotencia}`;
+        avisoRepetido.style.color = "#fbbf24";
+    } else if (numsHoy.length > 4) {
+        // Si no hay repetidos aún, sugerir que podría venir uno de la serie actual
+        avisoRepetido.innerHTML = "👀 ANALIZANDO PATRÓN DE REPETICIÓN...";
     } else {
         avisoRepetido.innerHTML = "";
     }
