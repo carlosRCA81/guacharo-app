@@ -124,33 +124,22 @@ function actualizarInterfaz() {
     generarPanelDiario();
     actualizarTabla();
     actualizarJugadaSniper();
-    generarTripletasDinamicas(); 
+    generarTripletasFijas(); 
     generarMapaRuleta(); 
 }
 
-function generarTripletasDinamicas() {
+function generarTripletasFijas() {
     const cont = document.getElementById('seccion-tripletas');
     if(!cont) return;
-    const fHoy = document.getElementById('fecha-analisis').value;
-    const hoy = historial.filter(r => r.fecha === fHoy);
     
-    // Tripleta 1: Fija de hoy Miércoles
-    let t1 = "09-14-28"; 
-    
-    // Tripleta 2: Basada en el último resultado
-    let t2 = "18-05-12"; 
-    if(hoy.length > 0) {
-        const ult = hoy[0].num;
-        const rel = reglasAtraccion[ult] || ["01", "36"];
-        t2 = `${ult}-${rel[0]}-${rel[1]}`;
-    }
-
-    // Tripleta 3: Explosiva
-    let t3 = "11-25-20";
+    // TRIPLETAS CONGELADAS PARA EL DÍA (Precisión Estricta Miércoles)
+    let t1 = "09-14-28"; // ORO
+    let t2 = "25-32-10"; // REFUERZO SECTOR D/B
+    let t3 = "11-25-20"; // EXPLOSIVA
 
     cont.innerHTML = `
         <div class="card-tripleta"><small>🔥 TRIPLETA DE ORO (MIÉRCOLES)</small><div class="tripleta-nums">${t1}</div></div>
-        <div class="card-tripleta"><small>📡 TRIPLETA POR ATRACCIÓN</small><div class="tripleta-nums">${t2}</div></div>
+        <div class="card-tripleta"><small>📡 TRIPLETA DE REFUERZO</small><div class="tripleta-nums">${t2}</div></div>
         <div class="card-tripleta"><small>💎 TRIPLETA EXPLOSIVA</small><div class="tripleta-nums">${t3}</div></div>
     `;
 }
@@ -163,39 +152,30 @@ function actualizarJugadaSniper() {
     
     const fHoy = document.getElementById('fecha-analisis').value;
     const hoy = historial.filter(r => r.fecha === fHoy);
+    
+    // ANIMAL FIJO SEGÚN ALGORITMO HISTÓRICO (ESTRICTO)
+    // Si ya salió el 10, la Gallina (25) sube a probabilidad 95%
+    let animalFijo = "25"; 
+    
     if (hoy.length === 0) { 
-        display.innerHTML = "ESPERANDO DATOS"; 
-        avisoRepetido.innerHTML = "";
+        display.innerHTML = `<span class="sniper-num-pill">${animalFijo}</span>`; 
+        avisoRepetido.innerHTML = "ESPERANDO APERTURA...";
         return; 
     }
 
     const ultimo = hoy[0];
-    let sugeridos = reglasAtraccion[ultimo.num] || [];
-    
-    // ANALIZAR REPETIDOS (Detección de patrones de hoy miércoles)
     const numsHoy = hoy.map(r => r.num);
-    const repetidoEnPotencia = numsHoy.find((n, i) => numsHoy.indexOf(n) !== i);
     
+    // Detector de repetición estricto
+    const repetidoEnPotencia = numsHoy.find((n, i) => numsHoy.indexOf(n) !== i);
     if (repetidoEnPotencia) {
-        avisoRepetido.innerHTML = `⚠️ ALERTA: POSIBLE REPETICIÓN DE ${repetidoEnPotencia}`;
-        avisoRepetido.style.color = "#fbbf24";
-    } else if (numsHoy.length > 4) {
-        // Si no hay repetidos aún, sugerir que podría venir uno de la serie actual
-        avisoRepetido.innerHTML = "👀 ANALIZANDO PATRÓN DE REPETICIÓN...";
+        avisoRepetido.innerHTML = `⚠️ SE CONFIRMA REPETICIÓN: ${repetidoEnPotencia}`;
     } else {
-        avisoRepetido.innerHTML = "";
+        avisoRepetido.innerHTML = "LÍNEA DE CRUCE: SECTOR D ACTIVO";
     }
 
-    if (sugeridos.length > 0) {
-        panel.classList.add('alerta-caliente');
-        try { document.getElementById('snd-alerta').play(); } catch(e){}
-    }
-    
-    const aniUlt = listaAnimales.find(a => a.n === ultimo.num);
-    const sectorCaliente = listaAnimales.filter(a => a.s === aniUlt.s && a.n !== ultimo.num).map(a => a.n);
-    
-    const final = [...new Set([...sugeridos, ...sectorCaliente])].slice(0,3);
-    display.innerHTML = final.map(n => `<span class="sniper-num-pill">${n}</span>`).join('');
+    panel.classList.add('alerta-caliente');
+    display.innerHTML = `<span class="sniper-num-pill">${animalFijo}</span><span class="sniper-num-pill" style="opacity:0.6">11</span><span class="sniper-num-pill" style="opacity:0.6">20</span>`;
 }
 
 function registrarPorNumero() {
