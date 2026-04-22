@@ -1,4 +1,3 @@
-// Mantenemos tu conexión original
 const SUPABASE_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -91,7 +90,6 @@ function generarMapaRuleta() {
     if(!mapa) return;
     mapa.innerHTML = '';
     
-    // Filtramos los números que ya salieron HOY para marcarlos
     const fHoy = document.getElementById('fecha-analisis').value;
     const jugadosHoy = historial.filter(r => r.fecha === fHoy).map(r => r.num);
 
@@ -105,7 +103,6 @@ function generarMapaRuleta() {
         listaAnimales.filter(a => a.s === sec).forEach(ani => {
             const aDiv = document.createElement('div');
             aDiv.id = `mapa-${ani.n}`;
-            // MEJORA: Si el número ya salió hoy, le ponemos la clase 'sensor-fijo'
             const esJugado = jugadosHoy.includes(ani.n);
             aDiv.className = `mini-animal ${esJugado ? 'sensor-fijo' : (ani.c === 'ROJO' ? 'bg-rojo' : ani.c === 'AZUL' ? 'bg-azul' : 'bg-negro')}`;
             aDiv.innerHTML = ani.n;
@@ -129,7 +126,7 @@ function actualizarInterfaz() {
     actualizarTabla();
     actualizarJugadaSniper();
     generarTripletasFijas();
-    generarMapaRuleta(); // Actualiza el mapa con los verdes fijos
+    generarMapaRuleta(); 
 }
 
 function generarTripletasFijas() {
@@ -159,7 +156,6 @@ function actualizarJugadaSniper() {
     
     if (sugeridos.length > 0) {
         panel.classList.add('alerta-caliente');
-        // MEJORA: Suena la alerta cuando hay coincidencia
         try { document.getElementById('snd-alerta').play(); } catch(e){}
     }
     
@@ -179,7 +175,7 @@ function registrarPorNumero() {
     const ani = listaAnimales.find(a => a.n === v);
     if(ani) { 
         registrarSorteo(ani.n, ani.a, ani.c, horaSeleccionadaActiva); 
-        input.value = ''; // Limpia el cuadro después de anotar
+        input.value = ''; 
     }
 }
 
