@@ -32,7 +32,8 @@ const reglasAtraccion = {
     '10': ['08', '13', '01', '00', '25'], '12': ['05', '09', '18', '11', '13'],
     '05': ['12', '18', '09', '34', '19', '11'], '09': ['05', '12', '18', '14', '28'],
     '36': ['03', '30', '26', '24', '13'], '25': ['07', '14', '21', '09'],
-    '20': ['17', '11', '08', '07'], '07': ['25', '11', '20', '14', '17']
+    '20': ['17', '11', '08', '07'], '07': ['25', '11', '20', '14', '17'],
+    '06': ['01', '04', '16', '33'], '32': ['11', '20', '14', '07']
 };
 
 async function inicializarSistema() {
@@ -47,10 +48,15 @@ async function inicializarSistema() {
 
 async function cargarHistorialRemoto() {
     try {
-        const { data, error } = await _supabase.from('historial_sorteos').select('*').order('fecha', { ascending: false });
+        const { data, error } = await _supabase.from('historial_sorteos').select('*');
         if (error) throw error;
-        if (data) { historial = data; actualizarInterfaz(); }
-    } catch (e) { console.error("Error remoto:", e); }
+        // Ordenamos el historial por fecha y luego por el índice de la hora
+        historial = data.sort((a, b) => {
+            if (a.fecha !== b.fecha) return b.fecha.localeCompare(a.fecha);
+            return horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora);
+        });
+        actualizarInterfaz();
+    } catch (e) { console.error("Error conexión:", e); }
 }
 
 function generarPanelDiario() {
@@ -71,35 +77,14 @@ function generarPanelDiario() {
 async function registrarSorteo(num, animal, color, hora) {
     const fecha = document.getElementById('fecha-analisis').value;
     const nuevo = { fecha, hora, num: num.toString(), animal, tipo: color };
+    
+    // UPSERT local
     const idx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
     if(idx !== -1) historial[idx] = nuevo; else historial.unshift(nuevo);
+    
     actualizarInterfaz();
     try { await _supabase.from('historial_sorteos').upsert(nuevo, { onConflict: 'fecha,hora' }); } 
-    catch (e) { console.error("Error upsert:", e); }
-}
-
-function generarMapaRuleta() {
-    const mapa = document.getElementById('mapa-ruleta');
-    if(!mapa) return;
-    mapa.innerHTML = '';
-    const fHoy = document.getElementById('fecha-analisis').value;
-    const jugadosHoy = historial.filter(r => r.fecha === fHoy).map(r => r.num);
-    ['A', 'B', 'C', 'D', 'E', 'F'].forEach(sec => {
-        const sDiv = document.createElement('div');
-        sDiv.className = 'sector-block';
-        sDiv.innerHTML = `<div class="sector-header">SEC ${sec}</div>`;
-        const sGrid = document.createElement('div');
-        sGrid.className = 'sector-grid';
-        listaAnimales.filter(a => a.s === sec).forEach(ani => {
-            const aDiv = document.createElement('div');
-            const esJugado = jugadosHoy.includes(ani.n);
-            aDiv.className = `mini-animal ${esJugado ? 'sensor-fijo' : (ani.c === 'ROJO' ? 'bg-rojo' : ani.c === 'AZUL' ? 'bg-azul' : 'bg-negro')}`;
-            aDiv.innerHTML = ani.n;
-            sGrid.appendChild(aDiv);
-        });
-        sDiv.appendChild(sGrid);
-        mapa.appendChild(sDiv);
-    });
+    catch (e) { console.error("Error Supabase:", e); }
 }
 
 function actualizarInterfaz() {
@@ -110,60 +95,123 @@ function actualizarInterfaz() {
     generarMapaRuleta();
 }
 
+// LOGICA ALTA DEFINICIÓN: Sniper que no repite y rastrea flujo
 function actualizarJugadaSniper() {
     const display = document.getElementById('numeros-sugeridos-directos');
     const aviso = document.getElementById('aviso-fuera');
     if(!display) return;
+    
     const fHoy = document.getElementById('fecha-analisis').value;
     const hoy = historial.filter(r => r.fecha === fHoy).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
     
-    if (hoy.length === 0) { display.innerHTML = "ESPERANDO..."; return; }
+    if (hoy.length === 0) { display.innerHTML = "ESPERANDO APERTURA"; return; }
 
-    const ult = hoy[0]; // Ejemplo: 12 (Caballo)
-    const pen = hoy[1]; // Ejemplo: 10 (Tigre)
-    let sugeridos = reglasAtraccion[ult.num] || ["25", "11", "20"];
+    const ult = hoy[0]; 
+    let sugeridos = [...(reglasAtraccion[ult.num] || ["25", "11", "20"])];
 
-    if (pen) {
-        const sU = listaAnimales.find(a => a.n === ult.num).s;
-        const sP = listaAnimales.find(a => a.n === pen.num).s;
-        // LÓGICA DE FLUJO: Si saltó de D a E, busca F o A
-        if (sP === 'D' && sU === 'E') {
-            const flujo = listaAnimales.filter(a => a.s === 'F' || a.s === 'A').map(a => a.n);
-            sugeridos = [...new Set([...sugeridos.slice(0,1), ...flujo.slice(0,2)])];
-            aviso.innerHTML = "🎯 MOVIMIENTO DETECTADO: SECTOR F / A";
-        } else {
-            aviso.innerHTML = "🔎 RASTREANDO ATRACCIÓN DIRECTA...";
-        }
+    // FILTRO ANTI-REPETICIÓN: Quitamos lo que ya salió hoy
+    const yaSalieron = hoy.map(r => r.num);
+    sugeridos = sugeridos.filter(n => !yaSalieron.includes(n));
+
+    // Si nos quedamos sin números por el filtro, buscamos por Sector
+    if (sugeridos.length < 2) {
+        const ultimoAni = listaAnimales.find(a => a.n === ult.num);
+        const sectorSig = { 'A':'B', 'B':'C', 'C':'D', 'D':'E', 'E':'F', 'F':'A' }[ultimoAni.s];
+        const refuerzos = listaAnimales.filter(a => a.s === sectorSig && !yaSalieron.includes(a.n)).map(a => a.n);
+        sugeridos = [...sugeridos, ...refuerzos];
     }
+
+    aviso.innerHTML = `📡 RASTREANDO TRAS EL ${ult.num}...`;
     display.innerHTML = sugeridos.slice(0,3).map(n => `<span class="sniper-num-pill">${n}</span>`).join('');
 }
 
+// TRIPLETAS QUE PIENSAN
 function generarTripletasDinamicas() {
     const cont = document.getElementById('seccion-tripletas');
     if(!cont) return;
     const fHoy = document.getElementById('fecha-analisis').value;
-    const hoy = historial.filter(r => r.fecha === fHoy).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
+    const hoy = historial.filter(r => r.fecha === fHoy);
     
-    let t1 = "11-25-20"; // EXPLOSIVA FIJA
-    let t2 = "09-14-28"; // ORO MIÉRCOLES
-    let t3 = "04-16-33"; // SECTOR F (GOLPE)
-
+    // T1: Dinámica basada en atracción real sin repetidos
+    let t1 = "11-25-20";
     if(hoy.length > 0) {
         const ult = hoy[0].num;
-        const rel = reglasAtraccion[ult] || ["01", "36"];
-        t1 = `${ult}-${rel[0]}-${rel[1]}`;
+        let base = (reglasAtraccion[ult] || ["01", "36", "13"]).filter(n => n !== ult);
+        t1 = base.slice(0,3).join('-');
+    }
+
+    // T2: Miércoles de Oro (Fija Estadística)
+    let t2 = "09-14-28"; 
+    // T3: El "Salto" (Sector que no ha salido hoy)
+    const sectoresHoy = hoy.map(r => listaAnimales.find(a => a.n === r.num).s);
+    const faltantes = ['A','B','C','D','E','F'].filter(s => !sectoresHoy.includes(s));
+    let t3 = "04-16-33"; // Default F
+    if(faltantes.length > 0) {
+        const aniFaltante = listaAnimales.filter(a => a.s === faltantes[0]).slice(0,3).map(a => a.n);
+        t3 = aniFaltante.join('-');
     }
 
     cont.innerHTML = `
-        <div class="card-tripleta"><small>💎 TRIPLETA DE ATAQUE</small><div class="tripleta-nums">${t1}</div></div>
+        <div class="card-tripleta"><small>💎 ATAQUE POST-SORTEO</small><div class="tripleta-nums">${t1}</div></div>
         <div class="card-tripleta"><small>🔥 ORO MIÉRCOLES</small><div class="tripleta-nums">${t2}</div></div>
-        <div class="card-tripleta"><small>📡 RADAR PRÓXIMO</small><div class="tripleta-nums">${t3}</div></div>
+        <div class="card-tripleta"><small>📡 SALTO DE SECTOR</small><div class="tripleta-nums">${t3}</div></div>
     `;
+}
+
+// ORDENAMIENTO DE TABLA (HISTORIAL CLARO)
+function actualizarTabla() {
+    const c = document.getElementById('lista-historial');
+    const fInput = document.getElementById('fecha-busqueda-historial');
+    if(!c || !fInput) return;
+    const f = fInput.value;
+    c.innerHTML = '';
+    
+    // Filtramos y ordenamos por hora real
+    const datosTabla = historial.filter(r => r.fecha === f)
+                        .sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
+    
+    datosTabla.forEach(r => {
+        const ani = listaAnimales.find(a => a.n === r.num);
+        if(ani) {
+            const clr = r.tipo === 'ROJO' ? 'color:#ff4d4d' : r.tipo === 'AZUL' ? 'color:#38bdf8' : 'color:#94a3b8';
+            c.innerHTML += `<tr>
+                <td>${r.hora}</td>
+                <td><b>${r.num}</b></td>
+                <td>${r.animal}</td>
+                <td>${ani.s}/${ani.e}</td>
+                <td style="${clr}; font-weight:bold">${r.tipo}</td>
+            </tr>`;
+        }
+    });
+}
+
+// FUNCIONES DE SOPORTE (Mantenidas y limpias)
+function generarMapaRuleta() {
+    const mapa = document.getElementById('mapa-ruleta');
+    if(!mapa) return; mapa.innerHTML = '';
+    const fHoy = document.getElementById('fecha-analisis').value;
+    const jugadosHoy = historial.filter(r => r.fecha === fHoy).map(r => r.num);
+    ['A', 'B', 'C', 'D', 'E', 'F'].forEach(sec => {
+        const sDiv = document.createElement('div');
+        sDiv.className = 'sector-block';
+        sDiv.innerHTML = `<div class="sector-header">SEC ${sec}</div>`;
+        const sGrid = document.createElement('div');
+        sGrid.className = 'sector-grid';
+        listaAnimales.filter(a => a.s === sec).forEach(ani => {
+            const aDiv = document.createElement('div');
+            const esJug = jugadosHoy.includes(ani.n);
+            aDiv.className = `mini-animal ${esJug ? 'sensor-fijo' : (ani.c==='ROJO'?'bg-rojo':ani.c==='AZUL'?'bg-azul':'bg-negro')}`;
+            aDiv.innerHTML = ani.n;
+            sGrid.appendChild(aDiv);
+        });
+        sDiv.appendChild(sGrid);
+        mapa.appendChild(sDiv);
+    });
 }
 
 function registrarPorNumero() {
     const input = document.getElementById('num-rapido');
-    if(!horaSeleccionadaActiva) return alert("Selecciona hora");
+    if(!horaSeleccionadaActiva) return alert("Selecciona hora en el panel");
     let v = input.value;
     if(v === "") return;
     if(v !== '0' && v !== '00') v = v.padStart(2, '0');
@@ -173,8 +221,7 @@ function registrarPorNumero() {
 
 function generarGridBotones() {
     const cont = document.getElementById('grid-container');
-    if(!cont) return;
-    cont.innerHTML = '';
+    if(!cont) return; cont.innerHTML = '';
     listaAnimales.forEach(a => {
         const d = document.createElement('div');
         d.className = "animal-btn";
@@ -182,21 +229,6 @@ function generarGridBotones() {
         d.innerHTML = `<b>${a.n}</b><br>${a.a}`;
         d.onclick = () => { if(horaSeleccionadaActiva) registrarSorteo(a.n, a.a, a.c, horaSeleccionadaActiva); };
         cont.appendChild(d);
-    });
-}
-
-function actualizarTabla() {
-    const c = document.getElementById('lista-historial');
-    const fInput = document.getElementById('fecha-busqueda-historial');
-    if(!c || !fInput) return;
-    const f = fInput.value;
-    c.innerHTML = '';
-    historial.filter(r => r.fecha === f).sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora)).forEach(r => {
-        const ani = listaAnimales.find(a => a.n === r.num);
-        if(ani) {
-            const colorStyle = r.tipo === 'ROJO' ? 'color:#ff4d4d' : r.tipo === 'AZUL' ? 'color:#38bdf8' : 'color:#94a3b8';
-            c.innerHTML += `<tr><td>${r.hora}</td><td><b>${r.num}</b></td><td>${r.animal}</td><td>${ani.s}/${ani.e}</td><td style="${colorStyle};font-weight:bold">${r.tipo}</td></tr>`;
-        }
     });
 }
 
@@ -212,7 +244,7 @@ function estudiarAtraccion() {
     const res = document.getElementById('resultado-atraccion');
     if (!val || !res) return;
     const comp = reglasAtraccion[val] || ["Calculando..."];
-    res.innerHTML = `<div style="margin-top:10px;"><b>Atracción:</b><br>${comp.map(n => `<span class="sniper-num-pill">${n}</span>`).join('')}</div>`;
+    res.innerHTML = `<div style="margin-top:10px;"><b>Atracción Fuerte:</b><br>${comp.map(n => `<span class="sniper-num-pill">${n}</span>`).join('')}</div>`;
 }
 
 function llenarSelectorEstudio() {
@@ -222,5 +254,9 @@ function llenarSelectorEstudio() {
     listaAnimales.forEach(a => s.innerHTML += `<option value="${a.n}">${a.n} - ${a.a}</option>`);
 }
 
-setInterval(() => { const clock = document.getElementById('live-clock'); if(clock) clock.innerText = new Date().toLocaleTimeString(); }, 1000);
+setInterval(() => { 
+    const clock = document.getElementById('live-clock'); 
+    if(clock) clock.innerText = new Date().toLocaleTimeString(); 
+}, 1000);
+
 window.onload = inicializarSistema;
