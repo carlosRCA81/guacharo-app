@@ -29,21 +29,17 @@ let historial = [];
 let horaSeleccionadaActiva = null;
 
 const reglasAtraccion = {
+    '10': ['08', '13', '01', '00', '25'], '12': ['05', '09', '18', '11', '13'],
     '05': ['12', '18', '09', '34', '19', '11'], '09': ['05', '12', '18', '14', '28'],
     '36': ['03', '30', '26', '24', '13'], '25': ['07', '14', '21', '09'],
-    '00': ['29', '26', '01', '22', '35'], '12': ['05', '09', '18', '11', '13'],
-    '20': ['17', '11', '08', '07'], '30': ['03', '36', '26', '06', '00'],
-    '07': ['25', '11', '20', '14', '17'], '35': ['25', '08', '09', '26', '29'],
-    '11': ['07', '20', '17', '12', '05'], '10': ['08', '13', '01', '00', '25'],
-    '14': ['09', '28', '07', '18', '32']
+    '20': ['17', '11', '08', '07'], '07': ['25', '11', '20', '14', '17']
 };
 
 async function inicializarSistema() {
-    const fechaInput = document.getElementById('fecha-analisis');
-    const fechaBusqueda = document.getElementById('fecha-busqueda-historial');
-    if(fechaInput) fechaInput.value = new Date().toISOString().split('T')[0];
-    if(fechaBusqueda) fechaBusqueda.value = new Date().toISOString().split('T')[0];
-    
+    const fA = document.getElementById('fecha-analisis');
+    const fH = document.getElementById('fecha-busqueda-historial');
+    if(fA) fA.value = new Date().toISOString().split('T')[0];
+    if(fH) fH.value = new Date().toISOString().split('T')[0];
     generarGridBotones();
     llenarSelectorEstudio();
     await cargarHistorialRemoto();
@@ -54,7 +50,7 @@ async function cargarHistorialRemoto() {
         const { data, error } = await _supabase.from('historial_sorteos').select('*').order('fecha', { ascending: false });
         if (error) throw error;
         if (data) { historial = data; actualizarInterfaz(); }
-    } catch (e) { console.error("Error cargando historial:", e); }
+    } catch (e) { console.error("Error remoto:", e); }
 }
 
 function generarPanelDiario() {
@@ -77,12 +73,9 @@ async function registrarSorteo(num, animal, color, hora) {
     const nuevo = { fecha, hora, num: num.toString(), animal, tipo: color };
     const idx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
     if(idx !== -1) historial[idx] = nuevo; else historial.unshift(nuevo);
-    
     actualizarInterfaz();
-    titilearEnMapa(num); 
-    
     try { await _supabase.from('historial_sorteos').upsert(nuevo, { onConflict: 'fecha,hora' }); } 
-    catch (e) { console.error("Error al guardar:", e); }
+    catch (e) { console.error("Error upsert:", e); }
 }
 
 function generarMapaRuleta() {
@@ -91,9 +84,7 @@ function generarMapaRuleta() {
     mapa.innerHTML = '';
     const fHoy = document.getElementById('fecha-analisis').value;
     const jugadosHoy = historial.filter(r => r.fecha === fHoy).map(r => r.num);
-
-    const sectores = ['A', 'B', 'C', 'D', 'E', 'F'];
-    sectores.forEach(sec => {
+    ['A', 'B', 'C', 'D', 'E', 'F'].forEach(sec => {
         const sDiv = document.createElement('div');
         sDiv.className = 'sector-block';
         sDiv.innerHTML = `<div class="sector-header">SEC ${sec}</div>`;
@@ -101,7 +92,6 @@ function generarMapaRuleta() {
         sGrid.className = 'sector-grid';
         listaAnimales.filter(a => a.s === sec).forEach(ani => {
             const aDiv = document.createElement('div');
-            aDiv.id = `mapa-${ani.n}`;
             const esJugado = jugadosHoy.includes(ani.n);
             aDiv.className = `mini-animal ${esJugado ? 'sensor-fijo' : (ani.c === 'ROJO' ? 'bg-rojo' : ani.c === 'AZUL' ? 'bg-azul' : 'bg-negro')}`;
             aDiv.innerHTML = ani.n;
@@ -112,83 +102,73 @@ function generarMapaRuleta() {
     });
 }
 
-function titilearEnMapa(num) {
-    const el = document.getElementById(`mapa-${num}`);
-    if(el) {
-        el.classList.add('titileo');
-        setTimeout(() => el.classList.remove('titileo'), 5000);
-    }
-}
-
 function actualizarInterfaz() {
     generarPanelDiario();
     actualizarTabla();
     actualizarJugadaSniper();
-    generarTripletasFijas(); 
-    generarMapaRuleta(); 
-}
-
-function generarTripletasFijas() {
-    const cont = document.getElementById('seccion-tripletas');
-    if(!cont) return;
-    
-    // TRIPLETAS CONGELADAS PARA EL DÍA (Precisión Estricta Miércoles)
-    let t1 = "09-14-28"; // ORO
-    let t2 = "25-32-10"; // REFUERZO SECTOR D/B
-    let t3 = "11-25-20"; // EXPLOSIVA
-
-    cont.innerHTML = `
-        <div class="card-tripleta"><small>🔥 TRIPLETA DE ORO (MIÉRCOLES)</small><div class="tripleta-nums">${t1}</div></div>
-        <div class="card-tripleta"><small>📡 TRIPLETA DE REFUERZO</small><div class="tripleta-nums">${t2}</div></div>
-        <div class="card-tripleta"><small>💎 TRIPLETA EXPLOSIVA</small><div class="tripleta-nums">${t3}</div></div>
-    `;
+    generarTripletasDinamicas();
+    generarMapaRuleta();
 }
 
 function actualizarJugadaSniper() {
     const display = document.getElementById('numeros-sugeridos-directos');
-    const panel = document.getElementById('panel-proxima-jugada');
-    const avisoRepetido = document.getElementById('aviso-fuera');
-    if(!display || !panel) return;
-    
+    const aviso = document.getElementById('aviso-fuera');
+    if(!display) return;
     const fHoy = document.getElementById('fecha-analisis').value;
-    const hoy = historial.filter(r => r.fecha === fHoy);
+    const hoy = historial.filter(r => r.fecha === fHoy).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
     
-    // ANIMAL FIJO SEGÚN ALGORITMO HISTÓRICO (ESTRICTO)
-    // Si ya salió el 10, la Gallina (25) sube a probabilidad 95%
-    let animalFijo = "25"; 
+    if (hoy.length === 0) { display.innerHTML = "ESPERANDO..."; return; }
+
+    const ult = hoy[0]; // Ejemplo: 12 (Caballo)
+    const pen = hoy[1]; // Ejemplo: 10 (Tigre)
+    let sugeridos = reglasAtraccion[ult.num] || ["25", "11", "20"];
+
+    if (pen) {
+        const sU = listaAnimales.find(a => a.n === ult.num).s;
+        const sP = listaAnimales.find(a => a.n === pen.num).s;
+        // LÓGICA DE FLUJO: Si saltó de D a E, busca F o A
+        if (sP === 'D' && sU === 'E') {
+            const flujo = listaAnimales.filter(a => a.s === 'F' || a.s === 'A').map(a => a.n);
+            sugeridos = [...new Set([...sugeridos.slice(0,1), ...flujo.slice(0,2)])];
+            aviso.innerHTML = "🎯 MOVIMIENTO DETECTADO: SECTOR F / A";
+        } else {
+            aviso.innerHTML = "🔎 RASTREANDO ATRACCIÓN DIRECTA...";
+        }
+    }
+    display.innerHTML = sugeridos.slice(0,3).map(n => `<span class="sniper-num-pill">${n}</span>`).join('');
+}
+
+function generarTripletasDinamicas() {
+    const cont = document.getElementById('seccion-tripletas');
+    if(!cont) return;
+    const fHoy = document.getElementById('fecha-analisis').value;
+    const hoy = historial.filter(r => r.fecha === fHoy).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
     
-    if (hoy.length === 0) { 
-        display.innerHTML = `<span class="sniper-num-pill">${animalFijo}</span>`; 
-        avisoRepetido.innerHTML = "ESPERANDO APERTURA...";
-        return; 
+    let t1 = "11-25-20"; // EXPLOSIVA FIJA
+    let t2 = "09-14-28"; // ORO MIÉRCOLES
+    let t3 = "04-16-33"; // SECTOR F (GOLPE)
+
+    if(hoy.length > 0) {
+        const ult = hoy[0].num;
+        const rel = reglasAtraccion[ult] || ["01", "36"];
+        t1 = `${ult}-${rel[0]}-${rel[1]}`;
     }
 
-    const ultimo = hoy[0];
-    const numsHoy = hoy.map(r => r.num);
-    
-    // Detector de repetición estricto
-    const repetidoEnPotencia = numsHoy.find((n, i) => numsHoy.indexOf(n) !== i);
-    if (repetidoEnPotencia) {
-        avisoRepetido.innerHTML = `⚠️ SE CONFIRMA REPETICIÓN: ${repetidoEnPotencia}`;
-    } else {
-        avisoRepetido.innerHTML = "LÍNEA DE CRUCE: SECTOR D ACTIVO";
-    }
-
-    panel.classList.add('alerta-caliente');
-    display.innerHTML = `<span class="sniper-num-pill">${animalFijo}</span><span class="sniper-num-pill" style="opacity:0.6">11</span><span class="sniper-num-pill" style="opacity:0.6">20</span>`;
+    cont.innerHTML = `
+        <div class="card-tripleta"><small>💎 TRIPLETA DE ATAQUE</small><div class="tripleta-nums">${t1}</div></div>
+        <div class="card-tripleta"><small>🔥 ORO MIÉRCOLES</small><div class="tripleta-nums">${t2}</div></div>
+        <div class="card-tripleta"><small>📡 RADAR PRÓXIMO</small><div class="tripleta-nums">${t3}</div></div>
+    `;
 }
 
 function registrarPorNumero() {
     const input = document.getElementById('num-rapido');
-    if(!horaSeleccionadaActiva) return alert("Selecciona una hora primero");
+    if(!horaSeleccionadaActiva) return alert("Selecciona hora");
     let v = input.value;
     if(v === "") return;
     if(v !== '0' && v !== '00') v = v.padStart(2, '0');
     const ani = listaAnimales.find(a => a.n === v);
-    if(ani) { 
-        registrarSorteo(ani.n, ani.a, ani.c, horaSeleccionadaActiva); 
-        input.value = ''; 
-    }
+    if(ani) { registrarSorteo(ani.n, ani.a, ani.c, horaSeleccionadaActiva); input.value = ''; }
 }
 
 function generarGridBotones() {
@@ -223,8 +203,7 @@ function actualizarTabla() {
 function openTab(evt, n) {
     document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    const target = document.getElementById(n);
-    if(target) target.style.display = 'block';
+    document.getElementById(n).style.display = 'block';
     evt.currentTarget.classList.add('active');
 }
 
@@ -233,9 +212,7 @@ function estudiarAtraccion() {
     const res = document.getElementById('resultado-atraccion');
     if (!val || !res) return;
     const comp = reglasAtraccion[val] || ["Calculando..."];
-    res.innerHTML = `<div style="margin-top:10px;"><b>Atracción directa:</b><br><div style="display:flex; justify-content:center; gap:5px; margin-top:5px;">
-        ${comp.map(n => `<span style="background:#ef4444; color:white; padding:5px 8px; border-radius:4px; font-weight:bold;">${n}</span>`).join('')}
-    </div></div>`;
+    res.innerHTML = `<div style="margin-top:10px;"><b>Atracción:</b><br>${comp.map(n => `<span class="sniper-num-pill">${n}</span>`).join('')}</div>`;
 }
 
 function llenarSelectorEstudio() {
