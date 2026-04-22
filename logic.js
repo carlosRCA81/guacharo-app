@@ -89,7 +89,6 @@ function generarMapaRuleta() {
     const mapa = document.getElementById('mapa-ruleta');
     if(!mapa) return;
     mapa.innerHTML = '';
-    
     const fHoy = document.getElementById('fecha-analisis').value;
     const jugadosHoy = historial.filter(r => r.fecha === fHoy).map(r => r.num);
 
@@ -125,28 +124,35 @@ function actualizarInterfaz() {
     generarPanelDiario();
     actualizarTabla();
     actualizarJugadaSniper();
-    generarTripletasFijas();
+    generarTripletasDinamicas(); // Cambio a dinámico
     generarMapaRuleta(); 
 }
 
-function generarTripletasFijas() {
+function generarTripletasDinamicas() {
     const cont = document.getElementById('seccion-tripletas');
     if(!cont) return;
-    let t1 = ["18", "09", "25"]; 
-    let t2 = ["00", "13", "01"]; 
-    let t3 = ["07", "32", "11"]; 
+    const fHoy = document.getElementById('fecha-analisis').value;
+    const hoy = historial.filter(r => r.fecha === fHoy);
     
+    let base = ["18", "09", "25"]; // Default
+    if(hoy.length > 0) {
+        const ultimo = hoy[0].num;
+        const extra = reglasAtraccion[ultimo] || ["00", "01"];
+        base = [ultimo, extra[0], extra[1]].slice(0,3);
+    }
+
     cont.innerHTML = `
-        <div class="card-tripleta"><small>🔥 TRIPLETA DE ORO</small><div class="tripleta-nums">${t1.join('-')}</div></div>
-        <div class="card-tripleta"><small>🎯 CRUCE DE RULETA</small><div class="tripleta-nums">${t2.join('-')}</div></div>
-        <div class="card-tripleta"><small>💎 JUGADA MAESTRA</small><div class="tripleta-nums">${t3.join('-')}</div></div>
+        <div class="card-tripleta"><small>🔥 TRIPLETA POR ATRACCIÓN</small><div class="tripleta-nums">${base.join('-')}</div></div>
+        <div class="card-tripleta"><small>💎 TRIPLETA EXPLOSIVA</small><div class="tripleta-nums">05-12-36</div></div>
     `;
 }
 
 function actualizarJugadaSniper() {
     const display = document.getElementById('numeros-sugeridos-directos');
     const panel = document.getElementById('panel-proxima-jugada');
+    const avisoRepetido = document.getElementById('aviso-fuera');
     if(!display || !panel) return;
+    
     const fHoy = document.getElementById('fecha-analisis').value;
     const hoy = historial.filter(r => r.fecha === fHoy);
     if (hoy.length === 0) { display.innerHTML = "ESPERANDO DATOS"; return; }
@@ -154,6 +160,16 @@ function actualizarJugadaSniper() {
     const ultimo = hoy[0];
     let sugeridos = reglasAtraccion[ultimo.num] || [];
     
+    // ANALIZAR REPETIDOS
+    const numsHoy = hoy.map(r => r.num);
+    const repetidoEnPotencia = numsHoy.find((n, i) => numsHoy.indexOf(n) !== i);
+    
+    if (repetidoEnPotencia) {
+        avisoRepetido.innerHTML = `⚠️ ALERTA: POSIBLE REPETICIÓN DE ${repetidoEnPotencia}`;
+    } else {
+        avisoRepetido.innerHTML = "";
+    }
+
     if (sugeridos.length > 0) {
         panel.classList.add('alerta-caliente');
         try { document.getElementById('snd-alerta').play(); } catch(e){}
