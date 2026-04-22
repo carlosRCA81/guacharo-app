@@ -28,71 +28,73 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historial = [];
 let horaSeleccionadaActiva = null;
 
+// Lógica de Atracción Reforzada con tus observaciones
 const reglasAtraccion = {
     '10': ['08', '13', '01', '00', '25'], '12': ['05', '09', '18', '11', '13'],
-    '05': ['12', '18', '09', '34', '19', '11'], '09': ['05', '12', '18', '14', '28'],
+    '05': ['12', '18', '09', '34', '19', '11'], '09': ['0', '05', '12', '18', '14'],
     '36': ['03', '30', '26', '24', '13'], '25': ['07', '14', '21', '09'],
     '20': ['17', '11', '08', '07'], '07': ['25', '11', '20', '14', '17'],
-    '06': ['01', '04', '16', '33'], '32': ['11', '20', '14', '07']
+    '06': ['01', '04', '16', '33'], '32': ['11', '20', '14', '07'],
+    '0': ['09', '14', '28', '26'], '00': ['26', '29', '36', '06'],
+    '08': ['35', '10', '29', '31'], '35': ['08', '02', '11', '26']
 };
 
-// 1. INICIALIZACIÓN BLINDADA
+// 1. INICIALIZACIÓN
 async function inicializarSistema() {
     const fA = document.getElementById('fecha-analisis');
     const fH = document.getElementById('fecha-busqueda-historial');
     const hoy = new Date().toISOString().split('T')[0];
-    
-    if(fA) fA.value = hoy;
-    if(fH) fH.value = hoy;
-
+    if(fA) fA.value = hoy; if(fH) fH.value = hoy;
     generarGridBotones();
     llenarSelectorEstudio();
-    
-    // Escuchar cambios de fecha para actualizar la vista
     if(fA) fA.addEventListener('change', actualizarInterfaz);
     if(fH) fH.addEventListener('change', actualizarTabla);
-
     await cargarHistorialRemoto();
 }
 
-// 2. CARGA DE DATOS SIN PÉRDIDAS (DESDE ENERO)
 async function cargarHistorialRemoto() {
     try {
-        const { data, error } = await _supabase
-            .from('historial_sorteos')
-            .select('*')
-            .order('fecha', { ascending: false });
-
+        const { data, error } = await _supabase.from('historial_sorteos').select('*').order('fecha', { ascending: false });
         if (error) throw error;
         historial = data || [];
         actualizarInterfaz();
-    } catch (e) { 
-        console.error("Error conexión Supabase:", e); 
-    }
+    } catch (e) { console.error("Error conexión Supabase:", e); }
 }
 
-// 3. REGISTRO QUE RESPETA LA CONEXIÓN
 async function registrarSorteo(num, animal, color, hora) {
     const fecha = document.getElementById('fecha-analisis').value;
     const nuevo = { fecha, hora, num: num.toString(), animal, tipo: color };
-    
     try {
-        // Enviar a Supabase (Upsert evita duplicados por fecha/hora)
-        const { error } = await _supabase
-            .from('historial_sorteos')
-            .upsert(nuevo, { onConflict: 'fecha,hora' });
-
+        const { error } = await _supabase.from('historial_sorteos').upsert(nuevo, { onConflict: 'fecha,hora' });
         if (error) throw error;
-
-        // Actualizar localmente para reflejo instantáneo
         const idx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
         if(idx !== -1) historial[idx] = nuevo; else historial.unshift(nuevo);
-        
         actualizarInterfaz();
-    } catch (e) { 
-        console.error("Error al guardar:", e);
-        alert("Error de conexión. Verifica Supabase.");
-    }
+    } catch (e) { console.error("Error al guardar:", e); alert("Error de conexión."); }
+}
+
+// 2. MOTOR DE ESTUDIO DE CICLOS (LA LÓGICA QUE PEDISTE)
+function analizarCicloDupla(n1, n2) {
+    let demoras = [];
+    let ultimoEncontrado = -1;
+    // Recorremos el historial de atrás hacia adelante (cronológico)
+    const crono = [...historial].reverse();
+    
+    crono.forEach((reg, i) => {
+        if (reg.num === n1) {
+            // Buscamos cuánto tardó en salir n2 después de este n1
+            for (let j = i + 1; j < crono.length; j++) {
+                if (crono[j].num === n2) {
+                    demoras.push(j - i); // Cantidad de sorteos de demora
+                    break;
+                }
+            }
+        }
+    });
+
+    if (demoras.length === 0) return "S/D";
+    const promedio = Math.round(demoras.reduce((a,b) => a+b, 0) / demoras.length);
+    return promedio;
 }
 
 function generarPanelDiario() {
@@ -100,7 +102,6 @@ function generarPanelDiario() {
     if(!p) return;
     const f = document.getElementById('fecha-analisis').value;
     p.innerHTML = '';
-    
     horasSorteo.forEach(h => {
         const r = historial.find(x => x.fecha === f && x.hora === h);
         const b = document.createElement('div');
@@ -111,33 +112,19 @@ function generarPanelDiario() {
     });
 }
 
-// 4. HISTORIAL CORREGIDO (FILTRADO POR FECHA SELECCIONADA)
 function actualizarTabla() {
     const c = document.getElementById('lista-historial');
     const fInput = document.getElementById('fecha-busqueda-historial');
     if(!c || !fInput) return;
-    
     const f = fInput.value;
     c.innerHTML = '';
-    
-    const datosTabla = historial.filter(r => r.fecha === f)
-                        .sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
-    
-    if (datosTabla.length === 0) {
-        c.innerHTML = '<tr><td colspan="5" style="text-align:center; opacity:0.5;">Sin datos</td></tr>';
-    }
-
+    const datosTabla = historial.filter(r => r.fecha === f).sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
+    if (datosTabla.length === 0) c.innerHTML = '<tr><td colspan="5" style="text-align:center; opacity:0.5;">Sin datos</td></tr>';
     datosTabla.forEach(r => {
         const ani = listaAnimales.find(a => a.n === r.num);
         if(ani) {
             const clr = r.tipo === 'ROJO' ? 'color:#ff4d4d' : r.tipo === 'AZUL' ? 'color:#38bdf8' : 'color:#94a3b8';
-            c.innerHTML += `<tr>
-                <td>${r.hora}</td>
-                <td><b>${r.num}</b></td>
-                <td>${r.animal}</td>
-                <td>${ani.s}/${ani.e}</td>
-                <td style="${clr}; font-weight:bold">${r.tipo}</td>
-            </tr>`;
+            c.innerHTML += `<tr><td>${r.hora}</td><td><b>${r.num}</b></td><td>${r.animal}</td><td>${ani.s}/${ani.e}</td><td style="${clr}; font-weight:bold">${r.tipo}</td></tr>`;
         }
     });
 }
@@ -150,6 +137,7 @@ function actualizarInterfaz() {
     generarMapaRuleta();
 }
 
+// 3. SNIPER CON PRIORIDAD DE DUPLAS Y CICLOS
 function actualizarJugadaSniper() {
     const display = document.getElementById('numeros-sugeridos-directos');
     const aviso = document.getElementById('aviso-fuera');
@@ -162,6 +150,20 @@ function actualizarJugadaSniper() {
 
     const ult = hoy[0]; 
     let sugeridos = [...(reglasAtraccion[ult.num] || ["25", "11", "20"])];
+    
+    // Verificamos si la última salida es parte de tus duplas clave
+    let mensajeExtra = "";
+    if (ult.num === '0') {
+        const delay = analizarCicloDupla('0', '09');
+        mensajeExtra = ` (Ciclo 0-09: ~${delay} sort.)`;
+    } else if (ult.num === '07') {
+        const delay = analizarCicloDupla('07', '25');
+        mensajeExtra = ` (Ciclo 07-25: ~${delay} sort.)`;
+    } else if (ult.num === '00') {
+        const delay26 = analizarCicloDupla('00', '26');
+        mensajeExtra = ` (Ciclo 00-26: ~${delay26} sort.)`;
+    }
+
     const yaSalieron = hoy.map(r => r.num);
     sugeridos = sugeridos.filter(n => !yaSalieron.includes(n));
 
@@ -172,7 +174,7 @@ function actualizarJugadaSniper() {
         sugeridos = [...sugeridos, ...refuerzos];
     }
 
-    aviso.innerHTML = `📡 RASTREANDO TRAS EL ${ult.num}...`;
+    aviso.innerHTML = `📡 RASTREANDO TRAS EL ${ult.num}${mensajeExtra}...`;
     display.innerHTML = sugeridos.slice(0,3).map(n => `<span class="sniper-num-pill">${n}</span>`).join('');
 }
 
@@ -189,7 +191,7 @@ function generarTripletasDinamicas() {
         t1 = base.slice(0,3).join('-');
     }
 
-    let t2 = "09-14-28"; 
+    let t2 = "09-00-26"; // Enfocada en tu estudio de duplas
     const sectoresHoy = hoy.map(r => listaAnimales.find(a => a.n === r.num).s);
     const faltantes = ['A','B','C','D','E','F'].filter(s => !sectoresHoy.includes(s));
     let t3 = "04-16-33";
@@ -200,7 +202,7 @@ function generarTripletasDinamicas() {
 
     cont.innerHTML = `
         <div class="card-tripleta"><small>💎 ATAQUE POST-SORTEO</small><div class="tripleta-nums">${t1}</div></div>
-        <div class="card-tripleta"><small>🔥 ORO MIÉRCOLES</small><div class="tripleta-nums">${t2}</div></div>
+        <div class="card-tripleta"><small>🔥 DUPLAS EN ESTUDIO</small><div class="tripleta-nums">${t2}</div></div>
         <div class="card-tripleta"><small>📡 SALTO DE SECTOR</small><div class="tripleta-nums">${t3}</div></div>
     `;
 }
