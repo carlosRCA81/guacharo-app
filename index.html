@@ -3,43 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRCA PRO V2 - GÉMINIS EDITION</title>
+    <title>CRCA PRO V2 - GÉMINIS PRECISION</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="main-app">
         <header>
-            <h1>CRCA PRO <span style="color: #22c55e;">V2</span> <small style="font-size: 0.5rem; color: #fbbf24;">GÉMINIS</small></h1>
+            <h1>CRCA PRO <span style="color: #22c55e;">V2</span> <small style="font-size: 0.5rem; color: #fbbf24;">PRECISION</small></h1>
             <div id="live-clock">00:00:00</div>
             <div class="tab-container">
                 <button class="tab-btn active" onclick="openTab(event, 'registro')">REGISTRO</button>
-                <button class="tab-btn" onclick="openTab(event, 'sectores-tab')">MAPA</button>
+                <button class="tab-btn" onclick="openTab(event, 'estudio-avanzado')">ALGORITMO</button>
                 <button class="tab-btn" onclick="openTab(event, 'tripletas-tab')">TRIPLETAS</button>
                 <button class="tab-btn" onclick="openTab(event, 'historial')">HISTORIAL</button>
             </div>
         </header>
 
         <section id="registro" class="tab-content active">
-            <div class="panel-sniper" id="panel-proxima-jugada">
+            <div class="panel-sniper">
                 <span class="sniper-badge">🎯 SNIPER INTELIGENTE</span>
-                <div class="sniper-nums" id="numeros-sugeridos-directos">ESPERANDO DATOS...</div>
-                <div id="aviso-fuera" class="aviso-status">📡 RASTREANDO MOVIMIENTO...</div>
+                <div class="sniper-nums" id="numeros-sugeridos-directos">ESPERANDO...</div>
+                <div id="aviso-fuera" class="aviso-status">📡 RASTREANDO SECTORES...</div>
             </div>
-
             <div class="panel-diario" id="panel-diario-sorteos"></div>
-
             <div class="entrada-rapida">
                 <input type="text" id="num-rapido" maxlength="2" placeholder="NRO">
                 <button onclick="registrarPorNumero()">ANOTAR</button>
             </div>
-            
             <div class="grid-animales" id="grid-container"></div>
             <input type="date" id="fecha-analisis" class="fecha-input">
         </section>
 
-        <section id="sectores-tab" class="tab-content" style="display:none;">
-            <div class="info-label">ESTADO DE SENSORES POR SECTOR</div>
-            <div id="mapa-ruleta" class="mapa-container"></div>
+        <section id="estudio-avanzado" class="tab-content" style="display:none;">
+            <div class="radar-container">
+                <h3 style="color: #fbbf24; text-align: center; font-size: 0.9rem;">📡 CALCULADORA DE PRECISIÓN</h3>
+                <p style="font-size: 0.7rem; text-align: center; opacity: 0.8;">Selecciona el número que salió para ver el próximo golpe.</p>
+                <select id="select-estudio-animal" onchange="estudiarAlgoritmo()" class="fecha-input" style="margin-bottom: 20px; font-weight: bold;"></select>
+                <div id="resultado-maestro" class="resultado-box-mini"></div>
+            </div>
         </section>
 
         <section id="tripletas-tab" class="tab-content" style="display:none;">
@@ -52,15 +53,9 @@
                 <input type="date" id="fecha-busqueda-historial" class="fecha-input">
             </div>
             <div class="tabla-contenedor">
-                <table id="tabla-pro">
+                <table>
                     <thead>
-                        <tr>
-                            <th>HORA</th>
-                            <th>NRO</th>
-                            <th>ANIMAL</th>
-                            <th>SEC</th>
-                            <th>TIPO</th>
-                        </tr>
+                        <tr><th>HORA</th><th>NRO</th><th>ANIMAL</th><th>SEC</th><th>COLOR</th></tr>
                     </thead>
                     <tbody id="lista-historial"></tbody>
                 </table>
