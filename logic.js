@@ -24,7 +24,6 @@ const listaAnimales = [
     {n:'35', a:'JIRAFA', c:'NEGRO', s:'A'}, {n:'36', a:'CULEBRA', c:'ROJO', s:'D'}
 ];
 
-// Algoritmo refinado con datos históricos para cruces y espejos
 const algoritmoLara = {
     '07': ['25', '32', '11'], '04': ['13', '14', '10'], '00': ['26', '29', '09'], 
     '10': ['08', '13', '36'], '12': ['05', '18', '19'], '05': ['12', '11', '34'], 
@@ -59,6 +58,46 @@ function actualizarTodo() {
     renderizarHistorial();
     renderizarMapa();
     ejecutarSniper();
+    calcularArrastreCarlos(); // <--- NUEVA LÓGICA ACTIVADA
+}
+
+// NUEVA FUNCIÓN: EL MOTOR DE ARRASTRE DE CARLOS
+function calcularArrastreCarlos() {
+    const fecha = document.getElementById('fecha-analisis').value;
+    const hoy = historialGlobal
+        .filter(r => r.fecha === fecha)
+        .sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
+
+    if (hoy.length < 1) return;
+
+    const actual = hoy[0].num; // El último que salió
+    const anterior = hoy[1] ? hoy[1].num : actual; // El de antes
+
+    // 1. LÓGICA DE UNIÓN (Como el 02 + 06 = 26)
+    // Tomamos el último dígito de cada uno
+    const d1 = anterior.slice(-1);
+    const d2 = actual.slice(-1);
+    const unionVal = d1 + d2;
+    
+    // 2. LÓGICA DE SUMA (Como el 9 + 4 = 13)
+    const sumaVal = (parseInt(d1) + parseInt(d2)).toString().padStart(2, '0');
+
+    // Buscamos si existen en la lista de animales
+    const aniUnion = listaAnimales.find(a => a.n === unionVal || a.n === parseInt(unionVal).toString());
+    const aniSuma = listaAnimales.find(a => a.n === sumaVal || a.n === parseInt(sumaVal).toString());
+
+    // Mostramos en el HTML
+    document.getElementById('arrastre-union').innerText = unionVal;
+    document.getElementById('arrastre-suma').innerText = sumaVal;
+    
+    // El Vínculo sugiere el de la unión por ser el más fuerte en tus pruebas
+    if(aniUnion) {
+        document.getElementById('arrastre-animal').innerText = aniUnion.a;
+    } else if (aniSuma) {
+        document.getElementById('arrastre-animal').innerText = aniSuma.a;
+    } else {
+        document.getElementById('arrastre-animal').innerText = "BUSCANDO...";
+    }
 }
 
 function renderizarMapa() {
@@ -86,28 +125,19 @@ function renderizarMapa() {
     });
 }
 
-// Lógica Maestra de Tripletas para mañana (7:00 PM)
 function calcularProyeccionManana(hoy) {
     if (hoy.length === 0) return ["01-10-25", "07-14-32", "00-26-36"];
-
     const ultimo = hoy[0].num;
     const primero = hoy[hoy.length - 1].num;
-    
-    // Cruce de sectores: Buscar el sector que menos salió hoy
     const conteoSectores = {A:0, B:0, C:0, D:0, E:0, F:0};
     hoy.forEach(r => {
         const s = listaAnimales.find(a => a.n === r.num).s;
         conteoSectores[s]++;
     });
     const sectorFrio = Object.keys(conteoSectores).reduce((a, b) => conteoSectores[a] < conteoSectores[b] ? a : b);
-
-    // Tripleta 1: Basada en el cierre (Espejo del último)
     const t1 = algoritmoLara[ultimo] ? algoritmoLara[ultimo].join('-') : "04-13-14";
-    // Tripleta 2: Basada en la apertura (Resorte del primero)
     const t2 = algoritmoLara[primero] ? algoritmoLara[primero].join('-') : "10-08-29";
-    // Tripleta 3: Basada en el Sector Frío (La caída obligatoria)
     const t3 = listaAnimales.filter(a => a.s === sectorFrio).slice(0,3).map(a => a.n).join('-');
-
     return [t1, t2, t3];
 }
 
@@ -115,31 +145,20 @@ function ejecutarSniper() {
     const display = document.getElementById('numeros-sugeridos-directos');
     const tripCont = document.getElementById('seccion-tripletas');
     const fecha = document.getElementById('fecha-analisis').value;
-    
-    const hoy = historialGlobal
-        .filter(r => r.fecha === fecha)
-        .sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
-
+    const hoy = historialGlobal.filter(r => r.fecha === fecha).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
     if(hoy.length === 0) {
         display.innerText = "ESPERANDO...";
-        tripCont.innerHTML = "<p style='text-align:center; font-size:0.7rem;'>ANOTA EL PRIMER SORTEO</p>";
         return;
     }
-
     const ultimo = hoy[0].num;
     const esCierre = hoy[0].hora === '7:00 PM';
-
-    // 1-2 números de máxima precisión
     let sugeridos = algoritmoLara[ultimo] || ["01", "25", "36"];
     display.innerHTML = sugeridos.slice(0,2).map(n => `<span class="sniper-pill">${n}</span>`).join('');
-
-    // Mostrar Tripletas (Si es las 7pm, muestra PROYECCIÓN MAÑANA)
     const tripletas = calcularProyeccionManana(hoy);
-    let html = `<h3 style="color:#fbbf24; text-align:center; font-size:0.8rem; margin-bottom:10px;">${esCierre ? '🚀 PROYECCIÓN PARA MAÑANA' : '🎯 TRIPLETAS DEL DÍA'}</h3>`;
-    
+    let html = `<h3 style="color:#fbbf24; text-align:center; font-size:0.8rem; margin-bottom:10px;">${esCierre ? '🚀 PROYECCIÓN MAÑANA' : '🎯 TRIPLETAS'}</h3>`;
     tripletas.forEach((t, i) => {
         html += `<div class="card-tripleta" style="border-left:4px solid ${i==0?'#38bdf8':i==1?'#fbbf24':'#22c55e'}; margin-bottom:8px; background:#020617; padding:10px; border-radius:8px;">
-                    <small style="color:#94a3b8; font-size:0.6rem;">${esCierre ? 'GOLPE MAESTRO' : 'OPCIÓN'} ${i+1}</small>
+                    <small style="color:#94a3b8; font-size:0.6rem;">OPCIÓN ${i+1}</small>
                     <div style="font-size:1.2rem; font-weight:bold; letter-spacing:2px; color:white;">${t}</div>
                  </div>`;
     });
@@ -151,12 +170,12 @@ function estudiarAlgoritmo() {
     const res = document.getElementById('resultado-maestro');
     if (!val) return res.innerHTML = '';
     const sugeridos = algoritmoLara[val] || ["S/D"];
-    res.innerHTML = `<div class="maestro-card"><small>SIGUIENTE GOLPE:</small><div class="maestro-nums">${sugeridos.map(n => `<span class="pill-maestra">${n}</span>`).join('')}</div></div>`;
+    res.innerHTML = `<div class="maestro-card"><small>SIGUIENTE:</small><div class="maestro-nums">${sugeridos.map(n => `<span class="pill-maestra">${n}</span>`).join('')}</div></div>`;
 }
 
 function llenarSelectorAlgoritmo() {
     const s = document.getElementById('select-estudio-animal');
-    s.innerHTML = '<option value="">-- ¿Qué número salió? --</option>';
+    s.innerHTML = '<option value="">-- ¿Qué salió? --</option>';
     listaAnimales.forEach(a => s.innerHTML += `<option value="${a.n}">${a.n} - ${a.a}</option>`);
 }
 
@@ -181,7 +200,6 @@ function renderizarHistorial() {
     const filtrado = historialGlobal
         .filter(r => r.fecha === fecha)
         .sort((a, b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
-
     filtrado.forEach(r => {
         const ani = listaAnimales.find(a => a.n === r.num);
         const claseColor = r.tipo === 'ROJO' ? 'txt-rojo' : 'txt-azul';
