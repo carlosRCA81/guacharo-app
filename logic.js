@@ -24,7 +24,6 @@ const listaAnimales = [
     {n:'35', a:'JIRAFA', c:'NEGRO', s:'A'}, {n:'36', a:'CULEBRA', c:'ROJO', s:'D'}
 ];
 
-// REGLAS LARA: Solo 1 o 2 fijos por número para no enredar
 const algoritmoLara = {
     '07': ['25'], '04': ['13', '14'], '00': ['26', '29'], '10': ['08', '13'],
     '12': ['05'], '05': ['12', '11'], '09': ['00', '14'], '36': ['13', '26'],
@@ -47,32 +46,6 @@ async function inicializar() {
     document.getElementById('fecha-busqueda-historial').onchange = renderizarHistorial;
 }
 
-// ALGORITMO DE PRECISIÓN (LO QUE PEDISTE)
-function estudiarAlgoritmo() {
-    const val = document.getElementById('select-estudio-animal').value;
-    const res = document.getElementById('resultado-maestro');
-    if (!val) return res.innerHTML = '';
-    
-    const sugeridos = algoritmoLara[val] || ["S/D"]; // S/D = Sin Datos aún
-    
-    res.innerHTML = `
-        <div class="maestro-card">
-            <small>SIGUIENTE GOLPE:</small>
-            <div class="maestro-nums">
-                ${sugeridos.map(n => `<span class="pill-maestra">${n}</span>`).join('')}
-            </div>
-            <div style="font-size: 0.6rem; margin-top: 10px; color: #38bdf8;">Basado en historial de cruces 2022-2026</div>
-        </div>
-    `;
-}
-
-function llenarSelectorAlgoritmo() {
-    const s = document.getElementById('select-estudio-animal');
-    s.innerHTML = '<option value="">-- ¿Qué número salió? --</option>';
-    listaAnimales.forEach(a => s.innerHTML += `<option value="${a.n}">${a.n} - ${a.a}</option>`);
-}
-
-// RESTO DE FUNCIONES (MANTENIDAS PARA ESTABILIDAD)
 async function cargarDatos() {
     const { data, error } = await _supabase.from('historial_sorteos').select('*').order('fecha', {ascending: false});
     if(!error) { historialGlobal = data; actualizarTodo(); }
@@ -81,7 +54,47 @@ async function cargarDatos() {
 function actualizarTodo() {
     renderizarPanelHoras();
     renderizarHistorial();
+    renderizarMapa();
     ejecutarSniper();
+}
+
+function renderizarMapa() {
+    const mapa = document.getElementById('mapa-ruleta');
+    if(!mapa) return;
+    mapa.innerHTML = '';
+    const fecha = document.getElementById('fecha-analisis').value;
+    const jugadosHoy = historialGlobal.filter(r => r.fecha === fecha).map(r => r.num);
+
+    ['A','B','C','D','E','F'].forEach(s => {
+        const secDiv = document.createElement('div');
+        secDiv.className = 'sector-block';
+        secDiv.innerHTML = `<div class="sector-header">SECTOR ${s}</div>`;
+        const grid = document.createElement('div');
+        grid.className = 'sector-grid';
+        listaAnimales.filter(a => a.s === s).forEach(ani => {
+            const isOut = jugadosHoy.includes(ani.n);
+            const item = document.createElement('div');
+            item.className = `mini-animal ${isOut ? 'sensor-fijo' : ani.c === 'ROJO' ? 'rojo' : ani.c === 'AZUL' ? 'azul' : 'negro'}`;
+            item.innerText = ani.n;
+            grid.appendChild(item);
+        });
+        secDiv.appendChild(grid);
+        mapa.appendChild(secDiv);
+    });
+}
+
+function estudiarAlgoritmo() {
+    const val = document.getElementById('select-estudio-animal').value;
+    const res = document.getElementById('resultado-maestro');
+    if (!val) return res.innerHTML = '';
+    const sugeridos = algoritmoLara[val] || ["S/D"];
+    res.innerHTML = `<div class="maestro-card"><small>SIGUIENTE GOLPE:</small><div class="maestro-nums">${sugeridos.map(n => `<span class="pill-maestra">${n}</span>`).join('')}</div></div>`;
+}
+
+function llenarSelectorAlgoritmo() {
+    const s = document.getElementById('select-estudio-animal');
+    s.innerHTML = '<option value="">-- ¿Qué número salió? --</option>';
+    listaAnimales.forEach(a => s.innerHTML += `<option value="${a.n}">${a.n} - ${a.a}</option>`);
 }
 
 function renderizarPanelHoras() {
@@ -114,13 +127,10 @@ function ejecutarSniper() {
     const tripCont = document.getElementById('seccion-tripletas');
     const fecha = document.getElementById('fecha-analisis').value;
     const hoy = historialGlobal.filter(r => r.fecha === fecha).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
-    
     if(hoy.length === 0) return display.innerText = "ESPERANDO...";
-    
     const ultimo = hoy[0].num;
     let sugeridos = algoritmoLara[ultimo] || ["01", "25", "36"];
     display.innerHTML = sugeridos.slice(0,2).map(n => `<span class="sniper-pill">${n}</span>`).join('');
-
     tripCont.innerHTML = `<div class="card-tripleta"><small>🎯 ATAQUE PRECISIÓN</small><div class="tripleta-nums">${sugeridos.join('-')}</div></div>`;
 }
 
