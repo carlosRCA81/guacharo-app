@@ -5,6 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CRCA PRO V2 - FULL EDITION</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilos específicos para la nueva sección de Carlos */
+        .panel-arrastre-carlos {
+            background: linear-gradient(145deg, #0f172a, #1e293b);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .arrastre-titulo {
+            color: #22c55e;
+            font-size: 0.75rem;
+            font-weight: bold;
+            letter-spacing: 1.5px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        .arrastre-flex {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            gap: 10px;
+        }
+        .arrastre-box {
+            background: rgba(2, 6, 23, 0.6);
+            border-radius: 8px;
+            padding: 8px;
+            flex: 1;
+        }
+        .arrastre-label {
+            display: block;
+            color: #94a3b8;
+            font-size: 0.6rem;
+            margin-bottom: 4px;
+        }
+        .arrastre-num {
+            color: #fbbf24;
+            font-size: 1.1rem;
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .arrastre-vinc {
+            color: #38bdf8;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
     <div id="main-app">
@@ -26,6 +75,25 @@
                 <div class="sniper-nums" id="numeros-sugeridos-directos">ESPERANDO...</div>
                 <div id="aviso-fuera" class="aviso-status">📡 RASTREANDO...</div>
             </div>
+
+            <div class="panel-arrastre-carlos">
+                <div class="arrastre-titulo">🧬 EL ARRASTRE DE CARLOS</div>
+                <div class="arrastre-flex" id="contenedor-arrastre">
+                    <div class="arrastre-box">
+                        <span class="arrastre-label">UNIÓN</span>
+                        <div class="arrastre-num" id="arrastre-union">--</div>
+                    </div>
+                    <div class="arrastre-box">
+                        <span class="arrastre-label">SUMA</span>
+                        <div class="arrastre-num" id="arrastre-suma">--</div>
+                    </div>
+                    <div class="arrastre-box">
+                        <span class="arrastre-label">VÍNCULO</span>
+                        <div class="arrastre-vinc" id="arrastre-animal">ESPERANDO</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="panel-diario" id="panel-diario-sorteos"></div>
             <div class="entrada-rapida">
                 <input type="text" id="num-rapido" maxlength="2" placeholder="NRO">
