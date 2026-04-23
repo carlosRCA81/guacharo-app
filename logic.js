@@ -25,259 +25,162 @@ const listaAnimales = [
 ];
 
 const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
-let historial = [];
-let horaSeleccionadaActiva = null;
+let historialGlobal = [];
+let horaActiva = null;
 
-// Lógica de Atracción Reforzada con tus observaciones
-const reglasAtraccion = {
-    '10': ['08', '13', '01', '00', '25'], '12': ['05', '09', '18', '11', '13'],
-    '05': ['12', '18', '09', '34', '19', '11'], '09': ['0', '05', '12', '18', '14'],
-    '36': ['03', '30', '26', '24', '13'], '25': ['07', '14', '21', '09'],
-    '20': ['17', '11', '08', '07'], '07': ['25', '11', '20', '14', '17'],
-    '06': ['01', '04', '16', '33'], '32': ['11', '20', '14', '07'],
-    '0': ['09', '14', '28', '26'], '00': ['26', '29', '36', '06'],
-    '08': ['35', '10', '29', '31'], '35': ['08', '02', '11', '26']
+const reglasLara = {
+    '07': ['25', '11', '14'], '04': ['13', '14', '26'], '00': ['26', '29', '36'],
+    '10': ['08', '13', '01'], '12': ['05', '09', '11'], '05': ['12', '34', '11'],
+    '09': ['00', '14', '28'], '36': ['03', '26', '13'], '32': ['07', '11', '20']
 };
 
-// 1. INICIALIZACIÓN
-async function inicializarSistema() {
-    const fA = document.getElementById('fecha-analisis');
-    const fH = document.getElementById('fecha-busqueda-historial');
+async function inicializar() {
     const hoy = new Date().toISOString().split('T')[0];
-    if(fA) fA.value = hoy; if(fH) fH.value = hoy;
-    generarGridBotones();
-    llenarSelectorEstudio();
-    if(fA) fA.addEventListener('change', actualizarInterfaz);
-    if(fH) fH.addEventListener('change', actualizarTabla);
-    await cargarHistorialRemoto();
-}
-
-async function cargarHistorialRemoto() {
-    try {
-        const { data, error } = await _supabase.from('historial_sorteos').select('*').order('fecha', { ascending: false });
-        if (error) throw error;
-        historial = data || [];
-        actualizarInterfaz();
-    } catch (e) { console.error("Error conexión Supabase:", e); }
-}
-
-async function registrarSorteo(num, animal, color, hora) {
-    const fecha = document.getElementById('fecha-analisis').value;
-    const nuevo = { fecha, hora, num: num.toString(), animal, tipo: color };
-    try {
-        const { error } = await _supabase.from('historial_sorteos').upsert(nuevo, { onConflict: 'fecha,hora' });
-        if (error) throw error;
-        const idx = historial.findIndex(r => r.fecha === fecha && r.hora === hora);
-        if(idx !== -1) historial[idx] = nuevo; else historial.unshift(nuevo);
-        actualizarInterfaz();
-    } catch (e) { console.error("Error al guardar:", e); alert("Error de conexión."); }
-}
-
-// 2. MOTOR DE ESTUDIO DE CICLOS (LA LÓGICA QUE PEDISTE)
-function analizarCicloDupla(n1, n2) {
-    let demoras = [];
-    let ultimoEncontrado = -1;
-    // Recorremos el historial de atrás hacia adelante (cronológico)
-    const crono = [...historial].reverse();
+    document.getElementById('fecha-analisis').value = hoy;
+    document.getElementById('fecha-busqueda-historial').value = hoy;
     
-    crono.forEach((reg, i) => {
-        if (reg.num === n1) {
-            // Buscamos cuánto tardó en salir n2 después de este n1
-            for (let j = i + 1; j < crono.length; j++) {
-                if (crono[j].num === n2) {
-                    demoras.push(j - i); // Cantidad de sorteos de demora
-                    break;
-                }
-            }
-        }
-    });
-
-    if (demoras.length === 0) return "S/D";
-    const promedio = Math.round(demoras.reduce((a,b) => a+b, 0) / demoras.length);
-    return promedio;
+    await cargarDatos();
+    generarBotones();
+    
+    document.getElementById('fecha-analisis').onchange = actualizarTodo;
+    document.getElementById('fecha-busqueda-historial').onchange = renderizarHistorial;
 }
 
-function generarPanelDiario() {
+async function cargarDatos() {
+    const { data, error } = await _supabase.from('historial_sorteos').select('*').order('fecha', {ascending: false});
+    if(!error) { historialGlobal = data; actualizarTodo(); }
+}
+
+function actualizarTodo() {
+    renderizarPanelHoras();
+    renderizarHistorial();
+    renderizarMapa();
+    ejecutarSniper();
+}
+
+function renderizarPanelHoras() {
     const p = document.getElementById('panel-diario-sorteos');
-    if(!p) return;
-    const f = document.getElementById('fecha-analisis').value;
+    const fecha = document.getElementById('fecha-analisis').value;
     p.innerHTML = '';
     horasSorteo.forEach(h => {
-        const r = historial.find(x => x.fecha === f && x.hora === h);
-        const b = document.createElement('div');
-        b.className = `hora-box ${r ? 'jugado' : ''} ${h === horaSeleccionadaActiva ? 'active-select' : ''}`;
-        b.innerHTML = r ? `${h}<br><b>${r.num}</b>` : h;
-        b.onclick = () => { horaSeleccionadaActiva = h; generarPanelDiario(); };
-        p.appendChild(b);
+        const reg = historialGlobal.find(x => x.fecha === fecha && x.hora === h);
+        const div = document.createElement('div');
+        div.className = `hora-box ${reg ? 'jugado' : ''} ${h === horaActiva ? 'active-select' : ''}`;
+        div.innerHTML = reg ? `${h}<br><b>${reg.num}</b>` : h;
+        div.onclick = () => { horaActiva = h; renderizarPanelHoras(); };
+        p.appendChild(div);
     });
 }
 
-function actualizarTabla() {
-    const c = document.getElementById('lista-historial');
-    const fInput = document.getElementById('fecha-busqueda-historial');
-    if(!c || !fInput) return;
-    const f = fInput.value;
-    c.innerHTML = '';
-    const datosTabla = historial.filter(r => r.fecha === f).sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
-    if (datosTabla.length === 0) c.innerHTML = '<tr><td colspan="5" style="text-align:center; opacity:0.5;">Sin datos</td></tr>';
-    datosTabla.forEach(r => {
+function renderizarHistorial() {
+    const lista = document.getElementById('lista-historial');
+    const fecha = document.getElementById('fecha-busqueda-historial').value;
+    lista.innerHTML = '';
+    const filtrado = historialGlobal.filter(r => r.fecha === fecha).sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
+    
+    filtrado.forEach(r => {
         const ani = listaAnimales.find(a => a.n === r.num);
-        if(ani) {
-            const clr = r.tipo === 'ROJO' ? 'color:#ff4d4d' : r.tipo === 'AZUL' ? 'color:#38bdf8' : 'color:#94a3b8';
-            c.innerHTML += `<tr><td>${r.hora}</td><td><b>${r.num}</b></td><td>${r.animal}</td><td>${ani.s}/${ani.e}</td><td style="${clr}; font-weight:bold">${r.tipo}</td></tr>`;
-        }
+        const row = `<tr>
+            <td>${r.hora}</td>
+            <td><span class="pill-num">${r.num}</span></td>
+            <td>${r.animal}</td>
+            <td>${ani ? ani.s : '-'}</td>
+            <td class="${r.tipo === 'ROJO' ? 'txt-rojo' : 'txt-azul'}">${r.tipo}</td>
+        </tr>`;
+        lista.innerHTML += row;
     });
 }
 
-function actualizarInterfaz() {
-    generarPanelDiario();
-    actualizarTabla();
-    actualizarJugadaSniper();
-    generarTripletasDinamicas();
-    generarMapaRuleta();
+function renderizarMapa() {
+    const mapa = document.getElementById('mapa-ruleta');
+    mapa.innerHTML = '';
+    const fecha = document.getElementById('fecha-analisis').value;
+    const jugadosHoy = historialGlobal.filter(r => r.fecha === fecha).map(r => r.num);
+
+    ['A','B','C','D','E','F'].forEach(s => {
+        const secDiv = document.createElement('div');
+        secDiv.className = 'sector-block';
+        secDiv.innerHTML = `<div class="sector-header">SECTOR ${s}</div>`;
+        const grid = document.createElement('div');
+        grid.className = 'sector-grid';
+        
+        listaAnimales.filter(a => a.s === s).forEach(ani => {
+            const isOut = jugadosHoy.includes(ani.n);
+            const item = document.createElement('div');
+            item.className = `mini-animal ${isOut ? 'sensor-fijo' : ani.c.toLowerCase()}`;
+            item.innerText = ani.n;
+            grid.appendChild(item);
+        });
+        secDiv.appendChild(grid);
+        mapa.appendChild(secDiv);
+    });
 }
 
-// 3. SNIPER CON PRIORIDAD DE DUPLAS Y CICLOS
-function actualizarJugadaSniper() {
+function ejecutarSniper() {
     const display = document.getElementById('numeros-sugeridos-directos');
-    const aviso = document.getElementById('aviso-fuera');
-    if(!display) return;
+    const fecha = document.getElementById('fecha-analisis').value;
+    const hoy = historialGlobal.filter(r => r.fecha === fecha).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
     
-    const fHoy = document.getElementById('fecha-analisis').value;
-    const hoy = historial.filter(r => r.fecha === fHoy).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
+    if(hoy.length === 0) return display.innerText = "ESPERANDO APERTURA";
+
+    const ultimo = hoy[0].num;
+    let sugeridos = reglasLara[ultimo] || ["01", "25", "36"];
     
-    if (hoy.length === 0) { display.innerHTML = "ESPERANDO APERTURA"; return; }
-
-    const ult = hoy[0]; 
-    let sugeridos = [...(reglasAtraccion[ult.num] || ["25", "11", "20"])];
+    // Filtro de repetición
+    sugeridos = sugeridos.filter(n => !hoy.map(r => r.num).includes(n));
     
-    // Verificamos si la última salida es parte de tus duplas clave
-    let mensajeExtra = "";
-    if (ult.num === '0') {
-        const delay = analizarCicloDupla('0', '09');
-        mensajeExtra = ` (Ciclo 0-09: ~${delay} sort.)`;
-    } else if (ult.num === '07') {
-        const delay = analizarCicloDupla('07', '25');
-        mensajeExtra = ` (Ciclo 07-25: ~${delay} sort.)`;
-    } else if (ult.num === '00') {
-        const delay26 = analizarCicloDupla('00', '26');
-        mensajeExtra = ` (Ciclo 00-26: ~${delay26} sort.)`;
-    }
-
-    const yaSalieron = hoy.map(r => r.num);
-    sugeridos = sugeridos.filter(n => !yaSalieron.includes(n));
-
-    if (sugeridos.length < 2) {
-        const ultimoAni = listaAnimales.find(a => a.n === ult.num);
-        const sectorSig = { 'A':'B', 'B':'C', 'C':'D', 'D':'E', 'E':'F', 'F':'A' }[ultimoAni.s];
-        const refuerzos = listaAnimales.filter(a => a.s === sectorSig && !yaSalieron.includes(a.n)).map(a => a.n);
-        sugeridos = [...sugeridos, ...refuerzos];
-    }
-
-    aviso.innerHTML = `📡 RASTREANDO TRAS EL ${ult.num}${mensajeExtra}...`;
-    display.innerHTML = sugeridos.slice(0,3).map(n => `<span class="sniper-num-pill">${n}</span>`).join('');
-}
-
-function generarTripletasDinamicas() {
-    const cont = document.getElementById('seccion-tripletas');
-    if(!cont) return;
-    const fHoy = document.getElementById('fecha-analisis').value;
-    const hoy = historial.filter(r => r.fecha === fHoy);
+    display.innerHTML = sugeridos.slice(0,3).map(n => `<span class="sniper-pill">${n}</span>`).join('');
     
-    let t1 = "11-25-20";
-    if(hoy.length > 0) {
-        const ult = hoy[0].num;
-        let base = (reglasAtraccion[ult] || ["01", "36", "13"]).filter(n => n !== ult);
-        t1 = base.slice(0,3).join('-');
-    }
-
-    let t2 = "09-00-26"; // Enfocada en tu estudio de duplas
-    const sectoresHoy = hoy.map(r => listaAnimales.find(a => a.n === r.num).s);
-    const faltantes = ['A','B','C','D','E','F'].filter(s => !sectoresHoy.includes(s));
-    let t3 = "04-16-33";
-    if(faltantes.length > 0) {
-        const aniFaltante = listaAnimales.filter(a => a.s === faltantes[0]).slice(0,3).map(a => a.n);
-        t3 = aniFaltante.join('-');
-    }
-
-    cont.innerHTML = `
-        <div class="card-tripleta"><small>💎 ATAQUE POST-SORTEO</small><div class="tripleta-nums">${t1}</div></div>
-        <div class="card-tripleta"><small>🔥 DUPLAS EN ESTUDIO</small><div class="tripleta-nums">${t2}</div></div>
-        <div class="card-tripleta"><small>📡 SALTO DE SECTOR</small><div class="tripleta-nums">${t3}</div></div>
+    // Generar Tripletas
+    const tripCont = document.getElementById('seccion-tripletas');
+    const t1 = sugeridos.slice(0,3).join('-');
+    const t2 = ["09","00","26"].join('-');
+    tripCont.innerHTML = `
+        <div class="card-tripleta"><small>🎯 ATAQUE SNIPER</small><div class="tripleta-nums">${t1}</div></div>
+        <div class="card-tripleta"><small>🔥 DUPLAS GÉMINIS</small><div class="tripleta-nums">${t2}</div></div>
     `;
 }
 
-function generarMapaRuleta() {
-    const mapa = document.getElementById('mapa-ruleta');
-    if(!mapa) return; mapa.innerHTML = '';
-    const fHoy = document.getElementById('fecha-analisis').value;
-    const jugadosHoy = historial.filter(r => r.fecha === fHoy).map(r => r.num);
-    ['A', 'B', 'C', 'D', 'E', 'F'].forEach(sec => {
-        const sDiv = document.createElement('div');
-        sDiv.className = 'sector-block';
-        sDiv.innerHTML = `<div class="sector-header">SEC ${sec}</div>`;
-        const sGrid = document.createElement('div');
-        sGrid.className = 'sector-grid';
-        listaAnimales.filter(a => a.s === sec).forEach(ani => {
-            const aDiv = document.createElement('div');
-            const esJug = jugadosHoy.includes(ani.n);
-            aDiv.className = `mini-animal ${esJug ? 'sensor-fijo' : (ani.c==='ROJO'?'bg-rojo':ani.c==='AZUL'?'bg-azul':'bg-negro')}`;
-            aDiv.innerHTML = ani.n;
-            sGrid.appendChild(aDiv);
-        });
-        sDiv.appendChild(sGrid);
-        mapa.appendChild(sDiv);
-    });
-}
-
-function registrarPorNumero() {
+async function registrarPorNumero() {
     const input = document.getElementById('num-rapido');
-    if(!horaSeleccionadaActiva) return alert("Selecciona hora en el panel");
-    let v = input.value;
-    if(v === "") return;
-    if(v !== '0' && v !== '00') v = v.padStart(2, '0');
-    const ani = listaAnimales.find(a => a.n === v);
-    if(ani) { registrarSorteo(ani.n, ani.a, ani.c, horaSeleccionadaActiva); input.value = ''; }
+    let val = input.value;
+    if(!horaActiva || val === "") return alert("Selecciona Hora y Número");
+    if(val !== '0' && val !== '00') val = val.padStart(2, '0');
+    
+    const ani = listaAnimales.find(a => a.n === val);
+    if(!ani) return alert("Número no válido");
+
+    const fecha = document.getElementById('fecha-analisis').value;
+    const nuevo = { fecha, hora: horaActiva, num: val, animal: ani.a, tipo: ani.c };
+
+    const { error } = await _supabase.from('historial_sorteos').upsert(nuevo, { onConflict: 'fecha,hora' });
+    if(!error) {
+        input.value = '';
+        await cargarDatos();
+    }
 }
 
-function generarGridBotones() {
+function generarBotones() {
     const cont = document.getElementById('grid-container');
-    if(!cont) return; cont.innerHTML = '';
+    cont.innerHTML = '';
     listaAnimales.forEach(a => {
-        const d = document.createElement('div');
-        d.className = "animal-btn";
-        d.style.borderLeft = `4px solid ${a.c === 'ROJO' ? '#ef4444' : a.c === 'AZUL' ? '#38bdf8' : '#475569'}`;
-        d.innerHTML = `<b>${a.n}</b><br>${a.a}`;
-        d.onclick = () => { if(horaSeleccionadaActiva) registrarSorteo(a.n, a.a, a.c, horaSeleccionadaActiva); };
-        cont.appendChild(d);
+        const btn = document.createElement('div');
+        btn.className = "animal-btn";
+        btn.innerHTML = `<b>${a.n}</b><br><small>${a.a}</small>`;
+        btn.onclick = () => { if(horaActiva) { document.getElementById('num-rapido').value = a.n; registrarPorNumero(); } };
+        cont.appendChild(btn);
     });
 }
 
-function openTab(evt, n) {
+function openTab(evt, name) {
     document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(n).style.display = 'block';
+    document.getElementById(name).style.display = 'block';
     evt.currentTarget.classList.add('active');
 }
 
-function estudiarAtraccion() {
-    const val = document.getElementById('select-estudio-animal').value;
-    const res = document.getElementById('resultado-atraccion');
-    if (!val || !res) return;
-    const comp = reglasAtraccion[val] || ["Calculando..."];
-    res.innerHTML = `<div style="margin-top:10px;"><b>Atracción Fuerte:</b><br>${comp.map(n => `<span class="sniper-num-pill">${n}</span>`).join('')}</div>`;
-}
-
-function llenarSelectorEstudio() {
-    const s = document.getElementById('select-estudio-animal');
-    if(!s) return;
-    s.innerHTML = '<option value="">-- Seleccionar --</option>';
-    listaAnimales.forEach(a => s.innerHTML += `<option value="${a.n}">${a.n} - ${a.a}</option>`);
-}
-
-setInterval(() => { 
-    const clock = document.getElementById('live-clock'); 
-    if(clock) clock.innerText = new Date().toLocaleTimeString(); 
+setInterval(() => {
+    document.getElementById('live-clock').innerText = new Date().toLocaleTimeString();
 }, 1000);
 
-window.onload = inicializarSistema;
+window.onload = inicializar;
