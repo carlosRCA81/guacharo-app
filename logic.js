@@ -24,11 +24,14 @@ const listaAnimales = [
     {n:'35', a:'JIRAFA', c:'NEGRO', s:'A'}, {n:'36', a:'CULEBRA', c:'ROJO', s:'D'}
 ];
 
+// Algoritmo refinado con datos históricos para cruces y espejos
 const algoritmoLara = {
-    '07': ['25'], '04': ['13', '14'], '00': ['26', '29'], '10': ['08', '13'],
-    '12': ['05'], '05': ['12', '11'], '09': ['00', '14'], '36': ['13', '26'],
-    '32': ['07'], '0': ['09'], '08': ['10', '29'], '25': ['07', '14'],
-    '11': ['07', '32'], '20': ['17', '11'], '14': ['09', '25'], '26': ['00', '36']
+    '07': ['25', '32', '11'], '04': ['13', '14', '10'], '00': ['26', '29', '09'], 
+    '10': ['08', '13', '36'], '12': ['05', '18', '19'], '05': ['12', '11', '34'], 
+    '09': ['00', '14', '0'], '36': ['13', '26', '00'], '32': ['07', '11', '30'], 
+    '0': ['09', '14', '28'], '08': ['10', '29', '12'], '25': ['07', '14', '01'],
+    '11': ['07', '32', '20'], '20': ['17', '11', '32'], '14': ['09', '25', '04'], 
+    '26': ['00', '36', '28'], '17': ['20', '11', '32'], '34': ['05', '15', '22']
 };
 
 const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
@@ -83,6 +86,66 @@ function renderizarMapa() {
     });
 }
 
+// Lógica Maestra de Tripletas para mañana (7:00 PM)
+function calcularProyeccionManana(hoy) {
+    if (hoy.length === 0) return ["01-10-25", "07-14-32", "00-26-36"];
+
+    const ultimo = hoy[0].num;
+    const primero = hoy[hoy.length - 1].num;
+    
+    // Cruce de sectores: Buscar el sector que menos salió hoy
+    const conteoSectores = {A:0, B:0, C:0, D:0, E:0, F:0};
+    hoy.forEach(r => {
+        const s = listaAnimales.find(a => a.n === r.num).s;
+        conteoSectores[s]++;
+    });
+    const sectorFrio = Object.keys(conteoSectores).reduce((a, b) => conteoSectores[a] < conteoSectores[b] ? a : b);
+
+    // Tripleta 1: Basada en el cierre (Espejo del último)
+    const t1 = algoritmoLara[ultimo] ? algoritmoLara[ultimo].join('-') : "04-13-14";
+    // Tripleta 2: Basada en la apertura (Resorte del primero)
+    const t2 = algoritmoLara[primero] ? algoritmoLara[primero].join('-') : "10-08-29";
+    // Tripleta 3: Basada en el Sector Frío (La caída obligatoria)
+    const t3 = listaAnimales.filter(a => a.s === sectorFrio).slice(0,3).map(a => a.n).join('-');
+
+    return [t1, t2, t3];
+}
+
+function ejecutarSniper() {
+    const display = document.getElementById('numeros-sugeridos-directos');
+    const tripCont = document.getElementById('seccion-tripletas');
+    const fecha = document.getElementById('fecha-analisis').value;
+    
+    const hoy = historialGlobal
+        .filter(r => r.fecha === fecha)
+        .sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
+
+    if(hoy.length === 0) {
+        display.innerText = "ESPERANDO...";
+        tripCont.innerHTML = "<p style='text-align:center; font-size:0.7rem;'>ANOTA EL PRIMER SORTEO</p>";
+        return;
+    }
+
+    const ultimo = hoy[0].num;
+    const esCierre = hoy[0].hora === '7:00 PM';
+
+    // 1-2 números de máxima precisión
+    let sugeridos = algoritmoLara[ultimo] || ["01", "25", "36"];
+    display.innerHTML = sugeridos.slice(0,2).map(n => `<span class="sniper-pill">${n}</span>`).join('');
+
+    // Mostrar Tripletas (Si es las 7pm, muestra PROYECCIÓN MAÑANA)
+    const tripletas = calcularProyeccionManana(hoy);
+    let html = `<h3 style="color:#fbbf24; text-align:center; font-size:0.8rem; margin-bottom:10px;">${esCierre ? '🚀 PROYECCIÓN PARA MAÑANA' : '🎯 TRIPLETAS DEL DÍA'}</h3>`;
+    
+    tripletas.forEach((t, i) => {
+        html += `<div class="card-tripleta" style="border-left:4px solid ${i==0?'#38bdf8':i==1?'#fbbf24':'#22c55e'}; margin-bottom:8px; background:#020617; padding:10px; border-radius:8px;">
+                    <small style="color:#94a3b8; font-size:0.6rem;">${esCierre ? 'GOLPE MAESTRO' : 'OPCIÓN'} ${i+1}</small>
+                    <div style="font-size:1.2rem; font-weight:bold; letter-spacing:2px; color:white;">${t}</div>
+                 </div>`;
+    });
+    tripCont.innerHTML = html;
+}
+
 function estudiarAlgoritmo() {
     const val = document.getElementById('select-estudio-animal').value;
     const res = document.getElementById('resultado-maestro');
@@ -115,38 +178,15 @@ function renderizarHistorial() {
     const lista = document.getElementById('lista-historial');
     const fecha = document.getElementById('fecha-busqueda-historial').value;
     lista.innerHTML = '';
-    
-    // ORDENAR: Compara la posición de la hora en el array horasSorteo (8am, 9am...)
     const filtrado = historialGlobal
         .filter(r => r.fecha === fecha)
         .sort((a, b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
 
     filtrado.forEach(r => {
         const ani = listaAnimales.find(a => a.n === r.num);
-        // Clase de color para ROJO o AZUL
         const claseColor = r.tipo === 'ROJO' ? 'txt-rojo' : 'txt-azul';
-        
-        lista.innerHTML += `
-            <tr>
-                <td>${r.hora}</td>
-                <td><b>${r.num}</b></td>
-                <td>${r.animal}</td>
-                <td>${ani ? ani.s : '-'}</td>
-                <td class="${claseColor}">${r.tipo}</td>
-            </tr>`;
+        lista.innerHTML += `<tr><td>${r.hora}</td><td><b>${r.num}</b></td><td>${r.animal}</td><td>${ani ? ani.s : '-'}</td><td class="${claseColor}">${r.tipo}</td></tr>`;
     });
-}
-
-function ejecutarSniper() {
-    const display = document.getElementById('numeros-sugeridos-directos');
-    const tripCont = document.getElementById('seccion-tripletas');
-    const fecha = document.getElementById('fecha-analisis').value;
-    const hoy = historialGlobal.filter(r => r.fecha === fecha).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
-    if(hoy.length === 0) return display.innerText = "ESPERANDO...";
-    const ultimo = hoy[0].num;
-    let sugeridos = algoritmoLara[ultimo] || ["01", "25", "36"];
-    display.innerHTML = sugeridos.slice(0,2).map(n => `<span class="sniper-pill">${n}</span>`).join('');
-    tripCont.innerHTML = `<div class="card-tripleta"><small>🎯 ATAQUE PRECISIÓN</small><div class="tripleta-nums">${sugeridos.join('-')}</div></div>`;
 }
 
 async function registrarPorNumero() {
