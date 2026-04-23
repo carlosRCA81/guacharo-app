@@ -12,6 +12,17 @@ body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; 
 .hora-box { background: #334155; padding: 8px 2px; text-align: center; border-radius: 6px; font-size: 0.6rem; border: 1px solid transparent; }
 .hora-box.jugado { background: var(--green) !important; color: #000; font-weight: bold; }
 .hora-box.active-select { border-color: var(--accent); }
+
+/* TABLA DE HISTORIAL REPARADA */
+.tabla-contenedor table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+.tabla-contenedor th { color: var(--accent); padding: 8px; border-bottom: 2px solid #334155; font-size: 0.7rem; }
+.tabla-contenedor td { padding: 10px 5px; text-align: center; border-bottom: 1px solid #334155; font-size: 0.75rem; }
+
+/* COLORES DE TEXTO */
+.txt-rojo { color: var(--red) !important; font-weight: bold; }
+.txt-azul { color: var(--accent) !important; font-weight: bold; }
+.tabla-contenedor b { color: var(--gold); } /* El número en dorado */
+
 .mapa-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #020617; padding: 10px; border-radius: 10px; }
 .sector-block { border: 1px solid #334155; padding: 8px; border-radius: 8px; }
 .sector-header { font-size: 0.6rem; color: var(--gold); text-align: center; margin-bottom: 5px; }
