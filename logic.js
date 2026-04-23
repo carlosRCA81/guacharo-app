@@ -115,10 +115,25 @@ function renderizarHistorial() {
     const lista = document.getElementById('lista-historial');
     const fecha = document.getElementById('fecha-busqueda-historial').value;
     lista.innerHTML = '';
-    const filtrado = historialGlobal.filter(r => r.fecha === fecha).sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
+    
+    // ORDENAR: Compara la posición de la hora en el array horasSorteo (8am, 9am...)
+    const filtrado = historialGlobal
+        .filter(r => r.fecha === fecha)
+        .sort((a, b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
+
     filtrado.forEach(r => {
         const ani = listaAnimales.find(a => a.n === r.num);
-        lista.innerHTML += `<tr><td>${r.hora}</td><td><b>${r.num}</b></td><td>${r.animal}</td><td>${ani ? ani.s : '-'}</td><td class="${r.tipo === 'ROJO' ? 'txt-rojo' : 'txt-azul'}">${r.tipo}</td></tr>`;
+        // Clase de color para ROJO o AZUL
+        const claseColor = r.tipo === 'ROJO' ? 'txt-rojo' : 'txt-azul';
+        
+        lista.innerHTML += `
+            <tr>
+                <td>${r.hora}</td>
+                <td><b>${r.num}</b></td>
+                <td>${r.animal}</td>
+                <td>${ani ? ani.s : '-'}</td>
+                <td class="${claseColor}">${r.tipo}</td>
+            </tr>`;
     });
 }
 
