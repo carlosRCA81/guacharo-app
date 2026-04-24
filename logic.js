@@ -58,46 +58,49 @@ function actualizarTodo() {
     renderizarHistorial();
     renderizarMapa();
     ejecutarSniper();
-    calcularArrastreCarlos(); // <--- NUEVA LÓGICA ACTIVADA
+    calcularArrastreCarlos();
+    ejecutarRadarCritico(); // ACTIVADO
 }
 
-// NUEVA FUNCIÓN: EL MOTOR DE ARRASTRE DE CARLOS
 function calcularArrastreCarlos() {
     const fecha = document.getElementById('fecha-analisis').value;
-    const hoy = historialGlobal
-        .filter(r => r.fecha === fecha)
-        .sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
-
+    const hoy = historialGlobal.filter(r => r.fecha === fecha).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
     if (hoy.length < 1) return;
-
-    const actual = hoy[0].num; // El último que salió
-    const anterior = hoy[1] ? hoy[1].num : actual; // El de antes
-
-    // 1. LÓGICA DE UNIÓN (Como el 02 + 06 = 26)
-    // Tomamos el último dígito de cada uno
+    const actual = hoy[0].num;
+    const anterior = hoy[1] ? hoy[1].num : actual;
     const d1 = anterior.slice(-1);
     const d2 = actual.slice(-1);
     const unionVal = d1 + d2;
-    
-    // 2. LÓGICA DE SUMA (Como el 9 + 4 = 13)
     const sumaVal = (parseInt(d1) + parseInt(d2)).toString().padStart(2, '0');
-
-    // Buscamos si existen en la lista de animales
     const aniUnion = listaAnimales.find(a => a.n === unionVal || a.n === parseInt(unionVal).toString());
     const aniSuma = listaAnimales.find(a => a.n === sumaVal || a.n === parseInt(sumaVal).toString());
-
-    // Mostramos en el HTML
     document.getElementById('arrastre-union').innerText = unionVal;
     document.getElementById('arrastre-suma').innerText = sumaVal;
-    
-    // El Vínculo sugiere el de la unión por ser el más fuerte en tus pruebas
-    if(aniUnion) {
-        document.getElementById('arrastre-animal').innerText = aniUnion.a;
-    } else if (aniSuma) {
-        document.getElementById('arrastre-animal').innerText = aniSuma.a;
-    } else {
-        document.getElementById('arrastre-animal').innerText = "BUSCANDO...";
-    }
+    if(aniUnion) document.getElementById('arrastre-animal').innerText = aniUnion.a;
+    else if (aniSuma) document.getElementById('arrastre-animal').innerText = aniSuma.a;
+    else document.getElementById('arrastre-animal').innerText = "BUSCANDO...";
+}
+
+// 📡 NUEVA INTELIGENCIA: RADAR CRÍTICO
+function ejecutarRadarCritico() {
+    const fecha = document.getElementById('fecha-analisis').value;
+    const hoy = historialGlobal.filter(r => r.fecha === fecha);
+    if (hoy.length < 1) return;
+
+    // FIJO A: Sensor de Vacío (Sector que no ha salido)
+    const conteoSectores = {A:0, B:0, C:0, D:0, E:0, F:0};
+    hoy.forEach(r => {
+        const ani = listaAnimales.find(a => a.n === r.num);
+        if(ani) conteoSectores[ani.s]++;
+    });
+    const sectorFrio = Object.keys(conteoSectores).reduce((a, b) => conteoSectores[a] < conteoSectores[b] ? a : b);
+    const sugeridoFrio = listaAnimales.find(a => a.s === sectorFrio && !hoy.some(r => r.num === a.n));
+    document.getElementById('radar-fijo-1').innerText = sugeridoFrio ? sugeridoFrio.n : "08";
+
+    // FIJO B: Espejo Dinámico
+    const ultimoNum = hoy.sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora))[0].num;
+    const espejo = (parseInt(ultimoNum) + 5).toString().slice(-2).padStart(2, '0');
+    document.getElementById('radar-fijo-2').innerText = espejo;
 }
 
 function renderizarMapa() {
@@ -106,7 +109,6 @@ function renderizarMapa() {
     mapa.innerHTML = '';
     const fecha = document.getElementById('fecha-analisis').value;
     const jugadosHoy = historialGlobal.filter(r => r.fecha === fecha).map(r => r.num);
-
     ['A','B','C','D','E','F'].forEach(s => {
         const secDiv = document.createElement('div');
         secDiv.className = 'sector-block';
@@ -131,8 +133,8 @@ function calcularProyeccionManana(hoy) {
     const primero = hoy[hoy.length - 1].num;
     const conteoSectores = {A:0, B:0, C:0, D:0, E:0, F:0};
     hoy.forEach(r => {
-        const s = listaAnimales.find(a => a.n === r.num).s;
-        conteoSectores[s]++;
+        const a = listaAnimales.find(x => x.n === r.num);
+        if(a) conteoSectores[a.s]++;
     });
     const sectorFrio = Object.keys(conteoSectores).reduce((a, b) => conteoSectores[a] < conteoSectores[b] ? a : b);
     const t1 = algoritmoLara[ultimo] ? algoritmoLara[ultimo].join('-') : "04-13-14";
@@ -146,10 +148,7 @@ function ejecutarSniper() {
     const tripCont = document.getElementById('seccion-tripletas');
     const fecha = document.getElementById('fecha-analisis').value;
     const hoy = historialGlobal.filter(r => r.fecha === fecha).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
-    if(hoy.length === 0) {
-        display.innerText = "ESPERANDO...";
-        return;
-    }
+    if(hoy.length === 0) { display.innerText = "ESPERANDO..."; return; }
     const ultimo = hoy[0].num;
     const esCierre = hoy[0].hora === '7:00 PM';
     let sugeridos = algoritmoLara[ultimo] || ["01", "25", "36"];
@@ -162,7 +161,7 @@ function ejecutarSniper() {
                     <div style="font-size:1.2rem; font-weight:bold; letter-spacing:2px; color:white;">${t}</div>
                  </div>`;
     });
-    tripCont.innerHTML = html;
+    if(tripCont) tripCont.innerHTML = html;
 }
 
 function estudiarAlgoritmo() {
@@ -175,6 +174,7 @@ function estudiarAlgoritmo() {
 
 function llenarSelectorAlgoritmo() {
     const s = document.getElementById('select-estudio-animal');
+    if(!s) return;
     s.innerHTML = '<option value="">-- ¿Qué salió? --</option>';
     listaAnimales.forEach(a => s.innerHTML += `<option value="${a.n}">${a.n} - ${a.a}</option>`);
 }
@@ -182,6 +182,7 @@ function llenarSelectorAlgoritmo() {
 function renderizarPanelHoras() {
     const p = document.getElementById('panel-diario-sorteos');
     const fecha = document.getElementById('fecha-analisis').value;
+    if(!p) return;
     p.innerHTML = '';
     horasSorteo.forEach(h => {
         const reg = historialGlobal.find(x => x.fecha === fecha && x.hora === h);
@@ -196,10 +197,9 @@ function renderizarPanelHoras() {
 function renderizarHistorial() {
     const lista = document.getElementById('lista-historial');
     const fecha = document.getElementById('fecha-busqueda-historial').value;
+    if(!lista) return;
     lista.innerHTML = '';
-    const filtrado = historialGlobal
-        .filter(r => r.fecha === fecha)
-        .sort((a, b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
+    const filtrado = historialGlobal.filter(r => r.fecha === fecha).sort((a, b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
     filtrado.forEach(r => {
         const ani = listaAnimales.find(a => a.n === r.num);
         const claseColor = r.tipo === 'ROJO' ? 'txt-rojo' : 'txt-azul';
@@ -222,6 +222,7 @@ async function registrarPorNumero() {
 
 function generarBotones() {
     const cont = document.getElementById('grid-container');
+    if(!cont) return;
     cont.innerHTML = '';
     listaAnimales.forEach(a => {
         const btn = document.createElement('div');
@@ -239,5 +240,5 @@ function openTab(evt, name) {
     evt.currentTarget.classList.add('active');
 }
 
-setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
+setInterval(() => { const clock = document.getElementById('live-clock'); if(clock) clock.innerText = new Date().toLocaleTimeString(); }, 1000);
 window.onload = inicializar;
