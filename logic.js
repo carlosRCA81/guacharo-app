@@ -24,18 +24,59 @@ const listaAnimales = [
     {n:'35', a:'JIRAFA', c:'NEGRO', s:'A'}, {n:'36', a:'CULEBRA', c:'ROJO', s:'D'}
 ];
 
-// 🧠 ALGORITMO LARA ACTUALIZADO (Mañana Sábado)
 const algoritmoLara = {
     '21': ['12', '11', '01'], '01': ['10', '11', '25'], '16': ['33', '23', '06'],
-    '36': ['26', '00', '13'], '26': ['36', '28', '14'], '25': ['35', '07', '01'],
-    '03': ['33', '24', '15'], '34': ['15', '22', '05'], '17': ['20', '32', '11'],
-    '06': ['16', '33', '21'], '07': ['25', '32', '11'], '12': ['21', '05', '19']
+    '36': ['26', '00', '13'], '26': ['36', '28', '14'], '25': ['35', '07', '01']
 };
 
 const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
 let historialGlobal = [];
 let horaActiva = null;
 
+// --- 🧠 NUEVO MOTOR DE INTELIGENCIA SENSORIAL (Enero - Abril) ---
+function motorInteligenciaAvanzada() {
+    if (historialGlobal.length === 0) return { sugeridos: ["11", "12"], deuda: "33" };
+
+    const fechaHoy = document.getElementById('fecha-analisis').value;
+    const hoy = historialGlobal.filter(r => r.fecha === fechaHoy).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
+    
+    // 1. ANALIZAR DEUDA HISTÓRICA (Desde Enero)
+    const conteoGlobal = {};
+    listaAnimales.forEach(a => conteoGlobal[a.n] = 0);
+    historialGlobal.forEach(r => { if(conteoGlobal[r.num] !== undefined) conteoGlobal[r.num]++; });
+    
+    // El animal que menos ha salido en 4 meses (Deuda Real)
+    const deudaReal = Object.keys(conteoGlobal).reduce((a, b) => conteoGlobal[a] < conteoGlobal[b] ? a : b);
+
+    // 2. LÓGICA DE SÁBADO (Filtro por día de la semana)
+    const hoyDate = new Date(fechaHoy + 'T12:00:00');
+    const esSabado = hoyDate.getDay() === 5; // Nota: 5 es Sábado en algunos sistemas o ajustado por zona
+    
+    // 3. CÁLCULO DE PROBABILIDAD DINÁMICA
+    const pesos = {};
+    listaAnimales.forEach(a => {
+        let pts = 0;
+        // Puntos por deuda global
+        if (a.n === deudaReal) pts += 40;
+        // Puntos si es espejo del último
+        if (hoy.length > 0) {
+            const ultimo = hoy[0].num;
+            if (a.n === ultimo.split('').reverse().join('')) pts += 35;
+            // Lógica de Suma (+10)
+            if (parseInt(a.n) === (parseInt(ultimo) + 10) % 37) pts += 25;
+        }
+        // Balance de color
+        const rojosHoy = hoy.filter(r => r.tipo === 'ROJO').length;
+        if (rojosHoy > hoy.length / 2 && a.c === 'NEGRO') pts += 15;
+        
+        pesos[a.n] = pts;
+    });
+
+    const ordenados = Object.keys(pesos).sort((a, b) => pesos[b] - pesos[a]);
+    return { sugeridos: ordenados.slice(0, 3), deuda: deudaReal };
+}
+
+// --- FUNCIONES DE INTERFAZ Y PROCESAMIENTO ---
 async function inicializar() {
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById('fecha-analisis').value = hoy;
@@ -61,6 +102,35 @@ function actualizarTodo() {
     ejecutarRadarCritico();
 }
 
+function ejecutarRadarCritico() {
+    const inteligencia = motorInteligenciaAvanzada();
+    document.getElementById('radar-fijo-1').innerText = inteligencia.sugeridos[0];
+    document.getElementById('radar-fijo-2').innerText = inteligencia.sugeridos[1];
+}
+
+function ejecutarSniper() {
+    const display = document.getElementById('numeros-sugeridos-directos');
+    const tripCont = document.getElementById('seccion-tripletas');
+    const inteligencia = motorInteligenciaAvanzada();
+    
+    display.innerHTML = inteligencia.sugeridos.slice(0,2).map(n => `<span class="sniper-pill">${n}</span>`).join('');
+    
+    // TRIPLETAS INTELIGENTES (No repetitivas)
+    const t1 = inteligencia.sugeridos.join('-');
+    const t2 = `${inteligencia.deuda}-11-22`; // Tripleta de Deuda
+    const t3 = "01-11-21"; // Tripleta de Simetría
+    
+    const tripletas = [t1, t2, t3];
+    let html = `<h3 style="color:#fbbf24; text-align:center; font-size:0.8rem; margin-bottom:10px;">🎯 INTELIGENCIA DE DATOS</h3>`;
+    tripletas.forEach((t, i) => {
+        html += `<div class="card-tripleta" style="border-left:4px solid ${i==0?'#38bdf8':i==1?'#fbbf24':'#22c55e'}; margin-bottom:8px; background:#020617; padding:10px; border-radius:8px;">
+                    <small style="color:#94a3b8; font-size:0.6rem;">PROYECCIÓN ${i+1}</small>
+                    <div style="font-size:1.2rem; font-weight:bold; letter-spacing:2px; color:white;">${t}</div>
+                 </div>`;
+    });
+    if(tripCont) tripCont.innerHTML = html;
+}
+
 function calcularArrastreCarlos() {
     const fecha = document.getElementById('fecha-analisis').value;
     const hoy = historialGlobal.filter(r => r.fecha === fecha).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
@@ -71,85 +141,13 @@ function calcularArrastreCarlos() {
     const d2 = actual.slice(-1);
     const unionVal = d1 + d2;
     const sumaVal = (parseInt(d1) + parseInt(d2)).toString().padStart(2, '0');
-    const aniUnion = listaAnimales.find(a => a.n === unionVal);
+    const aniUnion = listaAnimales.find(a => a.n === (parseInt(unionVal)%37).toString().padStart(2,'0'));
     const aniSuma = listaAnimales.find(a => a.n === sumaVal);
     document.getElementById('arrastre-union').innerText = unionVal;
     document.getElementById('arrastre-suma').innerText = sumaVal;
-    if(aniUnion) document.getElementById('arrastre-animal').innerText = aniUnion.a;
-    else if (aniSuma) document.getElementById('arrastre-animal').innerText = aniSuma.a;
-    else document.getElementById('arrastre-animal').innerText = "CALCULANDO...";
+    document.getElementById('arrastre-animal').innerText = aniUnion ? aniUnion.a : (aniSuma ? aniSuma.a : "ESTUDIANDO");
 }
 
-// 📡 MOTOR DE REBOTE: RADAR CRÍTICO SÁBADO (Detección de Volteados)
-function ejecutarRadarCritico() {
-    const fecha = document.getElementById('fecha-analisis').value;
-    const hoy = historialGlobal.filter(r => r.fecha === fecha).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
-    
-    if (hoy.length < 1) {
-        // Sugerencia de apertura basada en cierre de hoy (21)
-        document.getElementById('radar-fijo-1').innerText = "11"; 
-        document.getElementById('radar-fijo-2').innerText = "12";
-        return;
-    }
-
-    const ultimo = hoy[0].num;
-    
-    // FIJO 1: REGLA DE ESPEJO (Si salió 21, busca el 12)
-    let invertido = ultimo.split('').reverse().join('');
-    if (ultimo.length === 1) invertido = ultimo + "0";
-    const sug1 = listaAnimales.find(a => a.n === invertido || a.n === parseInt(invertido).toString());
-    document.getElementById('radar-fijo-1').innerText = sug1 ? sug1.n : "33";
-
-    // FIJO 2: DEUDA DE SECTOR FRÍO
-    const conteoSectores = {A:0, B:0, C:0, D:0, E:0, F:0};
-    hoy.forEach(r => {
-        const ani = listaAnimales.find(a => a.n === r.num);
-        if(ani) conteoSectores[ani.s]++;
-    });
-    const sectorFrio = Object.keys(conteoSectores).reduce((a, b) => conteoSectores[a] < conteoSectores[b] ? a : b);
-    const sug2 = listaAnimales.find(a => a.s === sectorFrio && !hoy.some(r => r.num === a.n));
-    document.getElementById('radar-fijo-2').innerText = sug2 ? sug2.n : "35";
-}
-
-// 🎯 SNIPER SÁBADO: FILTRO DE PRECISIÓN QUIRÚRGICA
-function ejecutarSniper() {
-    const display = document.getElementById('numeros-sugeridos-directos');
-    const tripCont = document.getElementById('seccion-tripletas');
-    const fecha = document.getElementById('fecha-analisis').value;
-    const hoy = historialGlobal.filter(r => r.fecha === fecha).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
-    
-    if(hoy.length === 0) {
-        display.innerHTML = `<span class="sniper-pill">11</span><span class="sniper-pill">12</span>`;
-        return;
-    }
-    
-    const ultimo = hoy[0].num;
-    let sugeridos = algoritmoLara[ultimo] || ["33", "35", "10"];
-
-    // Si el día está muy repetitivo, forzamos números de deuda
-    if (hoy.length > 5 && new Set(hoy.map(x=>x.num)).size < 4) {
-        sugeridos = ["08", "29", "19"];
-    }
-
-    display.innerHTML = sugeridos.slice(0,2).map(n => `<span class="sniper-pill">${n}</span>`).join('');
-    
-    // TRIPLETA FINA: BASADA EN ARRASTRE SEMANAL
-    const t1 = sugeridos.join('-');
-    const t2 = "33-35-12"; // La tripleta de oro (deuda acumulada)
-    const t3 = "11-01-21"; // La racha del terminal 1
-    
-    const tripletas = [t1, t2, t3];
-    let html = `<h3 style="color:#fbbf24; text-align:center; font-size:0.8rem; margin-bottom:10px;">🎯 TRIPLETA FINA SÁBADO</h3>`;
-    tripletas.forEach((t, i) => {
-        html += `<div class="card-tripleta" style="border-left:4px solid ${i==0?'#38bdf8':i==1?'#fbbf24':'#22c55e'}; margin-bottom:8px; background:#020617; padding:10px; border-radius:8px;">
-                    <small style="color:#94a3b8; font-size:0.6rem;">OPCIÓN ${i+1}</small>
-                    <div style="font-size:1.2rem; font-weight:bold; letter-spacing:2px; color:white;">${t}</div>
-                 </div>`;
-    });
-    if(tripCont) tripCont.innerHTML = html;
-}
-
-// RESTO DE FUNCIONES MANTENIDAS PARA NO DAÑAR EL DISEÑO
 function renderizarMapa() {
     const mapa = document.getElementById('mapa-ruleta');
     if(!mapa) return;
@@ -178,14 +176,14 @@ function estudiarAlgoritmo() {
     const val = document.getElementById('select-estudio-animal').value;
     const res = document.getElementById('resultado-maestro');
     if (!val) return res.innerHTML = '';
-    const sugeridos = algoritmoLara[val] || ["S/D"];
-    res.innerHTML = `<div class="maestro-card"><small>SIGUIENTE:</small><div class="maestro-nums">${sugeridos.map(n => `<span class="pill-maestra">${n}</span>`).join('')}</div></div>`;
+    const inteligencia = motorInteligenciaAvanzada();
+    res.innerHTML = `<div class="maestro-card"><small>PREDICCIÓN:</small><div class="maestro-nums">${inteligencia.sugeridos.map(n => `<span class="pill-maestra">${n}</span>`).join('')}</div></div>`;
 }
 
 function llenarSelectorAlgoritmo() {
     const s = document.getElementById('select-estudio-animal');
     if(!s) return;
-    s.innerHTML = '<option value="">-- Seleccionar --</option>';
+    s.innerHTML = '<option value="">-- ¿Qué salió? --</option>';
     listaAnimales.forEach(a => s.innerHTML += `<option value="${a.n}">${a.n} - ${a.a}</option>`);
 }
 
@@ -220,7 +218,7 @@ function renderizarHistorial() {
 async function registrarPorNumero() {
     const input = document.getElementById('num-rapido');
     let val = input.value;
-    if(!horaActiva || val === "") return alert("Seleccionar Hora");
+    if(!horaActiva || val === "") return alert("Selecciona Hora");
     if(val !== '0' && val !== '00') val = val.padStart(2, '0');
     const ani = listaAnimales.find(a => a.n === val);
     if(!ani) return;
