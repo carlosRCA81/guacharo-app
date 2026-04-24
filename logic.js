@@ -24,14 +24,12 @@ const listaAnimales = [
     {n:'35', a:'JIRAFA', c:'NEGRO', s:'A'}, {n:'36', a:'CULEBRA', c:'ROJO', s:'D'}
 ];
 
+// 🧠 ALGORITMO LARA ACTUALIZADO (Mañana Sábado)
 const algoritmoLara = {
-    '07': ['25', '32', '11'], '04': ['13', '14', '10'], '00': ['26', '29', '09'], 
-    '10': ['08', '13', '36'], '12': ['05', '18', '19'], '05': ['12', '11', '34'], 
-    '09': ['00', '14', '0'], '36': ['13', '26', '00'], '32': ['07', '11', '30'], 
-    '0': ['09', '14', '28'], '08': ['10', '29', '12'], '25': ['35', '07', '05'],
-    '11': ['07', '32', '20'], '20': ['17', '11', '32'], '14': ['09', '25', '04'], 
-    '26': ['36', '16', '06'], '17': ['20', '11', '32'], '34': ['03', '05', '15'],
-    '03': ['33', '13', '23'], '16': ['33', '21', '26'], '06': ['16', '26', '11']
+    '21': ['12', '11', '01'], '01': ['10', '11', '25'], '16': ['33', '23', '06'],
+    '36': ['26', '00', '13'], '26': ['36', '28', '14'], '25': ['35', '07', '01'],
+    '03': ['33', '24', '15'], '34': ['15', '22', '05'], '17': ['20', '32', '11'],
+    '06': ['16', '33', '21'], '07': ['25', '32', '11'], '12': ['21', '05', '19']
 };
 
 const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
@@ -73,45 +71,85 @@ function calcularArrastreCarlos() {
     const d2 = actual.slice(-1);
     const unionVal = d1 + d2;
     const sumaVal = (parseInt(d1) + parseInt(d2)).toString().padStart(2, '0');
-    const aniUnion = listaAnimales.find(a => a.n === unionVal || a.n === parseInt(unionVal).toString());
-    const aniSuma = listaAnimales.find(a => a.n === sumaVal || a.n === parseInt(sumaVal).toString());
+    const aniUnion = listaAnimales.find(a => a.n === unionVal);
+    const aniSuma = listaAnimales.find(a => a.n === sumaVal);
     document.getElementById('arrastre-union').innerText = unionVal;
     document.getElementById('arrastre-suma').innerText = sumaVal;
     if(aniUnion) document.getElementById('arrastre-animal').innerText = aniUnion.a;
     else if (aniSuma) document.getElementById('arrastre-animal').innerText = aniSuma.a;
-    else document.getElementById('arrastre-animal').innerText = "BUSCANDO...";
+    else document.getElementById('arrastre-animal').innerText = "CALCULANDO...";
 }
 
-// 📡 MOTOR ACTUALIZADO: RADAR CRÍTICO PRO (Precisión de Secuencia)
+// 📡 MOTOR DE REBOTE: RADAR CRÍTICO SÁBADO (Detección de Volteados)
 function ejecutarRadarCritico() {
     const fecha = document.getElementById('fecha-analisis').value;
     const hoy = historialGlobal.filter(r => r.fecha === fecha).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
-    if (hoy.length < 1) return;
+    
+    if (hoy.length < 1) {
+        // Sugerencia de apertura basada en cierre de hoy (21)
+        document.getElementById('radar-fijo-1').innerText = "11"; 
+        document.getElementById('radar-fijo-2').innerText = "12";
+        return;
+    }
 
     const ultimo = hoy[0].num;
     
-    // REGLA 1: FIJO A - ATRACCIÓN POR SECUENCIA (Lógica 25->26->??)
-    let sugeridoFijo1 = "";
-    if (ultimo === '26' || ultimo === '16' || ultimo === '06') {
-        sugeridoFijo1 = "36"; // Cierre de escala del terminal 6
-    } else {
-        const espejoInt = (parseInt(ultimo) + 10) % 37;
-        sugeridoFijo1 = espejoInt.toString().padStart(2, '0');
-    }
-    document.getElementById('radar-fijo-1').innerText = sugeridoFijo1;
+    // FIJO 1: REGLA DE ESPEJO (Si salió 21, busca el 12)
+    let invertido = ultimo.split('').reverse().join('');
+    if (ultimo.length === 1) invertido = ultimo + "0";
+    const sug1 = listaAnimales.find(a => a.n === invertido || a.n === parseInt(invertido).toString());
+    document.getElementById('radar-fijo-1').innerText = sug1 ? sug1.n : "33";
 
-    // REGLA 2: FIJO B - BLOQUEO DE SECTOR
-    const aniUltimo = listaAnimales.find(a => a.n === ultimo);
-    const sectoresDisponibles = ['A','B','C','D','E','F'];
-    const sectorActual = aniUltimo ? aniUltimo.s : 'D';
-    // Si la ruleta repite sector, saltamos al sector espejo (A-D, B-E, C-F)
-    const espejosSectores = { 'A':'D', 'D':'A', 'B':'E', 'E':'B', 'C':'F', 'F':'C' };
-    const sectorDestino = espejosSectores[sectorActual];
-    const sugeridoFijo2 = listaAnimales.find(a => a.s === sectorDestino && !hoy.some(r => r.num === a.n));
-    
-    document.getElementById('radar-fijo-2').innerText = sugeridoFijo2 ? sugeridoFijo2.n : "33";
+    // FIJO 2: DEUDA DE SECTOR FRÍO
+    const conteoSectores = {A:0, B:0, C:0, D:0, E:0, F:0};
+    hoy.forEach(r => {
+        const ani = listaAnimales.find(a => a.n === r.num);
+        if(ani) conteoSectores[ani.s]++;
+    });
+    const sectorFrio = Object.keys(conteoSectores).reduce((a, b) => conteoSectores[a] < conteoSectores[b] ? a : b);
+    const sug2 = listaAnimales.find(a => a.s === sectorFrio && !hoy.some(r => r.num === a.n));
+    document.getElementById('radar-fijo-2').innerText = sug2 ? sug2.n : "35";
 }
 
+// 🎯 SNIPER SÁBADO: FILTRO DE PRECISIÓN QUIRÚRGICA
+function ejecutarSniper() {
+    const display = document.getElementById('numeros-sugeridos-directos');
+    const tripCont = document.getElementById('seccion-tripletas');
+    const fecha = document.getElementById('fecha-analisis').value;
+    const hoy = historialGlobal.filter(r => r.fecha === fecha).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
+    
+    if(hoy.length === 0) {
+        display.innerHTML = `<span class="sniper-pill">11</span><span class="sniper-pill">12</span>`;
+        return;
+    }
+    
+    const ultimo = hoy[0].num;
+    let sugeridos = algoritmoLara[ultimo] || ["33", "35", "10"];
+
+    // Si el día está muy repetitivo, forzamos números de deuda
+    if (hoy.length > 5 && new Set(hoy.map(x=>x.num)).size < 4) {
+        sugeridos = ["08", "29", "19"];
+    }
+
+    display.innerHTML = sugeridos.slice(0,2).map(n => `<span class="sniper-pill">${n}</span>`).join('');
+    
+    // TRIPLETA FINA: BASADA EN ARRASTRE SEMANAL
+    const t1 = sugeridos.join('-');
+    const t2 = "33-35-12"; // La tripleta de oro (deuda acumulada)
+    const t3 = "11-01-21"; // La racha del terminal 1
+    
+    const tripletas = [t1, t2, t3];
+    let html = `<h3 style="color:#fbbf24; text-align:center; font-size:0.8rem; margin-bottom:10px;">🎯 TRIPLETA FINA SÁBADO</h3>`;
+    tripletas.forEach((t, i) => {
+        html += `<div class="card-tripleta" style="border-left:4px solid ${i==0?'#38bdf8':i==1?'#fbbf24':'#22c55e'}; margin-bottom:8px; background:#020617; padding:10px; border-radius:8px;">
+                    <small style="color:#94a3b8; font-size:0.6rem;">OPCIÓN ${i+1}</small>
+                    <div style="font-size:1.2rem; font-weight:bold; letter-spacing:2px; color:white;">${t}</div>
+                 </div>`;
+    });
+    if(tripCont) tripCont.innerHTML = html;
+}
+
+// RESTO DE FUNCIONES MANTENIDAS PARA NO DAÑAR EL DISEÑO
 function renderizarMapa() {
     const mapa = document.getElementById('mapa-ruleta');
     if(!mapa) return;
@@ -136,53 +174,6 @@ function renderizarMapa() {
     });
 }
 
-// 🎯 SNIPER ACTUALIZADO: REGLA DE PERSISTENCIA Y TERMINAL
-function ejecutarSniper() {
-    const display = document.getElementById('numeros-sugeridos-directos');
-    const tripCont = document.getElementById('seccion-tripletas');
-    const fecha = document.getElementById('fecha-analisis').value;
-    const hoy = historialGlobal.filter(r => r.fecha === fecha).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
-    
-    if(hoy.length === 0) { display.innerText = "ESPERANDO..."; return; }
-    
-    const ultimo = hoy[0].num;
-    const esCierre = hoy[0].hora === '7:00 PM';
-    
-    // Nueva Lógica Sniper: Si hubo repetición o secuencia (como 25->26), forzamos el cierre de terminal
-    let sugeridos = [];
-    if (ultimo.endsWith('6')) {
-        sugeridos = ["36", "06", "16"]; // Triple 6 detectado
-    } else if (ultimo === '03') {
-        sugeridos = ["33", "13", "23"];
-    } else {
-        sugeridos = algoritmoLara[ultimo] || ["08", "12", "33"];
-    }
-
-    display.innerHTML = sugeridos.slice(0,2).map(n => `<span class="sniper-pill">${n}</span>`).join('');
-    
-    const tripletas = calcularProyeccionManana(hoy);
-    let html = `<h3 style="color:#fbbf24; text-align:center; font-size:0.8rem; margin-bottom:10px;">${esCierre ? '🚀 PROYECCIÓN MAÑANA' : '🎯 TRIPLETAS'}</h3>`;
-    tripletas.forEach((t, i) => {
-        html += `<div class="card-tripleta" style="border-left:4px solid ${i==0?'#38bdf8':i==1?'#fbbf24':'#22c55e'}; margin-bottom:8px; background:#020617; padding:10px; border-radius:8px;">
-                    <small style="color:#94a3b8; font-size:0.6rem;">OPCIÓN ${i+1}</small>
-                    <div style="font-size:1.2rem; font-weight:bold; letter-spacing:2px; color:white;">${t}</div>
-                 </div>`;
-    });
-    if(tripCont) tripCont.innerHTML = html;
-}
-
-function calcularProyeccionManana(hoy) {
-    if (hoy.length === 0) return ["01-10-25", "07-14-32", "00-26-36"];
-    const ultimo = hoy[0].num;
-    
-    // Regla de Tripletas Inteligentes: Basada en el último terminal que salió
-    const t1 = algoritmoLara[ultimo] ? algoritmoLara[ultimo].join('-') : "36-26-16";
-    const t2 = "35-05-15"; // Refuerzo de terminal 5 por el 25 previo
-    const t3 = "33-03-23"; // Refuerzo de terminal 3 por el 03 previo
-    
-    return [t1, t2, t3];
-}
-
 function estudiarAlgoritmo() {
     const val = document.getElementById('select-estudio-animal').value;
     const res = document.getElementById('resultado-maestro');
@@ -194,7 +185,7 @@ function estudiarAlgoritmo() {
 function llenarSelectorAlgoritmo() {
     const s = document.getElementById('select-estudio-animal');
     if(!s) return;
-    s.innerHTML = '<option value="">-- ¿Qué salió? --</option>';
+    s.innerHTML = '<option value="">-- Seleccionar --</option>';
     listaAnimales.forEach(a => s.innerHTML += `<option value="${a.n}">${a.n} - ${a.a}</option>`);
 }
 
@@ -229,7 +220,7 @@ function renderizarHistorial() {
 async function registrarPorNumero() {
     const input = document.getElementById('num-rapido');
     let val = input.value;
-    if(!horaActiva || val === "") return alert("Selecciona Hora");
+    if(!horaActiva || val === "") return alert("Seleccionar Hora");
     if(val !== '0' && val !== '00') val = val.padStart(2, '0');
     const ani = listaAnimales.find(a => a.n === val);
     if(!ani) return;
