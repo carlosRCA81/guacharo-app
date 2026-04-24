@@ -28,9 +28,10 @@ const algoritmoLara = {
     '07': ['25', '32', '11'], '04': ['13', '14', '10'], '00': ['26', '29', '09'], 
     '10': ['08', '13', '36'], '12': ['05', '18', '19'], '05': ['12', '11', '34'], 
     '09': ['00', '14', '0'], '36': ['13', '26', '00'], '32': ['07', '11', '30'], 
-    '0': ['09', '14', '28'], '08': ['10', '29', '12'], '25': ['07', '14', '01'],
+    '0': ['09', '14', '28'], '08': ['10', '29', '12'], '25': ['35', '07', '05'],
     '11': ['07', '32', '20'], '20': ['17', '11', '32'], '14': ['09', '25', '04'], 
-    '26': ['00', '36', '28'], '17': ['20', '11', '32'], '34': ['05', '15', '22']
+    '26': ['36', '16', '06'], '17': ['20', '11', '32'], '34': ['03', '05', '15'],
+    '03': ['33', '13', '23'], '16': ['33', '21', '26'], '06': ['16', '26', '11']
 };
 
 const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
@@ -59,7 +60,7 @@ function actualizarTodo() {
     renderizarMapa();
     ejecutarSniper();
     calcularArrastreCarlos();
-    ejecutarRadarCritico(); // ACTIVADO
+    ejecutarRadarCritico();
 }
 
 function calcularArrastreCarlos() {
@@ -81,26 +82,34 @@ function calcularArrastreCarlos() {
     else document.getElementById('arrastre-animal').innerText = "BUSCANDO...";
 }
 
-// 📡 NUEVA INTELIGENCIA: RADAR CRÍTICO
+// 📡 MOTOR ACTUALIZADO: RADAR CRÍTICO PRO (Precisión de Secuencia)
 function ejecutarRadarCritico() {
     const fecha = document.getElementById('fecha-analisis').value;
-    const hoy = historialGlobal.filter(r => r.fecha === fecha);
+    const hoy = historialGlobal.filter(r => r.fecha === fecha).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
     if (hoy.length < 1) return;
 
-    // FIJO A: Sensor de Vacío (Sector que no ha salido)
-    const conteoSectores = {A:0, B:0, C:0, D:0, E:0, F:0};
-    hoy.forEach(r => {
-        const ani = listaAnimales.find(a => a.n === r.num);
-        if(ani) conteoSectores[ani.s]++;
-    });
-    const sectorFrio = Object.keys(conteoSectores).reduce((a, b) => conteoSectores[a] < conteoSectores[b] ? a : b);
-    const sugeridoFrio = listaAnimales.find(a => a.s === sectorFrio && !hoy.some(r => r.num === a.n));
-    document.getElementById('radar-fijo-1').innerText = sugeridoFrio ? sugeridoFrio.n : "08";
+    const ultimo = hoy[0].num;
+    
+    // REGLA 1: FIJO A - ATRACCIÓN POR SECUENCIA (Lógica 25->26->??)
+    let sugeridoFijo1 = "";
+    if (ultimo === '26' || ultimo === '16' || ultimo === '06') {
+        sugeridoFijo1 = "36"; // Cierre de escala del terminal 6
+    } else {
+        const espejoInt = (parseInt(ultimo) + 10) % 37;
+        sugeridoFijo1 = espejoInt.toString().padStart(2, '0');
+    }
+    document.getElementById('radar-fijo-1').innerText = sugeridoFijo1;
 
-    // FIJO B: Espejo Dinámico
-    const ultimoNum = hoy.sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora))[0].num;
-    const espejo = (parseInt(ultimoNum) + 5).toString().slice(-2).padStart(2, '0');
-    document.getElementById('radar-fijo-2').innerText = espejo;
+    // REGLA 2: FIJO B - BLOQUEO DE SECTOR
+    const aniUltimo = listaAnimales.find(a => a.n === ultimo);
+    const sectoresDisponibles = ['A','B','C','D','E','F'];
+    const sectorActual = aniUltimo ? aniUltimo.s : 'D';
+    // Si la ruleta repite sector, saltamos al sector espejo (A-D, B-E, C-F)
+    const espejosSectores = { 'A':'D', 'D':'A', 'B':'E', 'E':'B', 'C':'F', 'F':'C' };
+    const sectorDestino = espejosSectores[sectorActual];
+    const sugeridoFijo2 = listaAnimales.find(a => a.s === sectorDestino && !hoy.some(r => r.num === a.n));
+    
+    document.getElementById('radar-fijo-2').innerText = sugeridoFijo2 ? sugeridoFijo2.n : "33";
 }
 
 function renderizarMapa() {
@@ -127,32 +136,30 @@ function renderizarMapa() {
     });
 }
 
-function calcularProyeccionManana(hoy) {
-    if (hoy.length === 0) return ["01-10-25", "07-14-32", "00-26-36"];
-    const ultimo = hoy[0].num;
-    const primero = hoy[hoy.length - 1].num;
-    const conteoSectores = {A:0, B:0, C:0, D:0, E:0, F:0};
-    hoy.forEach(r => {
-        const a = listaAnimales.find(x => x.n === r.num);
-        if(a) conteoSectores[a.s]++;
-    });
-    const sectorFrio = Object.keys(conteoSectores).reduce((a, b) => conteoSectores[a] < conteoSectores[b] ? a : b);
-    const t1 = algoritmoLara[ultimo] ? algoritmoLara[ultimo].join('-') : "04-13-14";
-    const t2 = algoritmoLara[primero] ? algoritmoLara[primero].join('-') : "10-08-29";
-    const t3 = listaAnimales.filter(a => a.s === sectorFrio).slice(0,3).map(a => a.n).join('-');
-    return [t1, t2, t3];
-}
-
+// 🎯 SNIPER ACTUALIZADO: REGLA DE PERSISTENCIA Y TERMINAL
 function ejecutarSniper() {
     const display = document.getElementById('numeros-sugeridos-directos');
     const tripCont = document.getElementById('seccion-tripletas');
     const fecha = document.getElementById('fecha-analisis').value;
     const hoy = historialGlobal.filter(r => r.fecha === fecha).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
+    
     if(hoy.length === 0) { display.innerText = "ESPERANDO..."; return; }
+    
     const ultimo = hoy[0].num;
     const esCierre = hoy[0].hora === '7:00 PM';
-    let sugeridos = algoritmoLara[ultimo] || ["01", "25", "36"];
+    
+    // Nueva Lógica Sniper: Si hubo repetición o secuencia (como 25->26), forzamos el cierre de terminal
+    let sugeridos = [];
+    if (ultimo.endsWith('6')) {
+        sugeridos = ["36", "06", "16"]; // Triple 6 detectado
+    } else if (ultimo === '03') {
+        sugeridos = ["33", "13", "23"];
+    } else {
+        sugeridos = algoritmoLara[ultimo] || ["08", "12", "33"];
+    }
+
     display.innerHTML = sugeridos.slice(0,2).map(n => `<span class="sniper-pill">${n}</span>`).join('');
+    
     const tripletas = calcularProyeccionManana(hoy);
     let html = `<h3 style="color:#fbbf24; text-align:center; font-size:0.8rem; margin-bottom:10px;">${esCierre ? '🚀 PROYECCIÓN MAÑANA' : '🎯 TRIPLETAS'}</h3>`;
     tripletas.forEach((t, i) => {
@@ -162,6 +169,18 @@ function ejecutarSniper() {
                  </div>`;
     });
     if(tripCont) tripCont.innerHTML = html;
+}
+
+function calcularProyeccionManana(hoy) {
+    if (hoy.length === 0) return ["01-10-25", "07-14-32", "00-26-36"];
+    const ultimo = hoy[0].num;
+    
+    // Regla de Tripletas Inteligentes: Basada en el último terminal que salió
+    const t1 = algoritmoLara[ultimo] ? algoritmoLara[ultimo].join('-') : "36-26-16";
+    const t2 = "35-05-15"; // Refuerzo de terminal 5 por el 25 previo
+    const t3 = "33-03-23"; // Refuerzo de terminal 3 por el 03 previo
+    
+    return [t1, t2, t3];
 }
 
 function estudiarAlgoritmo() {
