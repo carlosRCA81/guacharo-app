@@ -1,4 +1,4 @@
-// --- CONFIGURACIÓN DE NÚCLEO AUTÓNOMO (FIXED) ---
+// --- NÚCLEO DE ESTUDIO TUAZAR (REPARADO Y LIGERO) ---
 const SUPABASE_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -29,9 +29,18 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historialGlobal = [];
 let horaActiva = null;
 
-// --- 🧠 MOTOR REPARADO: ANÁLISIS DE HISTORIAL TUAZAR ---
-function motorProbabilidadMaestra() {
-    if (historialGlobal.length === 0) return { sugeridos: ["31", "25", "10", "35"], unico: "31", tripletas: ["31-25-10"] };
+// --- RELOJ EN VIVO ---
+function actualizarReloj() {
+    const ahora = new Date();
+    const tiempo = ahora.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const el = document.getElementById('reloj-ia');
+    if(el) el.innerText = tiempo;
+}
+setInterval(actualizarReloj, 1000);
+
+// --- ESTUDIO AUTOMÁTICO SIN BLOQUEO ---
+function motorProbabilidadIA() {
+    if (historialGlobal.length === 0) return { unico: "17", tripletas: ["17-31-08"] };
 
     const fechaHoy = document.getElementById('fecha-analisis').value;
     const hoy = historialGlobal.filter(r => r.fecha === fechaHoy).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
@@ -41,49 +50,79 @@ function motorProbabilidadMaestra() {
 
     if (hoy.length > 0) {
         const ultimo = hoy[0].num;
-        // Escaneo rápido de patrones históricos (Lógica TuAzar 2019-2026)
-        historialGlobal.slice(0, 1000).forEach((reg, i) => {
-            if (reg.num === ultimo && i > 0) {
-                pesos[historialGlobal[i-1].num] += 60;
+        // Solo estudia los últimos 1500 sorteos para no congelar la web
+        for(let i=0; i < Math.min(historialGlobal.length - 1, 1500); i++) {
+            if (historialGlobal[i].num === ultimo) {
+                pesos[historialGlobal[i+1].num] += 50;
             }
-        });
-
-        // Deuda de Sectores (Sensor Visual)
-        let sectores = { 'A':0, 'B':0, 'C':0, 'D':0, 'E':0, 'F':0 };
-        hoy.forEach(r => { const ani = listaAnimales.find(a => a.n === r.num); if(ani) sectores[ani.s]++; });
-        const deuda = Object.keys(sectores).reduce((a, b) => sectores[a] < sectores[b] ? a : b);
-        listaAnimales.filter(a => a.s === deuda).forEach(a => pesos[a.n] += 40);
+        }
     }
 
     const orden = Object.keys(pesos).sort((a, b) => pesos[b] - pesos[a]);
     return { 
-        sugeridos: orden.slice(0, 4), 
-        unico: orden[0], 
+        unico: orden[0] || "05", 
         tripletas: [`${orden[0]}-${orden[1]}-${orden[2]}`, `${orden[1]}-${orden[2]}-${orden[3]}`] 
     };
 }
 
-// --- RECARGA DE INTERFAZ ---
-function actualizarTodo() {
-    try {
-        renderizarPanelHoras();
-        renderizarMapa();
-        renderizarHistorial();
-        ejecutarSniper();
-        renderizarAlertaCuantica();
-    } catch (e) { console.error("Error al actualizar: ", e); }
+// --- RENDERIZADO DE SECTORES (MAPA) ---
+function renderizarMapa() {
+    const mapa = document.getElementById('mapa-ruleta');
+    if(!mapa) return;
+    mapa.innerHTML = '';
+    const fecha = document.getElementById('fecha-analisis').value;
+    const jugadosHoy = historialGlobal.filter(r => r.fecha === fecha).map(r => r.num);
+
+    ['A','B','C','D','E','F'].forEach(s => {
+        const secDiv = document.createElement('div');
+        secDiv.className = 'sector-block';
+        secDiv.innerHTML = `<div class="sector-header">SECTOR ${s}</div><div class="sector-grid" id="grid-${s}"></div>`;
+        mapa.appendChild(secDiv);
+
+        const grid = secDiv.querySelector(`#grid-${s}`);
+        listaAnimales.filter(a => a.s === s).forEach(ani => {
+            const item = document.createElement('div');
+            const isOut = jugadosHoy.includes(ani.n);
+            item.className = `mini-animal ${isOut ? 'sensor-fijo' : (ani.c === 'ROJO' ? 'rojo' : 'negro')}`;
+            item.innerText = ani.n;
+            grid.appendChild(item);
+        });
+    });
 }
 
+// --- RECARGA DE TODA LA DATA ---
+async function actualizarTodo() {
+    renderizarPanelHoras();
+    renderizarMapa();
+    renderizarHistorial();
+    
+    // Sniper y Alerta
+    const data = motorProbabilidadIA();
+    const alertCont = document.getElementById('alerta-cuantica-panel');
+    if(alertCont) {
+        alertCont.innerHTML = `<div style="text-align:center; padding:15px; background:#020617; border:2px solid #38bdf8; border-radius:12px;">
+            <div style="font-size:4rem; color:white; font-weight:900;">${data.unico}</div>
+            <div style="color:#38bdf8; font-weight:bold;">${(listaAnimales.find(a=>a.n===data.unico)||{}).a || ''}</div>
+        </div>`;
+    }
+
+    const tripCont = document.getElementById('seccion-tripletas');
+    if(tripCont) {
+        tripCont.innerHTML = `<h3 style="color:#fbbf24; text-align:center;">🎯 TRIPLETAS IA</h3>` + 
+        data.tripletas.map(t => `<div style="background:#1e293b; color:white; padding:10px; margin:5px; border-radius:8px; text-align:center; font-weight:bold; border-left:4px solid #f59e0b;">${t}</div>`).join('');
+    }
+}
+
+// --- FUNCIONES BASE ---
 async function cargarDatos() {
-    const { data, error } = await _supabase.from('historial_sorteos').select('*').limit(2000).order('fecha', {ascending: false});
+    const { data, error } = await _supabase.from('historial_sorteos').select('*').order('fecha', {ascending: false}).limit(2000);
     if(!error) { historialGlobal = data; actualizarTodo(); }
 }
 
-// Re-añade la función para anotar que se perdió en el error
 async function registrarPorNumero() {
     const input = document.getElementById('num-rapido');
     let val = input.value;
-    if(!horaActiva || val === "") return alert("Selecciona Hora primero");
+    if(!horaActiva || val === "") return alert("Marca la hora primero");
     if(val !== '0' && val !== '00') val = val.padStart(2, '0');
     const ani = listaAnimales.find(a => a.n === val);
     const fecha = document.getElementById('fecha-analisis').value;
@@ -93,43 +132,10 @@ async function registrarPorNumero() {
     await cargarDatos();
 }
 
-// Inicialización de emergencia
-async function inicializar() {
-    const hoy = new Date().toISOString().split('T')[0];
-    document.getElementById('fecha-analisis').value = hoy;
-    await cargarDatos();
-    generarBotones();
-}
-
-// --- FUNCIONES VISUALES (MANTENER IGUAL) ---
-function renderizarMapa() {
-    const mapa = document.getElementById('mapa-ruleta');
-    if(!mapa) return;
-    mapa.innerHTML = '';
-    const fecha = document.getElementById('fecha-analisis').value;
-    const jugadosHoy = historialGlobal.filter(r => r.fecha === fecha).map(r => r.num);
-    ['A','B','C','D','E','F'].forEach(s => {
-        const secDiv = document.createElement('div');
-        secDiv.className = 'sector-block';
-        secDiv.innerHTML = `<div class="sector-header">SECTOR ${s}</div>`;
-        const grid = document.createElement('div');
-        grid.className = 'sector-grid';
-        listaAnimales.filter(a => a.s === s).forEach(ani => {
-            const isOut = jugadosHoy.includes(ani.n);
-            const item = document.createElement('div');
-            item.className = `mini-animal ${isOut ? 'sensor-fijo' : ani.c === 'ROJO' ? 'rojo' : 'negro'}`;
-            item.innerText = ani.n;
-            grid.appendChild(item);
-        });
-        secDiv.appendChild(grid);
-        mapa.appendChild(secDiv);
-    });
-}
-
 function renderizarPanelHoras() {
     const p = document.getElementById('panel-diario-sorteos');
-    if(!p) return;
     const fecha = document.getElementById('fecha-analisis').value;
+    if(!p) return;
     p.innerHTML = '';
     horasSorteo.forEach(h => {
         const reg = historialGlobal.find(x => x.fecha === fecha && x.hora === h);
@@ -154,4 +160,9 @@ function generarBotones() {
     });
 }
 
-window.onload = inicializar;
+window.onload = async () => {
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('fecha-analisis').value = hoy;
+    await cargarDatos();
+    generarBotones();
+};
