@@ -18,7 +18,7 @@ const listaAnimales = [
     {n:'21', a:'GALLO', c:'ROJO', s:'F'}, {n:'22', a:'CAMELLO', c:'NEGRO', s:'C'},
     {n:'23', a:'CEBRA', c:'ROJO', s:'F'}, {n:'24', a:'IGUANA', c:'NEGRO', s:'C'},
     {n:'25', a:'GALLINA', c:'ROJO', s:'D'}, {n:'26', a:'VACA', c:'NEGRO', s:'A'},
-    {n:'27', a:'PERRO', r:'ROJO', s:'D'}, {n:'28', a:'ZAMURO', c:'NEGRO', s:'A'},
+    {n:'27', a:'PERRO', c:'ROJO', s:'D'}, {n:'28', a:'ZAMURO', c:'NEGRO', s:'A'},
     {n:'29', a:'ELEFANTE', c:'NEGRO', s:'E'}, {n:'30', a:'CAIMAN', c:'ROJO', s:'B'},
     {n:'31', a:'LAPA', c:'NEGRO', s:'E'}, {n:'32', a:'ARDILLA', c:'ROJO', s:'B'},
     {n:'33', a:'PESCADO', c:'NEGRO', s:'F'}, {n:'34', a:'VENADO', c:'ROJO', s:'C'},
@@ -29,94 +29,88 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historialGlobal = [];
 let horaActiva = null;
 
-// --- 🧠 MOTOR DE ESTUDIO AUTOMÁTICO ---
+// --- 🧠 MOTOR DE INTELIGENCIA (ESTUDIO AUTOMÁTICO 2026) ---
 function motorInteligenciaAvanzada() {
-    if (historialGlobal.length < 2) return { sugeridos: ["10", "31", "24"], tripletas: ["10-31-24", "01-11-21", "00-10-20"] };
-
+    if (historialGlobal.length < 2) return { sugeridos: ["24", "25", "32"], tripletas: ["24-25-32"] };
     const fechaHoy = document.getElementById('fecha-analisis').value;
     const hoy = historialGlobal.filter(r => r.fecha === fechaHoy).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
-    
     let pesos = {};
     listaAnimales.forEach(a => pesos[a.n] = 0);
-
     if (hoy.length > 0) {
         const ultimo = hoy[0].num;
-        // Estudio de Repetición (2026)
         for(let i=1; i < historialGlobal.length; i++) {
-            if (historialGlobal[i].num === ultimo) {
-                pesos[historialGlobal[i-1].num] += 100;
-            }
+            if (historialGlobal[i].num === ultimo) { pesos[historialGlobal[i-1].num] += 100; }
         }
     }
-
     const ordenados = Object.keys(pesos).sort((a, b) => pesos[b] - pesos[a]);
-    
-    // Generar 3 Tripletas según el estudio
-    const t1 = `${ordenados[0]}-${ordenados[1]}-${ordenados[2]}`;
-    const t2 = `${ordenados[1]}-${ordenados[2]}-${ordenados[3]}`;
-    const t3 = hoy.length >= 12 ? "ESTUDIO-MAÑANA-LISTO" : `${ordenados[0]}-11-22`; 
-
-    return { sugeridos: ordenados.slice(0, 4), tripletas: [t1, t2, t3] };
+    return { sugeridos: ordenados.slice(0, 4), tripletas: [`${ordenados[0]}-${ordenados[1]}-${ordenados[2]}`, `${ordenados[1]}-${ordenados[2]}-${ordenados[3]}`, `${ordenados[0]}-${ordenados[2]}-${ordenados[3]}`] };
 }
 
-// --- 🚀 FUNCIONES DE REPARACIÓN (ARRASTRE, SECTORES, ALGORITMO) ---
-function calcularArrastreCarlos() {
-    const fecha = document.getElementById('fecha-analisis').value;
-    const hoy = historialGlobal.filter(r => r.fecha === fecha).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
-    
-    if (hoy.length < 2) return;
-
-    const actual = hoy[0].num;
-    const anterior = hoy[1].num;
-    
-    const u = anterior.slice(-1) + actual.slice(-1);
-    const s = (parseInt(anterior.slice(-1)) + parseInt(actual.slice(-1))).toString().padStart(2, '0');
-    
-    document.getElementById('arrastre-union').innerText = u;
-    document.getElementById('arrastre-suma').innerText = s;
-    document.getElementById('arrastre-vínculo').innerText = "VINCULADO";
-}
-
-function llenarSelectorAlgoritmo() {
+// --- 🛠️ REPARACIÓN DE ALGORITMO (CALCULADORA) ---
+function repararSelectorAlgoritmo() {
     const sel = document.getElementById('select-estudio-animal');
-    if(!sel || sel.options.length > 1) return;
+    if(!sel) return;
+    sel.innerHTML = '<option value="">-- SELECCIONAR NÚMERO --</option>';
     listaAnimales.forEach(a => {
         let opt = document.createElement('option');
         opt.value = a.n;
-        opt.text = `${a.n} - ${a.a}`;
-        sel.add(opt);
+        opt.innerText = `${a.n} - ${a.a}`;
+        sel.appendChild(opt);
     });
 }
 
-// --- 🎯 ACTUALIZACIÓN DE TODO EL SISTEMA ---
+// --- 🛠️ REPARACIÓN DE VÍNCULO (ARRASTRE) ---
+function calcularArrastreCarlos() {
+    const fecha = document.getElementById('fecha-analisis').value;
+    const hoy = historialGlobal.filter(r => r.fecha === fecha).sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
+    if (hoy.length < 2) return;
+    const actual = hoy[hoy.length - 1].num;
+    const anterior = hoy[hoy.length - 2].num;
+    const u = anterior.slice(-1) + actual.slice(-1);
+    const s = (parseInt(anterior.slice(-1)) + parseInt(actual.slice(-1))).toString().padStart(2, '0');
+    document.getElementById('arrastre-union').innerText = u;
+    document.getElementById('arrastre-suma').innerText = s;
+    document.getElementById('arrastre-vínculo').innerText = "VINCULADO ✅";
+}
+
+// --- 🛠️ REPARACIÓN DE HISTORIAL (SECTOR Y COLOR) ---
+function renderizarHistorial() {
+    const lista = document.getElementById('lista-historial');
+    const fecha = document.getElementById('fecha-busqueda-historial').value;
+    if(!lista) return;
+    lista.innerHTML = '';
+    const filtrado = historialGlobal.filter(r => r.fecha === fecha).sort((a, b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
+    filtrado.forEach(r => {
+        const ani = listaAnimales.find(a => a.n === r.num);
+        lista.innerHTML += `<tr>
+            <td>${r.hora}</td>
+            <td style="color:#fbbf24; font-weight:bold;">${r.num}</td>
+            <td>${r.animal}</td>
+            <td style="background:#1e293b;">${ani ? ani.s : '-'}</td>
+            <td style="color:${r.tipo === 'ROJO' ? '#ef4444' : '#94a3b8'}">${r.tipo}</td>
+        </tr>`;
+    });
+}
+
+// --- FUNCIONES GENERALES ACTUALIZADAS ---
 function actualizarTodo() {
     renderizarPanelHoras();
     renderizarHistorial();
     renderizarMapa();
     ejecutarSniper();
     calcularArrastreCarlos();
-    llenarSelectorAlgoritmo();
 }
 
 function ejecutarSniper() {
     const inteligencia = motorInteligenciaAvanzada();
-    
-    // Sniper y Radar
-    const display = document.getElementById('numeros-sugeridos-directos');
-    if(display) display.innerHTML = inteligencia.sugeridos.slice(0,2).map(n => `<span class="sniper-pill">${n}</span>`).join('');
-    
+    document.getElementById('numeros-sugeridos-directos').innerHTML = inteligencia.sugeridos.slice(0,2).map(n => `<span class="sniper-pill">${n}</span>`).join('');
     document.getElementById('radar-fijo-1').innerText = inteligencia.sugeridos[0];
     document.getElementById('radar-fijo-2').innerText = inteligencia.sugeridos[1];
-    
-    // Tripletas (Estudio de 3 Ganadoras)
     const tripCont = document.getElementById('seccion-tripletas');
     if(tripCont) {
-        tripCont.innerHTML = `<h3 style="color:#fbbf24; text-align:center;">🔥 TRIPLETAS MAESTRAS</h3>`;
-        inteligencia.tripletas.forEach((t, i) => {
-            tripCont.innerHTML += `
-                <div class="card-tripleta" style="border-left:4px solid #38bdf8; background:#020617; padding:12px; border-radius:8px; color:white; font-weight:bold; margin-bottom:8px; font-size:1.2rem; text-align:center;">
-                    ${t}
-                </div>`;
+        tripCont.innerHTML = `<h3 style="color:#fbbf24; text-align:center; font-size:0.8rem;">🎯 TRIPLETAS GANADORAS</h3>`;
+        inteligencia.tripletas.forEach(t => {
+            tripCont.innerHTML += `<div class="card-tripleta" style="border-left:4px solid #38bdf8; background:#020617; padding:8px; border-radius:8px; color:white; font-weight:bold; margin-bottom:5px; text-align:center; font-size:1.1rem;">${t}</div>`;
         });
     }
 }
@@ -127,7 +121,6 @@ function renderizarMapa() {
     mapa.innerHTML = '';
     const fecha = document.getElementById('fecha-analisis').value;
     const jugadosHoy = historialGlobal.filter(r => r.fecha === fecha).map(r => r.num);
-    
     ['A','B','C','D','E','F'].forEach(s => {
         const secDiv = document.createElement('div');
         secDiv.className = 'sector-block';
@@ -136,17 +129,13 @@ function renderizarMapa() {
         grid.className = 'sector-grid';
         listaAnimales.filter(a => a.s === s).forEach(ani => {
             const isOut = jugadosHoy.includes(ani.n);
-            const item = document.createElement('div');
-            item.className = `mini-animal ${isOut ? 'sensor-fijo' : (ani.c === 'ROJO' ? 'rojo' : 'negro')}`;
-            item.innerText = ani.n;
-            grid.appendChild(item);
+            grid.innerHTML += `<div class="mini-animal ${isOut ? 'sensor-fijo' : (ani.c === 'ROJO' ? 'rojo' : 'negro')}">${ani.n}</div>`;
         });
         secDiv.appendChild(grid);
         mapa.appendChild(secDiv);
     });
 }
 
-// --- NAVEGACIÓN Y CARGA ---
 function openTab(evt, name) {
     const contents = document.getElementsByClassName('tab-content');
     for (let i = 0; i < contents.length; i++) contents[i].style.display = 'none';
@@ -157,10 +146,7 @@ function openTab(evt, name) {
 }
 
 async function cargarDatos() {
-    const { data, error } = await _supabase.from('historial_sorteos')
-        .select('*')
-        .gte('fecha', '2026-01-01') 
-        .order('fecha', {ascending: false});
+    const { data, error } = await _supabase.from('historial_sorteos').select('*').gte('fecha', '2026-01-01').order('fecha', {ascending: false});
     if(!error) { historialGlobal = data; actualizarTodo(); }
 }
 
@@ -173,20 +159,7 @@ async function registrarPorNumero() {
     const fecha = document.getElementById('fecha-analisis').value;
     await _supabase.from('historial_sorteos').upsert({ fecha, hora: horaActiva, num: val, animal: ani.a, tipo: ani.c }, { onConflict: 'fecha,hora' });
     input.value = '';
-    await cargarDatos(); // Estudio automático inmediato
-}
-
-function generarBotones() {
-    const cont = document.getElementById('grid-container');
-    if(!cont) return;
-    cont.innerHTML = '';
-    listaAnimales.forEach(a => {
-        const btn = document.createElement('div');
-        btn.className = "animal-btn";
-        btn.innerHTML = `<b>${a.n}</b><br><small>${a.a}</small>`;
-        btn.onclick = () => { document.getElementById('num-rapido').value = a.n; registrarPorNumero(); };
-        cont.appendChild(btn);
-    });
+    await cargarDatos();
 }
 
 function renderizarPanelHoras() {
@@ -204,23 +177,12 @@ function renderizarPanelHoras() {
     });
 }
 
-function renderizarHistorial() {
-    const lista = document.getElementById('lista-historial');
-    const fecha = document.getElementById('fecha-busqueda-historial').value;
-    if(!lista) return;
-    lista.innerHTML = '';
-    const filtrado = historialGlobal.filter(r => r.fecha === fecha).sort((a, b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
-    filtrado.forEach(r => {
-        lista.innerHTML += `<tr><td>${r.hora}</td><td><b>${r.num}</b></td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
-    });
-}
-
 async function inicializar() {
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById('fecha-analisis').value = hoy;
     document.getElementById('fecha-busqueda-historial').value = hoy;
+    repararSelectorAlgoritmo();
     await cargarDatos();
-    generarBotones();
     document.getElementById('Registro').style.display = 'block';
 }
 
