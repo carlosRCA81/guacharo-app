@@ -1,4 +1,4 @@
-// --- NÚCLEO DE ESTUDIO TUAZAR (REPARADO Y LIGERO) ---
+// --- CONFIGURACIÓN DE CONEXIÓN ESTABLE ---
 const SUPABASE_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -29,107 +29,77 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historialGlobal = [];
 let horaActiva = null;
 
-// --- RELOJ EN VIVO ---
-function actualizarReloj() {
-    const ahora = new Date();
-    const tiempo = ahora.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    const el = document.getElementById('reloj-ia');
-    if(el) el.innerText = tiempo;
-}
-setInterval(actualizarReloj, 1000);
-
-// --- ESTUDIO AUTOMÁTICO SIN BLOQUEO ---
-function motorProbabilidadIA() {
-    if (historialGlobal.length === 0) return { unico: "17", tripletas: ["17-31-08"] };
+// --- MOTOR DE ESTUDIO (LIMITADO A 2025-2026 PARA VELOCIDAD) ---
+function motorPrediccionFija() {
+    if (historialGlobal.length === 0) return { fijo: "12", tripletas: ["12-36-02"] };
 
     const fechaHoy = document.getElementById('fecha-analisis').value;
-    const hoy = historialGlobal.filter(r => r.fecha === fechaHoy).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
+    const resultadosHoy = historialGlobal.filter(r => r.fecha === fechaHoy).sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
     
     let pesos = {};
     listaAnimales.forEach(a => pesos[a.n] = 0);
 
-    if (hoy.length > 0) {
-        const ultimo = hoy[0].num;
-        // Solo estudia los últimos 1500 sorteos para no congelar la web
-        for(let i=0; i < Math.min(historialGlobal.length - 1, 1500); i++) {
-            if (historialGlobal[i].num === ultimo) {
-                pesos[historialGlobal[i+1].num] += 50;
+    if (resultadosHoy.length > 0) {
+        const ultimo = resultadosHoy[resultadosHoy.length - 1].num;
+        // Análisis de arrastre histórico
+        for(let i=0; i < historialGlobal.length - 1; i++) {
+            if (historialGlobal[i+1].num === ultimo) {
+                pesos[historialGlobal[i].num] += 50;
             }
         }
     }
 
     const orden = Object.keys(pesos).sort((a, b) => pesos[b] - pesos[a]);
-    return { 
-        unico: orden[0] || "05", 
-        tripletas: [`${orden[0]}-${orden[1]}-${orden[2]}`, `${orden[1]}-${orden[2]}-${orden[3]}`] 
+    const fijo = orden[0] || "00";
+    return {
+        fijo: fijo,
+        tripletas: [`${fijo}-${orden[1] || '01'}-${orden[2] || '02'}`, `${orden[1] || '03'}-${orden[2] || '04'}-${orden[3] || '05'}`]
     };
 }
 
-// --- RENDERIZADO DE SECTORES (MAPA) ---
-function renderizarMapa() {
-    const mapa = document.getElementById('mapa-ruleta');
-    if(!mapa) return;
-    mapa.innerHTML = '';
-    const fecha = document.getElementById('fecha-analisis').value;
-    const jugadosHoy = historialGlobal.filter(r => r.fecha === fecha).map(r => r.num);
-
-    ['A','B','C','D','E','F'].forEach(s => {
-        const secDiv = document.createElement('div');
-        secDiv.className = 'sector-block';
-        secDiv.innerHTML = `<div class="sector-header">SECTOR ${s}</div><div class="sector-grid" id="grid-${s}"></div>`;
-        mapa.appendChild(secDiv);
-
-        const grid = secDiv.querySelector(`#grid-${s}`);
-        listaAnimales.filter(a => a.s === s).forEach(ani => {
-            const item = document.createElement('div');
-            const isOut = jugadosHoy.includes(ani.n);
-            item.className = `mini-animal ${isOut ? 'sensor-fijo' : (ani.c === 'ROJO' ? 'rojo' : 'negro')}`;
-            item.innerText = ani.n;
-            grid.appendChild(item);
-        });
-    });
-}
-
-// --- RECARGA DE TODA LA DATA ---
+// --- FUNCIONES DE INTERFAZ (TODAS ACTIVAS) ---
 async function actualizarTodo() {
     renderizarPanelHoras();
     renderizarMapa();
     renderizarHistorial();
     
-    // Sniper y Alerta
-    const data = motorProbabilidadIA();
-    const alertCont = document.getElementById('alerta-cuantica-panel');
-    if(alertCont) {
-        alertCont.innerHTML = `<div style="text-align:center; padding:15px; background:#020617; border:2px solid #38bdf8; border-radius:12px;">
-            <div style="font-size:4rem; color:white; font-weight:900;">${data.unico}</div>
-            <div style="color:#38bdf8; font-weight:bold;">${(listaAnimales.find(a=>a.n===data.unico)||{}).a || ''}</div>
-        </div>`;
+    const data = motorPrediccionFija();
+    const aniFijo = listaAnimales.find(a => a.n === data.fijo);
+
+    // Panel Sniper e Indicadores
+    const sniperCont = document.getElementById('alerta-cuantica-panel');
+    if(sniperCont) {
+        sniperCont.innerHTML = `
+            <div style="background:#020617; border:2px solid #38bdf8; border-radius:15px; padding:15px; text-align:center;">
+                <div style="font-size:4.5rem; color:white; font-weight:900; line-height:1;">${data.fijo}</div>
+                <div style="color:#fbbf24; font-size:1.4rem; font-weight:bold;">${aniFijo ? aniFijo.a : ''}</div>
+                <small style="color:#38bdf8;">ESTUDIO 2025-2026 ACTIVO</small>
+            </div>`;
     }
 
     const tripCont = document.getElementById('seccion-tripletas');
     if(tripCont) {
-        tripCont.innerHTML = `<h3 style="color:#fbbf24; text-align:center;">🎯 TRIPLETAS IA</h3>` + 
-        data.tripletas.map(t => `<div style="background:#1e293b; color:white; padding:10px; margin:5px; border-radius:8px; text-align:center; font-weight:bold; border-left:4px solid #f59e0b;">${t}</div>`).join('');
+        tripCont.innerHTML = `<h3 style="color:#fbbf24; text-align:center;">🎯 TRIPLETAS FIJAS</h3>` + 
+            data.tripletas.map(t => `<div style="background:#1e293b; color:white; padding:12px; margin:5px; border-radius:10px; text-align:center; font-weight:bold; font-size:1.2rem; border-left:4px solid #f59e0b;">${t}</div>`).join('');
     }
 }
 
-// --- FUNCIONES BASE ---
-async function cargarDatos() {
-    const { data, error } = await _supabase.from('historial_sorteos').select('*').order('fecha', {ascending: false}).limit(2000);
-    if(!error) { historialGlobal = data; actualizarTodo(); }
-}
-
-async function registrarPorNumero() {
-    const input = document.getElementById('num-rapido');
-    let val = input.value;
-    if(!horaActiva || val === "") return alert("Marca la hora primero");
-    if(val !== '0' && val !== '00') val = val.padStart(2, '0');
-    const ani = listaAnimales.find(a => a.n === val);
+function renderizarMapa() {
+    const mapa = document.getElementById('mapa-ruleta');
+    if(!mapa) return;
+    mapa.innerHTML = '';
     const fecha = document.getElementById('fecha-analisis').value;
-    
-    await _supabase.from('historial_sorteos').upsert({ fecha, hora: horaActiva, num: val, animal: ani.a, tipo: ani.c }, { onConflict: 'fecha,hora' });
-    input.value = '';
-    await cargarDatos();
+    const salieronHoy = historialGlobal.filter(r => r.fecha === fecha).map(r => r.num);
+
+    ['A','B','C','D','E','F'].forEach(s => {
+        let html = `<div class="sector-block"><div class="sector-header">SECTOR ${s}</div><div class="sector-grid">`;
+        listaAnimales.filter(a => a.s === s).forEach(ani => {
+            const activo = salieronHoy.includes(ani.n);
+            html += `<div class="mini-animal ${activo ? 'sensor-fijo' : (ani.c === 'ROJO' ? 'rojo' : 'negro')}">${ani.n}</div>`;
+        });
+        html += `</div></div>`;
+        mapa.innerHTML += html;
+    });
 }
 
 function renderizarPanelHoras() {
@@ -145,6 +115,27 @@ function renderizarPanelHoras() {
         div.onclick = () => { horaActiva = h; renderizarPanelHoras(); };
         p.appendChild(div);
     });
+}
+
+// --- REGISTRO Y CARGA ---
+async function cargarDatos() {
+    const { data, error } = await _supabase.from('historial_sorteos').select('*')
+        .gte('fecha', '2025-01-01') // Filtro para estudiar solo desde 2025
+        .order('fecha', {ascending: false});
+    if(!error) { historialGlobal = data; actualizarTodo(); }
+}
+
+async function registrarPorNumero() {
+    const input = document.getElementById('num-rapido');
+    let val = input.value;
+    if(!horaActiva || val === "") return alert("Selecciona Hora");
+    if(val !== '0' && val !== '00') val = val.padStart(2, '0');
+    const ani = listaAnimales.find(a => a.n === val);
+    const fecha = document.getElementById('fecha-analisis').value;
+    
+    await _supabase.from('historial_sorteos').upsert({ fecha, hora: horaActiva, num: val, animal: ani.a, tipo: ani.c }, { onConflict: 'fecha,hora' });
+    input.value = '';
+    await cargarDatos();
 }
 
 function generarBotones() {
