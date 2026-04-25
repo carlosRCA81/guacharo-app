@@ -1,4 +1,4 @@
-// --- CONFIGURACIÓN DE CONEXIÓN ESTABLE ---
+// --- CONFIGURACIÓN DE NÚCLEO ESTABLE ---
 const SUPABASE_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -29,58 +29,49 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historialGlobal = [];
 let horaActiva = null;
 
-// --- MOTOR DE ESTUDIO (LIMITADO A 2025-2026 PARA VELOCIDAD) ---
-function motorPrediccionFija() {
-    if (historialGlobal.length === 0) return { fijo: "12", tripletas: ["12-36-02"] };
+// --- ⏱️ RELOJ EN VIVO (FIXED) ---
+function actualizarReloj() {
+    const ahora = new Date();
+    const tiempo = ahora.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    const el = document.querySelector('h2') || document.querySelector('.reloj'); 
+    if(el) el.innerText = tiempo;
+}
+setInterval(actualizarReloj, 1000);
 
-    const fechaHoy = document.getElementById('fecha-analisis').value;
-    const resultadosHoy = historialGlobal.filter(r => r.fecha === fechaHoy).sort((a,b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
-    
-    let pesos = {};
-    listaAnimales.forEach(a => pesos[a.n] = 0);
+// --- 🧠 ESTUDIO RÁPIDO (LÓGICA 2025) ---
+function obtenerFijoIA() {
+    if (historialGlobal.length < 5) return { fijo: "29", trips: ["29-05-31"] };
+    const ultimoReg = historialGlobal[0]; 
+    const conteo = {};
+    listaAnimales.forEach(a => conteo[a.n] = 0);
 
-    if (resultadosHoy.length > 0) {
-        const ultimo = resultadosHoy[resultadosHoy.length - 1].num;
-        // Análisis de arrastre histórico
-        for(let i=0; i < historialGlobal.length - 1; i++) {
-            if (historialGlobal[i+1].num === ultimo) {
-                pesos[historialGlobal[i].num] += 50;
-            }
+    // Análisis de frecuencia después del último animal
+    historialGlobal.slice(0, 1500).forEach((reg, i) => {
+        if (i > 0 && historialGlobal[i-1].num === ultimoReg.num) {
+            conteo[reg.num] += 1;
         }
-    }
+    });
 
-    const orden = Object.keys(pesos).sort((a, b) => pesos[b] - pesos[a]);
-    const fijo = orden[0] || "00";
-    return {
-        fijo: fijo,
-        tripletas: [`${fijo}-${orden[1] || '01'}-${orden[2] || '02'}`, `${orden[1] || '03'}-${orden[2] || '04'}-${orden[3] || '05'}`]
-    };
+    const orden = Object.keys(conteo).sort((a, b) => conteo[b] - conteo[a]);
+    return { fijo: orden[0], trips: [`${orden[0]}-${orden[1]}-${orden[2]}`] };
 }
 
-// --- FUNCIONES DE INTERFAZ (TODAS ACTIVAS) ---
-async function actualizarTodo() {
+// --- 🎨 RENDERIZADO DE PANELES ---
+function renderizarTodo() {
     renderizarPanelHoras();
     renderizarMapa();
-    renderizarHistorial();
     
-    const data = motorPrediccionFija();
-    const aniFijo = listaAnimales.find(a => a.n === data.fijo);
+    const estudio = obtenerFijoIA();
+    const ani = listaAnimales.find(a => a.n === estudio.fijo);
 
-    // Panel Sniper e Indicadores
-    const sniperCont = document.getElementById('alerta-cuantica-panel');
-    if(sniperCont) {
-        sniperCont.innerHTML = `
-            <div style="background:#020617; border:2px solid #38bdf8; border-radius:15px; padding:15px; text-align:center;">
-                <div style="font-size:4.5rem; color:white; font-weight:900; line-height:1;">${data.fijo}</div>
-                <div style="color:#fbbf24; font-size:1.4rem; font-weight:bold;">${aniFijo ? aniFijo.a : ''}</div>
-                <small style="color:#38bdf8;">ESTUDIO 2025-2026 ACTIVO</small>
-            </div>`;
-    }
-
-    const tripCont = document.getElementById('seccion-tripletas');
-    if(tripCont) {
-        tripCont.innerHTML = `<h3 style="color:#fbbf24; text-align:center;">🎯 TRIPLETAS FIJAS</h3>` + 
-            data.tripletas.map(t => `<div style="background:#1e293b; color:white; padding:12px; margin:5px; border-radius:10px; text-align:center; font-weight:bold; font-size:1.2rem; border-left:4px solid #f59e0b;">${t}</div>`).join('');
+    // Sniper
+    const sniper = document.querySelector('.sniper-display') || document.getElementById('alerta-cuantica-panel');
+    if(sniper) {
+        sniper.innerHTML = `<div style="text-align:center; padding:10px;">
+            <div style="font-size:4rem; color:white; font-weight:bold;">${estudio.fijo}</div>
+            <div style="color:#fbbf24; font-size:1.5rem;">${ani ? ani.a : ''}</div>
+            <small style="color:#38bdf8;">PROBABILIDAD FIJA (ESTUDIO 2025)</small>
+        </div>`;
     }
 }
 
@@ -89,16 +80,23 @@ function renderizarMapa() {
     if(!mapa) return;
     mapa.innerHTML = '';
     const fecha = document.getElementById('fecha-analisis').value;
-    const salieronHoy = historialGlobal.filter(r => r.fecha === fecha).map(r => r.num);
+    const jugados = historialGlobal.filter(r => r.fecha === fecha).map(r => r.num);
 
     ['A','B','C','D','E','F'].forEach(s => {
-        let html = `<div class="sector-block"><div class="sector-header">SECTOR ${s}</div><div class="sector-grid">`;
+        const div = document.createElement('div');
+        div.className = 'sector-block';
+        div.innerHTML = `<div class="sector-header">SECTOR ${s}</div>`;
+        const grid = document.createElement('div');
+        grid.className = 'sector-grid';
         listaAnimales.filter(a => a.s === s).forEach(ani => {
-            const activo = salieronHoy.includes(ani.n);
-            html += `<div class="mini-animal ${activo ? 'sensor-fijo' : (ani.c === 'ROJO' ? 'rojo' : 'negro')}">${ani.n}</div>`;
+            const span = document.createElement('div');
+            const esFijo = jugados.includes(ani.n);
+            span.className = `mini-animal ${esFijo ? 'sensor-fijo' : (ani.c === 'ROJO' ? 'rojo' : 'negro')}`;
+            span.innerText = ani.n;
+            grid.appendChild(span);
         });
-        html += `</div></div>`;
-        mapa.innerHTML += html;
+        div.appendChild(grid);
+        mapa.appendChild(div);
     });
 }
 
@@ -117,18 +115,22 @@ function renderizarPanelHoras() {
     });
 }
 
-// --- REGISTRO Y CARGA ---
+// --- 🚀 ACCIONES DE CARGA ---
 async function cargarDatos() {
-    const { data, error } = await _supabase.from('historial_sorteos').select('*')
-        .gte('fecha', '2025-01-01') // Filtro para estudiar solo desde 2025
+    const { data, error } = await _supabase.from('historial_sorteos')
+        .select('*')
+        .gte('fecha', '2025-01-01')
         .order('fecha', {ascending: false});
-    if(!error) { historialGlobal = data; actualizarTodo(); }
+    if(!error) { 
+        historialGlobal = data; 
+        renderizarTodo(); 
+    }
 }
 
 async function registrarPorNumero() {
     const input = document.getElementById('num-rapido');
     let val = input.value;
-    if(!horaActiva || val === "") return alert("Selecciona Hora");
+    if(!horaActiva || val === "") return;
     if(val !== '0' && val !== '00') val = val.padStart(2, '0');
     const ani = listaAnimales.find(a => a.n === val);
     const fecha = document.getElementById('fecha-analisis').value;
@@ -138,22 +140,21 @@ async function registrarPorNumero() {
     await cargarDatos();
 }
 
-function generarBotones() {
-    const cont = document.getElementById('grid-container');
-    if(!cont) return;
-    cont.innerHTML = '';
-    listaAnimales.forEach(a => {
-        const btn = document.createElement('div');
-        btn.className = "animal-btn";
-        btn.innerHTML = `<b>${a.n}</b><br><small>${a.a}</small>`;
-        btn.onclick = () => { document.getElementById('num-rapido').value = a.n; registrarPorNumero(); };
-        cont.appendChild(btn);
-    });
-}
-
 window.onload = async () => {
-    const hoy = new Date().toISOString().split('T')[0];
-    document.getElementById('fecha-analisis').value = hoy;
+    const inputFecha = document.getElementById('fecha-analisis');
+    if(inputFecha) inputFecha.value = new Date().toISOString().split('T')[0];
+    actualizarReloj();
     await cargarDatos();
-    generarBotones();
+    
+    // Generar botones si no existen
+    const cont = document.getElementById('grid-container');
+    if(cont && cont.innerHTML === "") {
+        listaAnimales.forEach(a => {
+            const btn = document.createElement('div');
+            btn.className = "animal-btn";
+            btn.innerHTML = `<b>${a.n}</b><br><small>${a.a}</small>`;
+            btn.onclick = () => { document.getElementById('num-rapido').value = a.n; registrarPorNumero(); };
+            cont.appendChild(btn);
+        });
+    }
 };
