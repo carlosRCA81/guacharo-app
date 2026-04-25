@@ -28,9 +28,9 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historialGlobal = [];
 let horaActiva = null;
 
-// --- 🌌 MOTOR DE MATRIZ CUÁNTICA UNIVERSAL ---
+// --- 🧠 MOTOR DE INTELIGENCIA AUTÓNOMA (SISTEMA SOBRE SISTEMA) ---
 function motorProbabilidadMaestra() {
-    if (historialGlobal.length === 0) return { sugeridos: ["11", "22", "33"], unico: "11" };
+    if (historialGlobal.length === 0) return { sugeridos: ["11", "22", "33"], unico: "11", serieAlert: "S/N" };
 
     const fechaHoy = document.getElementById('fecha-analisis').value;
     const hoy = historialGlobal.filter(r => r.fecha === fechaHoy).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
@@ -38,50 +38,52 @@ function motorProbabilidadMaestra() {
     let pesos = {};
     listaAnimales.forEach(a => pesos[a.n] = 0);
 
-    const columnas = [
-        ['01','04','07','10','13','16','19','22','25','28','31','34'],
-        ['02','05','08','11','14','17','20','23','26','29','32','35'],
-        ['03','06','09','12','15','18','21','24','27','30','33','36','0','00']
-    ];
-
     if (hoy.length > 0) {
         const ultimo = hoy[0].num;
-        const penultimo = hoy[1] ? hoy[1].num : null;
-
-        // 1. ANÁLISIS DE COLUMNAS (TABLERO FÍSICO)
-        columnas.forEach(col => {
-            if (col.includes(ultimo)) {
-                col.forEach(n => { if(n !== ultimo) pesos[n] += 40; });
+        
+        // 1. ESCANEO PROFUNDO HISTÓRICO (Deep History Scan)
+        // El sistema busca CADA VEZ que salió el número actual y ve qué salió después en toda la historia
+        historialGlobal.forEach((reg, i) => {
+            if (reg.num === ultimo && i > 0) {
+                const siguienteEnEseMomento = historialGlobal[i-1].num;
+                pesos[siguienteEnEseMomento] += 50; // Gran peso por repetición histórica de patrón
             }
         });
 
-        // 2. CÁLCULO DE FRECUENCIA DE SALTO (BASADO EN EL HISTORIAL)
-        for (let i = 0; i < historialGlobal.length - 1; i++) {
-            if (historialGlobal[i+1].num === ultimo) {
-                const siguienteHistorico = historialGlobal[i].num;
-                if(pesos[siguienteHistorico] !== undefined) pesos[siguienteHistorico] += 50; 
+        // 2. DETECCIÓN DE SERIES POR PRESIÓN (Sector Heat)
+        let conteoSectores = { 'A':0, 'B':0, 'C':0, 'D':0, 'E':0, 'F':0 };
+        hoy.forEach(r => {
+            const ani = listaAnimales.find(a => a.n === r.num);
+            if(ani) conteoSectores[ani.s]++;
+        });
+
+        // Identificar sector con "Deuda Crítica" (El que no ha salido o tiene menos carga)
+        const sectorDeuda = Object.keys(conteoSectores).reduce((a, b) => conteoSectores[a] < conteoSectores[b] ? a : b);
+        listaAnimales.filter(a => a.s === sectorDeuda).forEach(a => pesos[a.n] += 35);
+
+        // 3. ANÁLISIS DE COLUMNAS MATEMÁTICAS
+        const columnas = [['01','04','07','10','13','16','19','22','25','28','31','34'],['02','05','08','11','14','17','20','23','26','29','32','35'],['03','06','09','12','15','18','21','24','27','30','33','36','0','00']];
+        columnas.forEach(col => {
+            if (col.includes(ultimo)) {
+                col.forEach(n => { if(n !== ultimo) pesos[n] += 25; });
             }
-        }
-
-        // 3. LÓGICA DE SIMETRÍA Y ESPEJO
-        const espejo = ultimo.split('').reverse().join('').padStart(2, '0');
-        if(pesos[espejo] !== undefined) pesos[espejo] += 30;
-
-        // 4. ANÁLISIS DE DIFERENCIA (TENSIÓN DE RULETA)
-        if (penultimo) {
-            const dif = Math.abs(parseInt(ultimo) - parseInt(penultimo));
-            const proximo = (parseInt(ultimo) + dif) % 37;
-            const nStr = proximo.toString().padStart(2, '0');
-            if(pesos[nStr] !== undefined) pesos[nStr] += 35;
-        }
+        });
     }
 
-    // Ordenar y extraer los más probables
     const ordenados = Object.keys(pesos).sort((a, b) => pesos[b] - pesos[a]);
-    return { sugeridos: ordenados.slice(0, 4), unico: ordenados[0] };
+    
+    // Detectar Serie Alerta (Ej: Si los últimos 3 fueron del mismo color o sector)
+    let serieMsg = "ESTABLE";
+    if (hoy.length >= 2) {
+        const s1 = listaAnimales.find(a => a.n === hoy[0].num).s;
+        const s2 = listaAnimales.find(a => a.n === hoy[1].num).s;
+        if(s1 === s2) serieMsg = `PRESIÓN EN SECTOR ${s1}`;
+    }
+
+    return { sugeridos: ordenados.slice(0, 4), unico: ordenados[0], serieAlert: serieMsg };
 }
 
-// --- PANEL VISUAL: ALERTA DE PRÓXIMO NÚMERO ---
+// --- PANEL DE ALERTA CUÁNTICA MEJORADO ---
 function renderizarAlertaCuantica() {
     const contenedor = document.getElementById('alerta-cuantica-panel');
     if(!contenedor) return;
@@ -89,20 +91,38 @@ function renderizarAlertaCuantica() {
     const animal = listaAnimales.find(a => a.n === datos.unico);
     
     contenedor.innerHTML = `
-        <div style="background: linear-gradient(145deg, #020617, #1e1b4b); border: 3px solid #f59e0b; border-radius: 20px; padding: 25px; text-align: center; box-shadow: 0 0 30px rgba(245, 158, 11, 0.4); position: relative; overflow: hidden;">
-            <div style="position: absolute; top: -10px; right: -10px; background: #ef4444; color: white; padding: 5px 15px; transform: rotate(15deg); font-size: 0.7rem; font-weight: bold; border-radius: 5px;">LIVE</div>
-            <h2 style="color: #f59e0b; font-size: 0.9rem; letter-spacing: 3px; text-transform: uppercase; margin: 0;">Próximo Número Detectado</h2>
-            <div style="font-size: 5rem; font-weight: 900; color: #ffffff; margin: 5px 0; line-height: 1;">${datos.unico}</div>
-            <div style="font-size: 1.5rem; color: #fbbf24; font-weight: bold; text-transform: uppercase;">${animal ? animal.a : ''}</div>
-            <div style="margin-top: 15px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px;">
-                <div style="width: 85%; height: 100%; background: #10b981; border-radius: 2px; box-shadow: 0 0 10px #10b981;"></div>
+        <div style="background: linear-gradient(135deg, #020617 0%, #0f172a 100%); border: 2px solid #38bdf8; border-radius: 15px; padding: 20px; text-align: center; box-shadow: 0 0 25px rgba(56, 189, 248, 0.2);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <small style="color: #38bdf8; font-weight: bold; font-size: 0.6rem;">IA AUTÓNOMA ACTIVA</small>
+                <small style="color: #f59e0b; font-weight: bold; font-size: 0.6rem;">${datos.serieAlert}</small>
             </div>
-            <p style="color: #94a3b8; font-size: 0.7rem; margin-top: 10px;">Confianza del Sistema: 85% | Análisis de Matriz Cuántica</p>
+            <h2 style="color: #fff; font-size: 0.8rem; margin: 0; opacity: 0.7;">TIRO DE PRECISIÓN</h2>
+            <div style="font-size: 4.5rem; font-weight: 900; color: #fff; text-shadow: 0 0 15px #38bdf8; margin: 5px 0;">${datos.unico}</div>
+            <div style="color: #38bdf8; font-size: 1.2rem; font-weight: bold; text-transform: uppercase; letter-spacing: 2px;">${animal ? animal.a : ''}</div>
+            <div style="margin-top: 15px; padding: 5px; background: rgba(56,189,248,0.1); border-radius: 5px; font-size: 0.6rem; color: #94a3b8;">
+                Sincronizado con historial global: ${historialGlobal.length} registros analizados
+            </div>
         </div>
     `;
 }
 
-// --- ACTUALIZACIÓN DE INTERFAZ ---
+// --- ARRASTRE DE CARLOS INTELIGENTE ---
+function calcularArrastreCarlos() {
+    const fecha = document.getElementById('fecha-analisis').value;
+    const hoy = historialGlobal.filter(r => r.fecha === fecha).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
+    if (hoy.length < 1) return;
+    
+    const actual = hoy[0].num;
+    const terminal = actual.slice(-1);
+    const datos = motorProbabilidadMaestra();
+    const animalPrediccion = listaAnimales.find(a => a.n === datos.sugeridos[0]);
+
+    document.getElementById('arrastre-union').innerText = "T-" + terminal;
+    document.getElementById('arrastre-suma').innerText = "INERCIA " + actual;
+    document.getElementById('arrastre-animal').innerText = animalPrediccion ? animalPrediccion.n + " - " + animalPrediccion.a : "ESPERANDO";
+}
+
+// --- ACTUALIZACIÓN Y CARGA ---
 async function inicializar() {
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById('fecha-analisis').value = hoy;
@@ -141,30 +161,15 @@ function ejecutarSniper() {
     
     display.innerHTML = datos.sugeridos.slice(0,2).map(n => `<span class="sniper-pill">${n}</span>`).join('');
     
-    const tripletas = [
-        `${datos.sugeridos[0]}-${datos.sugeridos[1]}-${datos.sugeridos[2]}`,
-        `${datos.sugeridos[1]}-${datos.sugeridos[3]}-${datos.sugeridos[0]}`
-    ];
-
-    let html = `<h3 style="color:#fbbf24; text-align:center; font-size:0.8rem; margin-bottom:10px;">🎯 MATRIZ DE TRIPLETAS</h3>`;
+    const tripletas = [`${datos.sugeridos[0]}-${datos.sugeridos[1]}-${datos.sugeridos[2]}`, `${datos.sugeridos[1]}-${datos.sugeridos[3]}-${datos.sugeridos[0]}`];
+    let html = `<h3 style="color:#fbbf24; text-align:center; font-size:0.8rem; margin-bottom:10px;">🎯 TRIPLETAS IA</h3>`;
     tripletas.forEach(t => {
-        html += `<div class="card-tripleta" style="border-left:4px solid #38bdf8; margin-bottom:8px; background:#020617; padding:10px; border-radius:8px;">
-                    <div style="font-size:1.2rem; font-weight:bold; color:white;">${t}</div>
-                 </div>`;
+        html += `<div class="card-tripleta" style="border-left:4px solid #38bdf8; margin-bottom:8px; background:#020617; padding:10px; border-radius:8px; color:white; font-weight:bold;">${t}</div>`;
     });
     if(tripCont) tripCont.innerHTML = html;
 }
 
-function calcularArrastreCarlos() {
-    const fecha = document.getElementById('fecha-analisis').value;
-    const hoy = historialGlobal.filter(r => r.fecha === fecha).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
-    if (hoy.length < 1) return;
-    const actual = hoy[0].num;
-    document.getElementById('arrastre-union').innerText = "T-" + actual.slice(-1);
-    document.getElementById('arrastre-suma').innerText = "CALCULANDO";
-}
-
-// --- FUNCIONES BASE MANTENIDAS ---
+// --- FUNCIONES DE RENDERIZADO (SE MANTIENEN TODAS) ---
 function renderizarMapa() {
     const mapa = document.getElementById('mapa-ruleta');
     if(!mapa) return;
@@ -254,7 +259,7 @@ function estudiarAlgoritmo() {
     const res = document.getElementById('resultado-maestro');
     if (!val) return res.innerHTML = '';
     const datos = motorProbabilidadMaestra();
-    res.innerHTML = `<div class="maestro-card"><small>PREDICCIÓN:</small><div class="maestro-nums">${datos.sugeridos.map(n => `<span class="pill-maestra">${n}</span>`).join('')}</div></div>`;
+    res.innerHTML = `<div class="maestro-card"><small>PREDICCIÓN IA:</small><div class="maestro-nums">${datos.sugeridos.map(n => `<span class="pill-maestra">${n}</span>`).join('')}</div></div>`;
 }
 
 function openTab(evt, name) {
