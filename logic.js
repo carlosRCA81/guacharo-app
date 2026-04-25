@@ -29,9 +29,9 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historialGlobal = [];
 let horaActiva = null;
 
-// --- 🧠 MOTOR DE ESTUDIO PROFUNDO (Lógica TuAzar) ---
+// --- 🧠 MOTOR DE ESTUDIO (SOLO ENERO 2026 - AHORA) ---
 function motorInteligenciaAvanzada() {
-    if (historialGlobal.length < 2) return { sugeridos: ["12", "19", "31"], deuda: "00", confianza: "0%" };
+    if (historialGlobal.length < 2) return { sugeridos: ["10", "31", "24", "25"] };
 
     const fechaHoy = document.getElementById('fecha-analisis').value;
     const hoy = historialGlobal.filter(r => r.fecha === fechaHoy).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
@@ -42,40 +42,25 @@ function motorInteligenciaAvanzada() {
     if (hoy.length > 0) {
         const ultimo = hoy[0].num;
 
-        // 1. ESCANEO DE SECUENCIA HISTÓRICA (Estudia qué salió después de este número en 2025/2026)
+        // BARRIDO DE REPETICIÓN (Busca el número que más veces sale después del actual)
         for(let i=1; i < historialGlobal.length; i++) {
             if (historialGlobal[i].num === ultimo) {
-                // El animal que salió en el sorteo SIGUIENTE al que acaba de salir
-                let animalSiguiente = historialGlobal[i-1].num;
-                pesos[animalSiguiente] += 100; // Gran peso a la repetición directa
+                let jale = historialGlobal[i-1].num;
+                pesos[jale] += 100; // Máxima prioridad por frecuencia
             }
         }
-
-        // 2. LÓGICA DE ESPEJOS Y PAREJAS
-        const espejo = ultimo.split('').reverse().join('');
-        if(pesos[espejo] !== undefined) pesos[espejo] += 40;
-
-        // 3. DEUDA DE SECTOR (¿Qué falta por salir hoy?)
-        let sectores = {A:0, B:0, C:0, D:0, E:0, F:0};
-        hoy.forEach(r => { const a = listaAnimales.find(x => x.n === r.num); if(a) sectores[a.s]++; });
-        const sectorDeuda = Object.keys(sectores).reduce((a, b) => sectores[a] < sectores[b] ? a : b);
-        listaAnimales.filter(a => a.s === sectorDeuda).forEach(a => pesos[a.n] += 20);
     }
 
     const ordenados = Object.keys(pesos).sort((a, b) => pesos[b] - pesos[a]);
-    return { 
-        sugeridos: ordenados.slice(0, 4), 
-        fijo: ordenados[0],
-        deuda: ordenados[ordenados.length - 1] 
-    };
+    return { sugeridos: ordenados.slice(0, 4) };
 }
 
 // --- 🚀 FUNCIONES DE ACTUALIZACIÓN ---
 async function cargarDatos() {
-    // Filtro 2025 para velocidad máxima
+    // ESTUDIO DESDE ENERO 2026
     const { data, error } = await _supabase.from('historial_sorteos')
         .select('*')
-        .gte('fecha', '2025-01-01')
+        .gte('fecha', '2026-01-01') 
         .order('fecha', {ascending: false});
     
     if(!error) { 
@@ -91,41 +76,31 @@ function actualizarTodo() {
     ejecutarSniper();
 }
 
+// --- 🎯 REPARACIÓN DE SECCIONES (SNIPER, RADAR, TRIPLETA) ---
 function ejecutarSniper() {
-    const display = document.getElementById('numeros-sugeridos-directos');
-    const tripCont = document.getElementById('seccion-tripletas');
-    const f1 = document.getElementById('radar-fijo-1');
-    const f2 = document.getElementById('radar-fijo-2');
-    
     const inteligencia = motorInteligenciaAvanzada();
     
-    // Fijos en el Radar
-    if(f1) f1.innerText = inteligencia.sugeridos[0];
-    if(f2) f2.innerText = inteligencia.sugeridos[1];
+    // Sniper Inteligente
+    const display = document.getElementById('numeros-sugeridos-directos');
+    if(display) display.innerHTML = inteligencia.sugeridos.slice(0,2).map(n => `<span class="sniper-pill">${n}</span>`).join('');
     
-    // Sniper Pills
-    if(display) {
-        display.innerHTML = inteligencia.sugeridos.slice(0,2).map(n => `<span class="sniper-pill">${n}</span>`).join('');
-    }
+    // Radar Fijos
+    if(document.getElementById('radar-fijo-1')) document.getElementById('radar-fijo-1').innerText = inteligencia.sugeridos[0];
+    if(document.getElementById('radar-fijo-2')) document.getElementById('radar-fijo-2').innerText = inteligencia.sugeridos[1];
     
-    // Tripletas con base en el estudio de repetición
+    // Tripleta
+    const tripCont = document.getElementById('seccion-tripletas');
     if(tripCont) {
-        const t1 = `${inteligencia.sugeridos[0]}-${inteligencia.sugeridos[1]}-${inteligencia.sugeridos[2]}`;
-        const t2 = `${inteligencia.sugeridos[1]}-${inteligencia.sugeridos[2]}-${inteligencia.sugeridos[3]}`;
-        
         tripCont.innerHTML = `
-            <h3 style="color:#fbbf24; text-align:center; font-size:0.9rem;">🎯 ESTUDIO DE REPETICIÓN</h3>
-            <div class="card-tripleta" style="border-left:4px solid #38bdf8; margin:10px 0; background:#020617; padding:10px; border-radius:8px;">
-                <div style="font-size:1.3rem; color:white; font-weight:bold;">${t1}</div>
-            </div>
-            <div class="card-tripleta" style="border-left:4px solid #fbbf24; margin:10px 0; background:#020617; padding:10px; border-radius:8px;">
-                <div style="font-size:1.3rem; color:white; font-weight:bold;">${t2}</div>
+            <h3 style="color:#fbbf24; text-align:center;">🎯 ESTUDIO DE REPETICIÓN</h3>
+            <div class="card-tripleta" style="border-left:4px solid #38bdf8; background:#020617; padding:10px; border-radius:8px; color:white; font-weight:bold; margin-bottom:10px;">
+                ${inteligencia.sugeridos[0]}-${inteligencia.sugeridos[1]}-${inteligencia.sugeridos[2]}
             </div>
         `;
     }
 }
 
-// --- 🎨 RENDERIZADO DE INTERFAZ ---
+// --- 🗺️ REPARACIÓN DE MAPA Y PANELES ---
 function renderizarMapa() {
     const mapa = document.getElementById('mapa-ruleta');
     if(!mapa) return;
@@ -151,6 +126,20 @@ function renderizarMapa() {
     });
 }
 
+// --- 🛠️ REPARACIÓN DE PESTAÑAS (NAVEGACIÓN) ---
+function openTab(evt, name) {
+    const contents = document.getElementsByClassName('tab-content');
+    for (let i = 0; i < contents.length; i++) contents[i].style.display = 'none';
+    
+    const btns = document.getElementsByClassName('tab-btn');
+    for (let i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+    
+    const target = document.getElementById(name);
+    if(target) target.style.display = 'block';
+    evt.currentTarget.classList.add('active');
+}
+
+// --- RESTO DE FUNCIONES (REGISTRO, HISTORIAL) ---
 function renderizarPanelHoras() {
     const p = document.getElementById('panel-diario-sorteos');
     const fecha = document.getElementById('fecha-analisis').value;
@@ -173,12 +162,10 @@ function renderizarHistorial() {
     lista.innerHTML = '';
     const filtrado = historialGlobal.filter(r => r.fecha === fecha).sort((a, b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
     filtrado.forEach(r => {
-        const claseColor = r.tipo === 'ROJO' ? 'txt-rojo' : 'txt-negro';
-        lista.innerHTML += `<tr><td>${r.hora}</td><td><b>${r.num}</b></td><td>${r.animal}</td><td>${claseColor}</td></tr>`;
+        lista.innerHTML += `<tr><td>${r.hora}</td><td><b>${r.num}</b></td><td>${r.animal}</td><td>${r.tipo}</td></tr>`;
     });
 }
 
-// --- ✍️ REGISTRO Y BOTONES ---
 async function registrarPorNumero() {
     const input = document.getElementById('num-rapido');
     let val = input.value;
@@ -187,12 +174,9 @@ async function registrarPorNumero() {
     const ani = listaAnimales.find(a => a.n === val);
     const fecha = document.getElementById('fecha-analisis').value;
     
-    await _supabase.from('historial_sorteos').upsert({ 
-        fecha, hora: horaActiva, num: val, animal: ani.a, tipo: ani.c 
-    }, { onConflict: 'fecha,hora' });
-    
+    await _supabase.from('historial_sorteos').upsert({ fecha, hora: horaActiva, num: val, animal: ani.a, tipo: ani.c }, { onConflict: 'fecha,hora' });
     input.value = '';
-    await cargarDatos(); // Recarga y estudia automáticamente
+    await cargarDatos();
 }
 
 function generarBotones() {
@@ -208,18 +192,15 @@ function generarBotones() {
     });
 }
 
-// --- 🏁 INICIO ---
 async function inicializar() {
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById('fecha-analisis').value = hoy;
     document.getElementById('fecha-busqueda-historial').value = hoy;
     await cargarDatos();
     generarBotones();
+    // Aseguramos que la pestaña de REGISTRO se vea al inicio
+    document.getElementById('Registro').style.display = 'block';
 }
 
-setInterval(() => { 
-    const clock = document.getElementById('live-clock'); 
-    if(clock) clock.innerText = new Date().toLocaleTimeString(); 
-}, 1000);
-
+setInterval(() => { if(document.getElementById('live-clock')) document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 window.onload = inicializar;
