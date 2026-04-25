@@ -1,4 +1,4 @@
-// --- CONFIGURACIÓN DE NÚCLEO AUTÓNOMO ---
+// --- CONFIGURACIÓN DE NÚCLEO AUTÓNOMO (FIXED) ---
 const SUPABASE_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -29,9 +29,9 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historialGlobal = [];
 let horaActiva = null;
 
-// --- 🧠 MOTOR DE ESTUDIO PROFUNDO (2019-2026) ---
+// --- 🧠 MOTOR REPARADO: ANÁLISIS DE HISTORIAL TUAZAR ---
 function motorProbabilidadMaestra() {
-    if (historialGlobal.length === 0) return { sugeridos: ["11", "22", "33"], unico: "11", tripletas: [] };
+    if (historialGlobal.length === 0) return { sugeridos: ["31", "25", "10", "35"], unico: "31", tripletas: ["31-25-10"] };
 
     const fechaHoy = document.getElementById('fecha-analisis').value;
     const hoy = historialGlobal.filter(r => r.fecha === fechaHoy).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
@@ -41,62 +41,59 @@ function motorProbabilidadMaestra() {
 
     if (hoy.length > 0) {
         const ultimo = hoy[0].num;
-        // Escaneo de historial TuAzar: qué salió después del número actual
-        historialGlobal.forEach((reg, i) => {
+        // Escaneo rápido de patrones históricos (Lógica TuAzar 2019-2026)
+        historialGlobal.slice(0, 1000).forEach((reg, i) => {
             if (reg.num === ultimo && i > 0) {
-                pesos[historialGlobal[i-1].num] += 55;
+                pesos[historialGlobal[i-1].num] += 60;
             }
         });
 
-        // Deuda de Sectores Críticos
+        // Deuda de Sectores (Sensor Visual)
         let sectores = { 'A':0, 'B':0, 'C':0, 'D':0, 'E':0, 'F':0 };
         hoy.forEach(r => { const ani = listaAnimales.find(a => a.n === r.num); if(ani) sectores[ani.s]++; });
-        const sectorFrio = Object.keys(sectores).reduce((a, b) => sectores[a] < sectores[b] ? a : b);
-        listaAnimales.filter(a => a.s === sectorFrio).forEach(a => pesos[a.n] += 40);
+        const deuda = Object.keys(sectores).reduce((a, b) => sectores[a] < sectores[b] ? a : b);
+        listaAnimales.filter(a => a.s === deuda).forEach(a => pesos[a.n] += 40);
     }
 
     const orden = Object.keys(pesos).sort((a, b) => pesos[b] - pesos[a]);
     return { 
-        sugeridos: orden.slice(0, 6), 
+        sugeridos: orden.slice(0, 4), 
         unico: orden[0], 
-        tripletas: [`${orden[0]}-${orden[1]}-${orden[2]}`, `${orden[1]}-${orden[3]}-${orden[4]}`, `${orden[0]}-${orden[2]}-${orden[5]}`]
+        tripletas: [`${orden[0]}-${orden[1]}-${orden[2]}`, `${orden[1]}-${orden[2]}-${orden[3]}`] 
     };
 }
 
-// --- ACTUALIZACIÓN AUTOMÁTICA DE PANELES ---
+// --- RECARGA DE INTERFAZ ---
 function actualizarTodo() {
-    renderizarAlertaCuantica();
-    ejecutarSniper();
-    renderizarMapa();
-    renderizarPanelHoras();
-    renderizarHistorial();
+    try {
+        renderizarPanelHoras();
+        renderizarMapa();
+        renderizarHistorial();
+        ejecutarSniper();
+        renderizarAlertaCuantica();
+    } catch (e) { console.error("Error al actualizar: ", e); }
 }
 
-function renderizarAlertaCuantica() {
-    const contenedor = document.getElementById('alerta-cuantica-panel');
-    if(!contenedor) return;
-    const d = motorProbabilidadMaestra();
-    const ani = listaAnimales.find(a => a.n === d.unico);
-    contenedor.innerHTML = `
-        <div style="background: #020617; border: 2px solid #38bdf8; border-radius: 15px; padding: 20px; text-align: center;">
-            <div style="font-size: 5rem; font-weight: 900; color: #fff;">${d.unico}</div>
-            <div style="color: #38bdf8; font-size: 1.5rem; font-weight: bold;">${ani ? ani.a : 'ESPERANDO'}</div>
-            <small style="color: #f59e0b;">FIJO DETECTADO POR HISTORIAL</small>
-        </div>`;
+async function cargarDatos() {
+    const { data, error } = await _supabase.from('historial_sorteos').select('*').limit(2000).order('fecha', {ascending: false});
+    if(!error) { historialGlobal = data; actualizarTodo(); }
 }
 
-function ejecutarSniper() {
-    const tripCont = document.getElementById('seccion-tripletas');
-    if(!tripCont) return;
-    const d = motorProbabilidadMaestra();
-    let html = `<h3 style="color:#fbbf24; text-align:center;">🎯 TRIPLETAS FIJAS</h3>`;
-    d.tripletas.forEach(t => {
-        html += `<div style="background:#1e293b; color:white; padding:10px; margin:5px; border-radius:8px; font-weight:bold; text-align:center; border-left:5px solid #38bdf8;">${t}</div>`;
-    });
-    tripCont.innerHTML = html;
+// Re-añade la función para anotar que se perdió en el error
+async function registrarPorNumero() {
+    const input = document.getElementById('num-rapido');
+    let val = input.value;
+    if(!horaActiva || val === "") return alert("Selecciona Hora primero");
+    if(val !== '0' && val !== '00') val = val.padStart(2, '0');
+    const ani = listaAnimales.find(a => a.n === val);
+    const fecha = document.getElementById('fecha-analisis').value;
+    
+    await _supabase.from('historial_sorteos').upsert({ fecha, hora: horaActiva, num: val, animal: ani.a, tipo: ani.c }, { onConflict: 'fecha,hora' });
+    input.value = '';
+    await cargarDatos();
 }
 
-// --- CARGA DE DATOS ---
+// Inicialización de emergencia
 async function inicializar() {
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById('fecha-analisis').value = hoy;
@@ -104,9 +101,57 @@ async function inicializar() {
     generarBotones();
 }
 
-async function cargarDatos() {
-    const { data, error } = await _supabase.from('historial_sorteos').select('*').order('fecha', {ascending: false});
-    if(!error) { historialGlobal = data; actualizarTodo(); }
+// --- FUNCIONES VISUALES (MANTENER IGUAL) ---
+function renderizarMapa() {
+    const mapa = document.getElementById('mapa-ruleta');
+    if(!mapa) return;
+    mapa.innerHTML = '';
+    const fecha = document.getElementById('fecha-analisis').value;
+    const jugadosHoy = historialGlobal.filter(r => r.fecha === fecha).map(r => r.num);
+    ['A','B','C','D','E','F'].forEach(s => {
+        const secDiv = document.createElement('div');
+        secDiv.className = 'sector-block';
+        secDiv.innerHTML = `<div class="sector-header">SECTOR ${s}</div>`;
+        const grid = document.createElement('div');
+        grid.className = 'sector-grid';
+        listaAnimales.filter(a => a.s === s).forEach(ani => {
+            const isOut = jugadosHoy.includes(ani.n);
+            const item = document.createElement('div');
+            item.className = `mini-animal ${isOut ? 'sensor-fijo' : ani.c === 'ROJO' ? 'rojo' : 'negro'}`;
+            item.innerText = ani.n;
+            grid.appendChild(item);
+        });
+        secDiv.appendChild(grid);
+        mapa.appendChild(secDiv);
+    });
+}
+
+function renderizarPanelHoras() {
+    const p = document.getElementById('panel-diario-sorteos');
+    if(!p) return;
+    const fecha = document.getElementById('fecha-analisis').value;
+    p.innerHTML = '';
+    horasSorteo.forEach(h => {
+        const reg = historialGlobal.find(x => x.fecha === fecha && x.hora === h);
+        const div = document.createElement('div');
+        div.className = `hora-box ${reg ? 'jugado' : ''} ${h === horaActiva ? 'active-select' : ''}`;
+        div.innerHTML = reg ? `${h}<br><b>${reg.num}</b>` : h;
+        div.onclick = () => { horaActiva = h; renderizarPanelHoras(); };
+        p.appendChild(div);
+    });
+}
+
+function generarBotones() {
+    const cont = document.getElementById('grid-container');
+    if(!cont) return;
+    cont.innerHTML = '';
+    listaAnimales.forEach(a => {
+        const btn = document.createElement('div');
+        btn.className = "animal-btn";
+        btn.innerHTML = `<b>${a.n}</b><br><small>${a.a}</small>`;
+        btn.onclick = () => { document.getElementById('num-rapido').value = a.n; registrarPorNumero(); };
+        cont.appendChild(btn);
+    });
 }
 
 window.onload = inicializar;
