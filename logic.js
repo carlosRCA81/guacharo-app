@@ -1,4 +1,4 @@
-// --- CONFIGURACIÓN DE CONEXIÓN ---
+// --- CONFIGURACIÓN DE NÚCLEO AUTÓNOMO ---
 const SUPABASE_URL = 'https://yhhiohwoutkmzkcengev.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaGlvaHdvdXRrbXprY2VuZ2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA2MDYsImV4cCI6MjA5MTQxNjYwNn0.FvoJcNPor5sicHLpRot_8DCGCd4ifx54JrxrcMrTTBc';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -27,10 +27,11 @@ const listaAnimales = [
 
 const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
 let historialGlobal = [];
+let horaActiva = null;
 
-// --- 🔥 NUEVO MOTOR AUTÓNOMO DE PREDICCIÓN FIJA ---
+// --- 🧠 MOTOR DE ESTUDIO PROFUNDO (2019-2026) ---
 function motorProbabilidadMaestra() {
-    if (historialGlobal.length === 0) return { sugeridos: ["22", "31", "27", "35"], unico: "22", tripletas: [] };
+    if (historialGlobal.length === 0) return { sugeridos: ["11", "22", "33"], unico: "11", tripletas: [] };
 
     const fechaHoy = document.getElementById('fecha-analisis').value;
     const hoy = historialGlobal.filter(r => r.fecha === fechaHoy).sort((a,b) => horasSorteo.indexOf(b.hora) - horasSorteo.indexOf(a.hora));
@@ -38,79 +39,64 @@ function motorProbabilidadMaestra() {
     let pesos = {};
     listaAnimales.forEach(a => pesos[a.n] = 0);
 
-    // 1. ESCANEO PROFUNDO (Deep History Scan 2019-2026)
     if (hoy.length > 0) {
         const ultimo = hoy[0].num;
+        // Escaneo de historial TuAzar: qué salió después del número actual
         historialGlobal.forEach((reg, i) => {
             if (reg.num === ultimo && i > 0) {
-                const siguienteHistorico = historialGlobal[i-1].num;
-                pesos[siguienteHistorico] += 60; // Máximo peso al patrón histórico
+                pesos[historialGlobal[i-1].num] += 55;
             }
         });
+
+        // Deuda de Sectores Críticos
+        let sectores = { 'A':0, 'B':0, 'C':0, 'D':0, 'E':0, 'F':0 };
+        hoy.forEach(r => { const ani = listaAnimales.find(a => a.n === r.num); if(ani) sectores[ani.s]++; });
+        const sectorFrio = Object.keys(sectores).reduce((a, b) => sectores[a] < sectores[b] ? a : b);
+        listaAnimales.filter(a => a.s === sectorFrio).forEach(a => pesos[a.n] += 40);
     }
 
-    // 2. ANÁLISIS DE PRESIÓN DE SECTORES (Evita Monotonía)
-    let conteoSectores = { 'A':0, 'B':0, 'C':0, 'D':0, 'E':0, 'F':0 };
-    hoy.forEach(r => {
-        const ani = listaAnimales.find(a => a.n === r.num);
-        if(ani) conteoSectores[ani.s]++;
-    });
-    const sectorDeuda = Object.keys(conteoSectores).reduce((a, b) => conteoSectores[a] < conteoSectores[b] ? a : b);
-    listaAnimales.filter(a => a.s === sectorDeuda).forEach(a => pesos[a.n] += 45);
-
-    const ordenados = Object.keys(pesos).sort((a, b) => pesos[b] - pesos[a]);
-    
-    // 3. GENERACIÓN DE TRIPLETAS FIJAS (Lógica de Arrastre Triple)
-    const t1 = `${ordenados[0]}-${ordenados[1]}-${ordenados[2]}`;
-    const t2 = `${ordenados[1]}-${ordenados[3]}-${ordenados[4] || '11'}`;
-    const t3 = `${ordenados[0]}-${ordenados[2]}-${ordenados[5] || '33'}`;
-
+    const orden = Object.keys(pesos).sort((a, b) => pesos[b] - pesos[a]);
     return { 
-        sugeridos: ordenados.slice(0, 6), 
-        unico: ordenados[0], 
-        tripletas: [t1, t2, t3] 
+        sugeridos: orden.slice(0, 6), 
+        unico: orden[0], 
+        tripletas: [`${orden[0]}-${orden[1]}-${orden[2]}`, `${orden[1]}-${orden[3]}-${orden[4]}`, `${orden[0]}-${orden[2]}-${orden[5]}`]
     };
 }
 
-// --- PANEL VISUAL AUTÓNOMO ---
+// --- ACTUALIZACIÓN AUTOMÁTICA DE PANELES ---
+function actualizarTodo() {
+    renderizarAlertaCuantica();
+    ejecutarSniper();
+    renderizarMapa();
+    renderizarPanelHoras();
+    renderizarHistorial();
+}
+
 function renderizarAlertaCuantica() {
     const contenedor = document.getElementById('alerta-cuantica-panel');
-    const datos = motorProbabilidadMaestra();
-    const ani = listaAnimales.find(a => a.n === datos.unico);
-    
+    if(!contenedor) return;
+    const d = motorProbabilidadMaestra();
+    const ani = listaAnimales.find(a => a.n === d.unico);
     contenedor.innerHTML = `
-        <div style="background: #020617; border: 2px solid #38bdf8; border-radius: 15px; padding: 20px; text-align: center; box-shadow: 0 0 20px #38bdf844;">
-            <small style="color: #38bdf8; letter-spacing: 2px;">IA: ANÁLISIS 2019-2026 ACTIVO</small>
-            <div style="font-size: 5rem; font-weight: 900; color: white; line-height: 1;">${datos.unico}</div>
-            <div style="font-size: 1.5rem; color: #fbbf24; font-weight: bold;">${ani ? ani.a : ''}</div>
-            <div style="margin-top: 10px; color: #94a3b8; font-size: 0.7rem;">Siguiente Sorteo: ALTA PROBABILIDAD</div>
-        </div>
-    `;
+        <div style="background: #020617; border: 2px solid #38bdf8; border-radius: 15px; padding: 20px; text-align: center;">
+            <div style="font-size: 5rem; font-weight: 900; color: #fff;">${d.unico}</div>
+            <div style="color: #38bdf8; font-size: 1.5rem; font-weight: bold;">${ani ? ani.a : 'ESPERANDO'}</div>
+            <small style="color: #f59e0b;">FIJO DETECTADO POR HISTORIAL</small>
+        </div>`;
 }
 
 function ejecutarSniper() {
     const tripCont = document.getElementById('seccion-tripletas');
-    const datos = motorProbabilidadMaestra();
-    
-    let html = `<h3 style="color:#fbbf24; text-align:center;">🎯 TRIPLETAS FIJAS IA</h3>`;
-    datos.tripletas.forEach(t => {
-        html += `<div style="background:#1e293b; color:white; padding:12px; margin:8px; border-radius:10px; font-weight:900; font-size:1.4rem; text-align:center; border-left:5px solid #f59e0b;">${t}</div>`;
+    if(!tripCont) return;
+    const d = motorProbabilidadMaestra();
+    let html = `<h3 style="color:#fbbf24; text-align:center;">🎯 TRIPLETAS FIJAS</h3>`;
+    d.tripletas.forEach(t => {
+        html += `<div style="background:#1e293b; color:white; padding:10px; margin:5px; border-radius:8px; font-weight:bold; text-align:center; border-left:5px solid #38bdf8;">${t}</div>`;
     });
-    if(tripCont) tripCont.innerHTML = html;
+    tripCont.innerHTML = html;
 }
 
-// --- ARRASTRE DE CARLOS AUTOMÁTICO ---
-function calcularArrastreCarlos() {
-    const datos = motorProbabilidadMaestra();
-    const hoy = historialGlobal.filter(r => r.fecha === document.getElementById('fecha-analisis').value);
-    if(hoy.length === 0) return;
-    
-    document.getElementById('arrastre-union').innerText = "T-" + hoy[0].num.slice(-1);
-    document.getElementById('arrastre-suma').innerText = "VÍNCULO DIRECTO";
-    document.getElementById('arrastre-animal').innerText = datos.unico + " - " + (listaAnimales.find(a => a.n === datos.unico).a);
-}
-
-// --- FUNCIONES DE REGISTRO Y CARGA ---
+// --- CARGA DE DATOS ---
 async function inicializar() {
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById('fecha-analisis').value = hoy;
@@ -121,55 +107,6 @@ async function inicializar() {
 async function cargarDatos() {
     const { data, error } = await _supabase.from('historial_sorteos').select('*').order('fecha', {ascending: false});
     if(!error) { historialGlobal = data; actualizarTodo(); }
-}
-
-function actualizarTodo() {
-    renderizarPanelHoras();
-    renderizarHistorial();
-    renderizarMapa();
-    ejecutarSniper();
-    calcularArrastreCarlos();
-    renderizarAlertaCuantica();
-}
-
-async function registrarPorNumero() {
-    const input = document.getElementById('num-rapido');
-    let val = input.value;
-    if(!horaActiva || val === "") return alert("Selecciona Hora");
-    if(val !== '0' && val !== '00') val = val.padStart(2, '0');
-    const ani = listaAnimales.find(a => a.n === val);
-    const fecha = document.getElementById('fecha-analisis').value;
-    
-    await _supabase.from('historial_sorteos').upsert({ fecha, hora: horaActiva, num: val, animal: ani.a, tipo: ani.c }, { onConflict: 'fecha,hora' });
-    input.value = '';
-    await cargarDatos();
-}
-
-// El resto de funciones (generarBotones, renderizarMapa, etc.) se mantienen igual para no romper la interfaz
-function generarBotones() {
-    const cont = document.getElementById('grid-container');
-    cont.innerHTML = '';
-    listaAnimales.forEach(a => {
-        const btn = document.createElement('div');
-        btn.className = "animal-btn";
-        btn.innerHTML = `<b>${a.n}</b><br><small>${a.a}</small>`;
-        btn.onclick = () => { document.getElementById('num-rapido').value = a.n; registrarPorNumero(); };
-        cont.appendChild(btn);
-    });
-}
-
-function renderizarPanelHoras() {
-    const p = document.getElementById('panel-diario-sorteos');
-    const fecha = document.getElementById('fecha-analisis').value;
-    p.innerHTML = '';
-    horasSorteo.forEach(h => {
-        const reg = historialGlobal.find(x => x.fecha === fecha && x.hora === h);
-        const div = document.createElement('div');
-        div.className = `hora-box ${reg ? 'jugado' : ''} ${h === horaActiva ? 'active-select' : ''}`;
-        div.innerHTML = reg ? `${h}<br><b>${reg.num}</b>` : h;
-        div.onclick = () => { horaActiva = h; renderizarPanelHoras(); };
-        p.appendChild(div);
-    });
 }
 
 window.onload = inicializar;
