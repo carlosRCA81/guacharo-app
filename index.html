@@ -2,68 +2,40 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LOTTOAPP CRL - V3 PRO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LottoApp CRL V3 | Pro</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <div id="main-app">
+    <div class="glass-container">
         <header>
-            <h1>LOTTOAPP <span style="color: #22c55e;">CRL</span></h1>
-            <div id="live-clock">00:00:00</div>
-            <div class="tab-container">
-                <button class="tab-btn active" onclick="openTab(event, 'panel-maestro')">TABLA SEMANAL</button>
-                <button class="tab-btn" onclick="openTab(event, 'supervision')">SUPERVISIÓN</button>
-                <button class="tab-btn" onclick="openTab(event, 'historial')">HISTORIAL</button>
+            <h1 class="neon-text">LOTTOAPP CRL V3</h1>
+            <div class="status-bar">
+                <input type="date" id="fecha-analisis" onchange="cargarDatos()">
+                <div id="live-clock">00:00:00</div>
             </div>
         </header>
 
-        <section id="panel-maestro" class="tab-content active">
-            <div class="controles-fecha">
-                <input type="date" id="fecha-analisis" class="fecha-input" onchange="actualizarTodo()">
-            </div>
-            
-            <div class="tabla-semanal-container">
-                <table id="tabla-maestra">
-                    <thead>
-                        <tr id="cabecera-dias">
-                            <th>HORA</th>
-                            </tr>
-                    </thead>
-                    <tbody id="cuerpo-tabla"></tbody>
-                </table>
+        <div class="sector-grid" id="sector-display">
             </div>
 
-            <div class="entrada-rapida">
-                <div class="info-registro">
-                    <span id="hora-seleccionada">Seleccione una celda</span>
-                </div>
-                <div class="flex-input">
-                    <input type="text" id="num-rapido" maxlength="2" placeholder="NRO">
-                    <button onclick="registrarPorNumero()" class="btn-anotar">ANOTAR</button>
-                </div>
+        <div id="contenedor-supervision" class="supervision-container">
             </div>
-        </section>
 
-        <section id="supervision" class="tab-content" style="display:none;">
-            <h2 class="titulo-sec">📡 RADAR DE GRUPOS ACTIVOS</h2>
-            <div id="contenedor-supervision"></div>
-        </section>
+        <div class="table-container">
+            <div id="hora-seleccionada" class="selection-info">Seleccione una celda</div>
+            <table>
+                <thead><tr id="cabecera-dias"></tr></thead>
+                <tbody id="cuerpo-tabla"></tbody>
+            </table>
+        </div>
 
-        <section id="historial" class="tab-content" style="display:none;">
-            <div class="historial-header">
-                <input type="date" id="fecha-busqueda-historial" class="fecha-input" onchange="renderizarHistorial()">
-            </div>
-            <div class="tabla-contenedor">
-                <table>
-                    <thead><tr><th>HORA</th><th>NRO</th><th>ANIMAL</th><th>SEC</th></tr></thead>
-                    <tbody id="lista-historial"></tbody>
-                </table>
-            </div>
-        </section>
+        <div class="action-bar">
+            <input type="number" id="num-rapido" placeholder="Nro" maxlength="2">
+            <button onclick="registrarPorNumero()" class="btn-save-manual">GUARDAR RESULTADO</button>
+        </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="logic.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
