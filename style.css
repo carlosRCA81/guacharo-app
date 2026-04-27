@@ -1,31 +1,12 @@
-body { background: #050505; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; display: flex; justify-content: center; }
-.glass-container { background: #111; border: 1px solid #333; border-radius: 12px; padding: 15px; width: 100%; max-width: 480px; }
-.neon-text { color: #fdd835; text-align: center; margin: 5px 0; font-size: 1.4rem; text-shadow: 0 0 10px rgba(253, 216, 53, 0.3); }
-.status-bar { display: flex; justify-content: space-between; margin-bottom: 15px; }
-#fecha-analisis { background: #222; border: 1px solid #fdd835; color: white; border-radius: 5px; padding: 5px; }
+/* ... Manten tus estilos anteriores y añade estos ... */
+.sector-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 10px; }
+.sector-box { background: rgba(255,255,255,0.05); border: 1px solid #333; border-radius: 5px; padding: 5px; text-align: center; }
+.sector-box h4 { margin: 0; font-size: 0.5rem; color: #fdd835; }
+.sector-nums { font-size: 0.6rem; color: #39ff14; font-weight: bold; }
 
-/* Sectores Estilo Ruleta */
-.sector-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
-.sector-box { background: #1a1a1a; border: 1px solid #444; border-radius: 8px; padding: 8px; text-align: center; }
-.sector-box h4 { margin: 0 0 5px 0; font-size: 0.7rem; color: #fdd835; }
-.sector-nums { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; min-height: 20px; }
-.n-mini { font-size: 0.7rem; background: #333; padding: 2px 4px; border-radius: 3px; }
-
-/* Grupos de Vigilancia */
-.supervision-container { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-.card-grupo { background: #1a1a1a; padding: 8px; border-radius: 6px; font-size: 0.65rem; position: relative; }
-.bolitas-flex { display: flex; gap: 3px; margin-top: 5px; flex-wrap: wrap; }
-.bolita { width: 18px; height: 18px; border-radius: 50%; border: 1px solid #555; text-align: center; line-height: 18px; font-size: 0.55rem; }
-.bolita.out { background: #39ff14; color: black; border-color: #39ff14; font-weight: bold; }
-.alerta-faltante { background: rgba(255, 0, 0, 0.2); color: #ff4444; padding: 2px; margin-top: 5px; border-radius: 4px; font-weight: bold; text-align: center; border: 1px solid #ff4444; }
-
-/* Tabla */
-.table-container { overflow-x: auto; margin-bottom: 15px; }
-table { width: 100%; border-collapse: collapse; font-size: 0.7rem; }
-th, td { border: 1px solid #222; padding: 6px 2px; text-align: center; }
-.celda-num { height: 35px; cursor: pointer; background: #0d0d0d; }
-.celda-sel { border: 2px solid #39ff14 !important; }
-.n-destacado { font-weight: bold; font-size: 0.9rem; }
-.action-bar { display: flex; gap: 10px; }
-#num-rapido { flex: 1; background: #222; border: 1px solid #333; color: #39ff14; padding: 10px; border-radius: 8px; font-size: 1.1rem; text-align: center; }
-.btn-save-manual { background: #1b5e20; color: #39ff14; border: 1px solid #39ff14; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+.supervision-container { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 10px; }
+.card-grupo { background: #111; border: 1px solid #444; padding: 5px; border-radius: 5px; font-size: 0.55rem; }
+.bolitas-flex { display: flex; gap: 2px; margin-top: 3px; }
+.bolita { width: 14px; height: 14px; border-radius: 50%; border: 1px solid #555; text-align: center; line-height: 14px; font-size: 0.45rem; }
+.bolita.out { background: #39ff14; color: black; border-color: #39ff14; }
+.alerta-faltante { color: #ff4444; font-weight: bold; margin-top: 3px; border-top: 1px solid #333; }
