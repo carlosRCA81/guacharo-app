@@ -1,23 +1,33 @@
-body { background: #0a0a0a; color: white; font-family: sans-serif; margin: 0; padding: 10px; display: flex; justify-content: center; }
-.glass-container { background: #111; border: 1px solid #333; border-radius: 15px; padding: 15px; width: 100%; max-width: 450px; }
-.neon-text { color: #fdd835; text-align: center; font-size: 1.5rem; margin-bottom: 15px; }
-.status-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-#date-picker { background: #222; border: 1px solid #fdd835; color: white; padding: 5px; border-radius: 5px; }
+:root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --gold: #fbbf24; --green: #22c55e; }
+body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; padding: 5px; display: flex; justify-content: center; }
+.glass-container { background: var(--card); border: 1px solid #334155; border-radius: 15px; padding: 10px; width: 100%; max-width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+.neon-text { color: var(--gold); text-align: center; text-shadow: 0 0 5px var(--gold); font-size: 1.4rem; margin: 5px 0; }
 
-/* Cuadritos de Sectores */
-.sector-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
-.sector-box { background: #1a1a1a; border: 1px solid #444; border-radius: 8px; padding: 5px; text-align: center; }
-.sector-box h4 { margin: 0; font-size: 0.6rem; color: #fdd835; }
-.sector-nums { font-size: 0.7rem; color: #39ff14; font-weight: bold; }
+.tab-container { display: flex; gap: 4px; margin-bottom: 10px; }
+.tab-btn { flex: 1; padding: 8px 2px; font-size: 0.6rem; background: #0f172a; border: 1px solid #334155; color: #94a3b8; border-radius: 6px; cursor: pointer; }
+.tab-btn.active { background: var(--accent); color: #000; font-weight: bold; }
 
-/* Tabla Semanal */
-.table-container { overflow-x: auto; }
+.panel-arrastre-carlos { background: rgba(2, 6, 23, 0.6); border: 1px solid #334155; border-radius: 10px; padding: 10px; margin-bottom: 10px; text-align: center; }
+.arrastre-titulo { color: var(--green); font-size: 0.65rem; font-weight: bold; margin-bottom: 5px; }
+.arrastre-flex { display: flex; justify-content: space-around; gap: 5px; }
+.arrastre-num { color: var(--gold); font-size: 1rem; font-weight: bold; }
+.arrastre-vinc { color: var(--accent); font-size: 0.7rem; font-weight: bold; }
+
+.status-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+#date-picker { background: #0f172a; border: 1px solid var(--gold); color: white; padding: 4px; border-radius: 5px; font-size: 0.8rem; }
+#live-clock { color: var(--gold); font-size: 0.8rem; font-weight: bold; }
+
 table { width: 100%; border-collapse: collapse; }
-th { background: #1a1a1a; color: #fdd835; font-size: 0.65rem; padding: 8px 2px; border: 1px solid #333; }
-td { border: 1px solid #222; text-align: center; padding: 5px 2px; }
-.cell-input { width: 28px; height: 28px; background: #111; border: 1px solid #333; color: #39ff14; text-align: center; border-radius: 4px; font-weight: bold; }
+th { background: #0f172a; color: #888; font-size: 0.55rem; padding: 5px 2px; border: 1px solid #334155; }
+th small { color: var(--gold); display: block; }
+td { border: 1px solid #1e293b; text-align: center; padding: 2px; }
+.cell-input { width: 28px; height: 26px; background: #020617; border: 1px solid #334155; color: var(--green); text-align: center; border-radius: 4px; font-weight: bold; font-size: 0.8rem; outline: none; }
 
-/* Botones */
-.btn-save-manual { width: 100%; padding: 12px; background: #1b5e20; border: 2px solid #39ff14; color: #39ff14; border-radius: 8px; font-weight: bold; margin: 10px 0; cursor: pointer; }
-.btn-reset { flex: 1; padding: 10px; background: #222; border: 1px solid #444; color: white; border-radius: 5px; cursor: pointer; }
-.btn-blue { border-color: #00e5ff; color: #00e5ff; }
+.btn-save-manual { width: 100%; padding: 12px; background: #1b5e20; border: 2px solid var(--green); color: var(--green); border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+
+/* Mapa Sectores */
+.sector-block { background: #020617; margin-bottom: 10px; padding: 5px; border-radius: 5px; }
+.sector-header { color: var(--gold); font-size: 0.7rem; margin-bottom: 5px; border-bottom: 1px solid #333; }
+.sector-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; }
+.mini-animal { font-size: 0.6rem; padding: 2px; border-radius: 3px; text-align: center; background: #1e293b; }
+.sensor-fijo { background: var(--green); color: #000; font-weight: bold; }
