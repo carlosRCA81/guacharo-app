@@ -6,52 +6,28 @@
     <title>CRCA PRO V2 - FULL EDITION</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Estilos específicos para la nueva sección de Carlos */
         .panel-arrastre-carlos {
             background: linear-gradient(145deg, #0f172a, #1e293b);
-            border: 1px solid #334155;
+            border: 1px solid #fbbf24;
             border-radius: 12px;
             padding: 15px;
             margin-bottom: 20px;
-            text-align: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
         .arrastre-titulo {
-            color: #22c55e;
+            color: #fbbf24;
             font-size: 0.75rem;
             font-weight: bold;
             letter-spacing: 1.5px;
             margin-bottom: 10px;
             text-transform: uppercase;
+            text-align: center;
         }
-        .arrastre-flex {
+        /* Ajuste para que las listas no se amontonen */
+        #contenedor-vigilancia {
             display: flex;
-            justify-content: space-around;
-            align-items: center;
+            flex-direction: column;
             gap: 10px;
-        }
-        .arrastre-box {
-            background: rgba(2, 6, 23, 0.6);
-            border-radius: 8px;
-            padding: 8px;
-            flex: 1;
-        }
-        .arrastre-label {
-            display: block;
-            color: #94a3b8;
-            font-size: 0.6rem;
-            margin-bottom: 4px;
-        }
-        .arrastre-num {
-            color: #fbbf24;
-            font-size: 1.1rem;
-            font-weight: bold;
-            font-family: 'Courier New', Courier, monospace;
-        }
-        .arrastre-vinc {
-            color: #38bdf8;
-            font-size: 0.8rem;
-            font-weight: bold;
         }
     </style>
 </head>
@@ -63,7 +39,7 @@
             <div class="tab-container">
                 <button class="tab-btn active" onclick="openTab(event, 'registro')">REGISTRO</button>
                 <button class="tab-btn" onclick="openTab(event, 'estudio-avanzado')">ALGORITMO</button>
-                <button class="tab-btn" onclick="openTab(event, 'sectores-tab')">MAPA</button>
+                <button class="tab-btn" onclick="openTab(event, 'sectores-tab')">SECTORES</button>
                 <button class="tab-btn" onclick="openTab(event, 'tripletas-tab')">TRIPLETAS</button>
                 <button class="tab-btn" onclick="openTab(event, 'historial')">HISTORIAL</button>
             </div>
@@ -77,21 +53,9 @@
             </div>
 
             <div class="panel-arrastre-carlos">
-                <div class="arrastre-titulo">🧬 EL ARRASTRE DE CARLOS</div>
-                <div class="arrastre-flex" id="contenedor-arrastre">
-                    <div class="arrastre-box">
-                        <span class="arrastre-label">UNIÓN</span>
-                        <div class="arrastre-num" id="arrastre-union">--</div>
+                <div class="arrastre-titulo">🚨 VIGILANTE DE LISTAS</div>
+                <div id="contenedor-vigilancia">
                     </div>
-                    <div class="arrastre-box">
-                        <span class="arrastre-label">SUMA</span>
-                        <div class="arrastre-num" id="arrastre-suma">--</div>
-                    </div>
-                    <div class="arrastre-box">
-                        <span class="arrastre-label">VÍNCULO</span>
-                        <div class="arrastre-vinc" id="arrastre-animal">ESPERANDO</div>
-                    </div>
-                </div>
             </div>
 
             <div class="panel-diario" id="panel-diario-sorteos"></div>
@@ -103,17 +67,17 @@
             <input type="date" id="fecha-analisis" class="fecha-input">
         </section>
 
+        <section id="sectores-tab" class="tab-content" style="display:none;">
+            <div class="info-label">ESTADO DE SENSORES POR SECTOR</div>
+            <div id="mapa-ruleta" class="mapa-container"></div>
+        </section>
+
         <section id="estudio-avanzado" class="tab-content" style="display:none;">
             <div class="radar-container">
                 <h3 style="color: #fbbf24; text-align: center; font-size: 0.9rem;">📡 CALCULADORA DE PRECISIÓN</h3>
                 <select id="select-estudio-animal" onchange="estudiarAlgoritmo()" class="fecha-input" style="margin-bottom: 20px; font-weight: bold;"></select>
                 <div id="resultado-maestro" class="resultado-box-mini"></div>
             </div>
-        </section>
-
-        <section id="sectores-tab" class="tab-content" style="display:none;">
-            <div class="info-label">ESTADO DE SENSORES POR SECTOR</div>
-            <div id="mapa-ruleta" class="mapa-container"></div>
         </section>
 
         <section id="tripletas-tab" class="tab-content" style="display:none;">
