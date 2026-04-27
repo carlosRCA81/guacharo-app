@@ -3,39 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LottoApp CRL V3 | Pro</title>
+    <title>CRCA PRO V3 | Semanario Edition</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div class="glass-container">
         <header>
-            <h1 class="neon-text">LOTTOAPP CRL V3</h1>
+            <h1 class="neon-text">CRCA PRO <span style="color: #22c55e;">V3</span></h1>
+            <div class="tab-container">
+                <button class="tab-btn active" onclick="openTab(event, 'registro')">SEMANARIO</button>
+                <button class="tab-btn" onclick="openTab(event, 'estudio-avanzado')">ALGORITMO</button>
+                <button class="tab-btn" onclick="openTab(event, 'sectores-tab')">MAPA</button>
+            </div>
             <div class="status-bar">
                 <input type="date" id="date-picker" onchange="changeDate()">
                 <div id="live-clock">00:00:00</div>
             </div>
         </header>
 
-        <div class="sector-grid" id="sector-display"></div>
-
-        <div id="contenedor-supervision" class="supervision-container"></div>
-
-        <div class="table-container">
-            <table>
-                <thead><tr id="header-days"></tr></thead>
-                <tbody id="main-table"></tbody>
-            </table>
-        </div>
-
-        <div class="action-bar">
-            <div id="save-status" class="status-msg">Semanario Activo</div>
-            <button onclick="saveAllToSupabase()" class="btn-save-manual">💾 GUARDAR TODA LA SEMANA</button>
-            <div style="display: flex; gap: 8px;">
-                <button onclick="resetView()" class="btn-reset">🔄 LIMPIAR VISTA</button>
-                <button onclick="searchByMonth()" class="btn-reset btn-blue">🔍 BUSCAR MES</button>
+        <section id="registro" class="tab-content active">
+            <div class="panel-arrastre-carlos">
+                <div class="arrastre-titulo">🧬 EL ARRASTRE DE CARLOS</div>
+                <div class="arrastre-flex">
+                    <div class="arrastre-box"><span class="arrastre-label">UNIÓN</span><div class="arrastre-num" id="arrastre-union">--</div></div>
+                    <div class="arrastre-box"><span class="arrastre-label">SUMA</span><div class="arrastre-num" id="arrastre-suma">--</div></div>
+                    <div class="arrastre-box"><span class="arrastre-label">VÍNCULO</span><div class="arrastre-vinc" id="arrastre-animal">...</div></div>
+                </div>
             </div>
-        </div>
+
+            <div class="table-container">
+                <table>
+                    <thead><tr id="header-days"></tr></thead>
+                    <tbody id="main-table"></tbody>
+                </table>
+            </div>
+
+            <div class="action-bar">
+                <button onclick="saveAllToSupabase()" class="btn-save-manual">💾 GUARDAR SEMANA EN HISTORIAL</button>
+            </div>
+        </section>
+
+        <section id="estudio-avanzado" class="tab-content" style="display:none;">
+            <div class="radar-container">
+                <h3 style="color: #fbbf24; text-align: center;">📡 CALCULADORA DE PRECISIÓN</h3>
+                <div id="resultado-maestro" class="resultado-box-mini"></div>
+            </div>
+        </section>
+
+        <section id="sectores-tab" class="tab-content" style="display:none;">
+            <div id="mapa-ruleta" class="mapa-container"></div>
+        </section>
     </div>
     <script src="script.js"></script>
 </body>
