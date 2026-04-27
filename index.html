@@ -3,108 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRCA PRO V2 - FULL EDITION</title>
+    <title>LOTTOAPP CRL - V3 PRO</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        .panel-arrastre-carlos { background: linear-gradient(145deg, #0f172a, #1e293b); border: 1px solid #334155; border-radius: 12px; padding: 15px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        .arrastre-titulo { color: #22c55e; font-size: 0.75rem; font-weight: bold; letter-spacing: 1.5px; margin-bottom: 10px; text-transform: uppercase; }
-        .arrastre-flex { display: flex; justify-content: space-around; align-items: center; gap: 10px; }
-        .arrastre-box { background: rgba(2, 6, 23, 0.6); border-radius: 8px; padding: 8px; flex: 1; }
-        .arrastre-label { display: block; color: #94a3b8; font-size: 0.6rem; margin-bottom: 4px; }
-        .arrastre-num { color: #fbbf24; font-size: 1.1rem; font-weight: bold; font-family: 'Courier New', Courier, monospace; }
-        .arrastre-vinc { color: #38bdf8; font-size: 0.8rem; font-weight: bold; }
-
-        /* ESTILOS DEL RADAR CRÍTICO - CARLOS */
-        .panel-radar-critico { background: #020617; border: 2px solid #22c55e; border-radius: 12px; padding: 12px; margin-bottom: 20px; box-shadow: 0 0 15px rgba(34, 197, 94, 0.2); }
-        .radar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .fijo-master { background: #1e293b; border-radius: 8px; padding: 10px; text-align: center; border-bottom: 3px solid #fbbf24; }
-        .fijo-num { font-size: 1.5rem; color: #fff; font-weight: 900; }
-        .radar-tag { font-size: 0.55rem; color: #22c55e; font-weight: bold; display: block; text-transform: uppercase; }
-    </style>
 </head>
 <body>
     <div id="main-app">
         <header>
-            <h1>CRCA PRO <span style="color: #22c55e;">V2</span></h1>
+            <h1>LOTTOAPP <span style="color: #22c55e;">CRL</span></h1>
             <div id="live-clock">00:00:00</div>
             <div class="tab-container">
-                <button class="tab-btn active" onclick="openTab(event, 'registro')">REGISTRO</button>
-                <button class="tab-btn" onclick="openTab(event, 'estudio-avanzado')">ALGORITMO</button>
-                <button class="tab-btn" onclick="openTab(event, 'sectores-tab')">MAPA</button>
-                <button class="tab-btn" onclick="openTab(event, 'tripletas-tab')">TRIPLETAS</button>
+                <button class="tab-btn active" onclick="openTab(event, 'panel-maestro')">TABLA SEMANAL</button>
+                <button class="tab-btn" onclick="openTab(event, 'supervision')">SUPERVISIÓN</button>
                 <button class="tab-btn" onclick="openTab(event, 'historial')">HISTORIAL</button>
             </div>
         </header>
 
-        <section id="registro" class="tab-content active">
-            <div class="panel-sniper">
-                <span class="sniper-badge">🎯 SNIPER INTELIGENTE</span>
-                <div class="sniper-nums" id="numeros-sugeridos-directos">ESPERANDO...</div>
-                <div id="aviso-fuera" class="aviso-status">📡 RASTREANDO...</div>
+        <section id="panel-maestro" class="tab-content active">
+            <div class="controles-fecha">
+                <input type="date" id="fecha-analisis" class="fecha-input" onchange="actualizarTodo()">
+            </div>
+            
+            <div class="tabla-semanal-container">
+                <table id="tabla-maestra">
+                    <thead>
+                        <tr id="cabecera-dias">
+                            <th>HORA</th>
+                            </tr>
+                    </thead>
+                    <tbody id="cuerpo-tabla"></tbody>
+                </table>
             </div>
 
-            <div class="panel-arrastre-carlos">
-                <div class="arrastre-titulo">🧬 EL ARRASTRE DE CARLOS</div>
-                <div class="arrastre-flex" id="contenedor-arrastre">
-                    <div class="arrastre-box"><span class="arrastre-label">UNIÓN</span><div class="arrastre-num" id="arrastre-union">--</div></div>
-                    <div class="arrastre-box"><span class="arrastre-label">SUMA</span><div class="arrastre-num" id="arrastre-suma">--</div></div>
-                    <div class="arrastre-box"><span class="arrastre-label">VÍNCULO</span><div class="arrastre-vinc" id="arrastre-animal">ESPERANDO</div></div>
-                </div>
-            </div>
-
-            <div class="panel-radar-critico">
-                <div class="arrastre-titulo" style="color: #fbbf24;">📡 RADAR CRÍTICO (FIJOS)</div>
-                <div class="radar-grid">
-                    <div class="fijo-master">
-                        <span class="radar-tag">FIJO A (VACÍO)</span>
-                        <div class="fijo-num" id="radar-fijo-1">--</div>
-                    </div>
-                    <div class="fijo-master">
-                        <span class="radar-tag">FIJO B (ESPEJO)</span>
-                        <div class="fijo-num" id="radar-fijo-2">--</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="panel-diario" id="panel-diario-sorteos"></div>
             <div class="entrada-rapida">
-                <input type="text" id="num-rapido" maxlength="2" placeholder="NRO">
-                <button onclick="registrarPorNumero()">ANOTAR</button>
-            </div>
-            <div class="grid-animales" id="grid-container"></div>
-            <input type="date" id="fecha-analisis" class="fecha-input">
-        </section>
-
-        <section id="estudio-avanzado" class="tab-content" style="display:none;">
-            <div class="radar-container">
-                <h3 style="color: #fbbf24; text-align: center; font-size: 0.9rem;">📡 CALCULADORA DE PRECISIÓN</h3>
-                <select id="select-estudio-animal" onchange="estudiarAlgoritmo()" class="fecha-input" style="margin-bottom: 20px; font-weight: bold;"></select>
-                <div id="resultado-maestro" class="resultado-box-mini"></div>
+                <div class="info-registro">
+                    <span id="hora-seleccionada">Seleccione una celda</span>
+                </div>
+                <div class="flex-input">
+                    <input type="text" id="num-rapido" maxlength="2" placeholder="NRO">
+                    <button onclick="registrarPorNumero()" class="btn-anotar">ANOTAR</button>
+                </div>
             </div>
         </section>
 
-        <section id="sectores-tab" class="tab-content" style="display:none;">
-            <div class="info-label">ESTADO DE SENSORES POR SECTOR</div>
-            <div id="mapa-ruleta" class="mapa-container"></div>
-        </section>
-
-        <section id="tripletas-tab" class="tab-content" style="display:none;">
-            <h2 style="text-align:center; color: #fbbf24; font-size: 1rem;">🔥 ESTUDIO DE TRIPLETAS</h2>
-            <div id="seccion-tripletas" class="tripleta-list"></div>
+        <section id="supervision" class="tab-content" style="display:none;">
+            <h2 class="titulo-sec">📡 RADAR DE GRUPOS ACTIVOS</h2>
+            <div id="contenedor-supervision"></div>
         </section>
 
         <section id="historial" class="tab-content" style="display:none;">
             <div class="historial-header">
-                <input type="date" id="fecha-busqueda-historial" class="fecha-input">
+                <input type="date" id="fecha-busqueda-historial" class="fecha-input" onchange="renderizarHistorial()">
             </div>
             <div class="tabla-contenedor">
                 <table>
-                    <thead><tr><th>HORA</th><th>NRO</th><th>ANIMAL</th><th>SEC</th><th>COLOR</th></tr></thead>
+                    <thead><tr><th>HORA</th><th>NRO</th><th>ANIMAL</th><th>SEC</th></tr></thead>
                     <tbody id="lista-historial"></tbody>
                 </table>
             </div>
         </section>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="logic.js"></script>
 </body>
