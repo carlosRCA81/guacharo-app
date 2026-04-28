@@ -35,25 +35,54 @@ const LISTAS_PRIORITARIAS = [
     {id: 8, nums: ['35', '08']},
     {id: 9, nums: ['03', '30', '33', '32', '36', '26']},
     {id: 10, nums: ['00', '29', '26']},
-    {id: 11, nums: ['34', '19', '05']} // <-- NUEVA LISTA #11
+    {id: 11, nums: ['34', '19', '05']}
 ];
 
 const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
 let historialGlobal = [];
 let horaActiva = null;
 
+// --- 🎯 MONITOR DE SECTORES (MAPA) ---
+function renderizarMapa() {
+    const mapa = document.getElementById('mapa-ruleta');
+    if(!mapa) return;
+    mapa.innerHTML = '';
+    
+    const fecha = document.getElementById('fecha-analisis').value;
+    const sorteosHoy = historialGlobal.filter(r => r.fecha === fecha).map(r => r.num);
+
+    ['A','B','C','D','E','F'].forEach(s => {
+        const secDiv = document.createElement('div');
+        secDiv.className = 'sector-block';
+        secDiv.innerHTML = `<div class="sector-header">SECTOR ${s}</div>`;
+        
+        const grid = document.createElement('div');
+        grid.className = 'sector-grid';
+        
+        listaAnimales.filter(a => a.s === s).forEach(ani => {
+            const yaSalio = sorteosHoy.includes(ani.n);
+            const item = document.createElement('div');
+            // Si ya salió, le ponemos la clase sensor-fijo (Verde)
+            item.className = `mini-animal ${yaSalio ? 'sensor-fijo' : ani.c.toLowerCase()}`;
+            item.innerText = ani.n;
+            grid.appendChild(item);
+        });
+        
+        secDiv.appendChild(grid);
+        mapa.appendChild(secDiv);
+    });
+}
+
 function motorVigilante() {
     const fechaHoy = document.getElementById('fecha-analisis').value;
     const sorteosHoy = historialGlobal.filter(r => r.fecha === fechaHoy).map(r => r.num);
     const contenedor = document.getElementById('contenedor-vigilancia');
-    
     if (!contenedor) return;
     contenedor.innerHTML = '';
 
     LISTAS_PRIORITARIAS.forEach(lista => {
         const encontrados = lista.nums.filter(n => sorteosHoy.includes(n));
         const faltantes = lista.nums.filter(n => !sorteosHoy.includes(n));
-
         if (encontrados.length > 0 && faltantes.length > 0) {
             contenedor.innerHTML += `
                 <div style="background: rgba(251, 191, 36, 0.1); border: 1px solid #fbbf24; padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
@@ -68,13 +97,8 @@ function motorVigilante() {
                 </div>`;
         }
     });
-
-    if (contenedor.innerHTML === '') {
-        contenedor.innerHTML = '<div style="color: #94a3b8; font-size: 0.7rem; text-align:center;">ESPERANDO ACTIVACIÓN...</div>';
-    }
 }
 
-// El resto de las funciones se mantienen iguales para asegurar estabilidad
 async function inicializar() {
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById('fecha-analisis').value = hoy;
@@ -95,8 +119,8 @@ function actualizarTodo() {
     renderizarPanelHoras();
     renderizarHistorial();
     renderizarMapa();
-    ejecutarSniper();
     motorVigilante();
+    ejecutarSniper();
 }
 
 function ejecutarSniper() {
@@ -104,15 +128,36 @@ function ejecutarSniper() {
     const fechaHoy = document.getElementById('fecha-analisis').value;
     const sorteosHoy = historialGlobal.filter(r => r.fecha === fechaHoy).map(r => r.num);
     let sugeridos = [];
-    
     LISTAS_PRIORITARIAS.forEach(l => {
-        if(l.nums.some(n => sorteosHoy.includes(n))) {
-            sugeridos.push(...l.nums.filter(n => !sorteosHoy.includes(n)));
-        }
+        if(l.nums.some(n => sorteosHoy.includes(n))) sugeridos.push(...l.nums.filter(n => !sorteosHoy.includes(n)));
     });
-
     const finales = [...new Set(sugeridos)].slice(0, 3);
     display.innerHTML = (finales.length > 0 ? finales : ["08", "00", "05"]).map(n => `<span class="sniper-pill">${n}</span>`).join('');
+}
+
+async function registrarPorNumero() {
+    const input = document.getElementById('num-rapido');
+    let val = input.value;
+    if(!horaActiva || val === "") return alert("Selecciona Hora");
+    const ani = listaAnimales.find(a => a.n === val);
+    if(!ani) return;
+    const fecha = document.getElementById('fecha-analisis').value;
+    await _supabase.from('historial_sorteos').upsert({ fecha, hora: horaActiva, num: val, animal: ani.a, tipo: ani.c }, { onConflict: 'fecha,hora' });
+    input.value = '';
+    await cargarDatos();
+}
+
+function generarBotones() {
+    const cont = document.getElementById('grid-container');
+    if(!cont) return;
+    cont.innerHTML = '';
+    listaAnimales.forEach(a => {
+        const btn = document.createElement('div');
+        btn.className = "animal-btn";
+        btn.innerHTML = `<b>${a.n}</b><br><small>${a.a}</small>`;
+        btn.onclick = () => { document.getElementById('num-rapido').value = a.n; registrarPorNumero(); };
+        cont.appendChild(btn);
+    });
 }
 
 function renderizarPanelHoras() {
@@ -143,62 +188,6 @@ function renderizarHistorial() {
     });
 }
 
-async function registrarPorNumero() {
-    const input = document.getElementById('num-rapido');
-    let val = input.value;
-    if(!horaActiva || val === "") return alert("Selecciona Hora");
-    const ani = listaAnimales.find(a => a.n === val);
-    if(!ani) return;
-    const fecha = document.getElementById('fecha-analisis').value;
-    await _supabase.from('historial_sorteos').upsert({ fecha, hora: horaActiva, num: val, animal: ani.a, tipo: ani.c }, { onConflict: 'fecha,hora' });
-    input.value = '';
-    await cargarDatos();
-}
-
-function generarBotones() {
-    const cont = document.getElementById('grid-container');
-    if(!cont) return;
-    cont.innerHTML = '';
-    listaAnimales.forEach(a => {
-        const btn = document.createElement('div');
-        btn.className = "animal-btn";
-        btn.innerHTML = `<b>${a.n}</b><br><small>${a.a}</small>`;
-        btn.onclick = () => { document.getElementById('num-rapido').value = a.n; registrarPorNumero(); };
-        cont.appendChild(btn);
-    });
-}
-
-function renderizarMapa() {
-    const mapa = document.getElementById('mapa-ruleta');
-    if(!mapa) return;
-    mapa.innerHTML = '';
-    const fecha = document.getElementById('fecha-analisis').value;
-    const jugadosHoy = historialGlobal.filter(r => r.fecha === fecha).map(r => r.num);
-    ['A','B','C','D','E','F'].forEach(s => {
-        const secDiv = document.createElement('div');
-        secDiv.className = 'sector-block';
-        secDiv.innerHTML = `<div class="sector-header">SECTOR ${s}</div>`;
-        const grid = document.createElement('div');
-        grid.className = 'sector-grid';
-        listaAnimales.filter(a => a.s === s).forEach(ani => {
-            const isOut = jugadosHoy.includes(ani.n);
-            const item = document.createElement('div');
-            item.className = `mini-animal ${isOut ? 'sensor-fijo' : ani.c === 'ROJO' ? 'rojo' : 'negro'}`;
-            item.innerText = ani.n;
-            grid.appendChild(item);
-        });
-        secDiv.appendChild(grid);
-        mapa.appendChild(secDiv);
-    });
-}
-
-function estudiarAlgoritmo() {
-    const val = document.getElementById('select-estudio-animal').value;
-    const res = document.getElementById('resultado-maestro');
-    if (!val) return res.innerHTML = '';
-    res.innerHTML = `<div class="maestro-card"><small>ESTADO DE LISTA:</small><div class="maestro-nums"><span class="pill-maestra">${val}</span></div></div>`;
-}
-
 function llenarSelectorAlgoritmo() {
     const s = document.getElementById('select-estudio-animal');
     if(!s) return;
@@ -213,5 +202,16 @@ function openTab(evt, name) {
     evt.currentTarget.classList.add('active');
 }
 
-setInterval(() => { const clock = document.getElementById('live-clock'); if(clock) clock.innerText = new Date().toLocaleTimeString(); }, 1000);
+// Reloj y Reinicio Automático a las 12:00 AM
+setInterval(() => { 
+    const ahora = new Date();
+    const clock = document.getElementById('live-clock'); 
+    if(clock) clock.innerText = ahora.toLocaleTimeString(); 
+    
+    // Reinicio a medianoche
+    if(ahora.getHours() === 0 && ahora.getMinutes() === 0 && ahora.getSeconds() === 0) {
+        inicializar(); 
+    }
+}, 1000);
+
 window.onload = inicializar;
