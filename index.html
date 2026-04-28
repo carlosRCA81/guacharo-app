@@ -23,11 +23,57 @@
             text-transform: uppercase;
             text-align: center;
         }
-        /* Ajuste para que las listas no se amontonen */
         #contenedor-vigilancia {
             display: flex;
             flex-direction: column;
             gap: 10px;
+        }
+        /* Estilos para los Sectores Visuales */
+        .mapa-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            padding: 10px;
+        }
+        .sector-block {
+            background: #1e293b;
+            border-radius: 10px;
+            padding: 10px;
+            border: 1px solid #334155;
+        }
+        .sector-header {
+            color: #38bdf8;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 5px;
+        }
+        .sector-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+        }
+        .mini-animal {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            border-radius: 4px;
+            color: white;
+        }
+        .mini-animal.rojo { background: #ef444433; border: 1px solid #ef4444; }
+        .mini-animal.azul { background: #38bdf833; border: 1px solid #38bdf8; }
+        .mini-animal.negro { background: #1e293b; border: 1px solid #475569; }
+        /* COLOR FIJO CUANDO YA SALIÓ */
+        .sensor-fijo { 
+            background: #22c55e !important; 
+            color: #000 !important; 
+            box-shadow: 0 0 10px #22c55e;
+            border: 1px solid #fff !important;
         }
     </style>
 </head>
@@ -54,8 +100,7 @@
 
             <div class="panel-arrastre-carlos">
                 <div class="arrastre-titulo">🚨 VIGILANTE DE LISTAS</div>
-                <div id="contenedor-vigilancia">
-                    </div>
+                <div id="contenedor-vigilancia"></div>
             </div>
 
             <div class="panel-diario" id="panel-diario-sorteos"></div>
@@ -68,7 +113,7 @@
         </section>
 
         <section id="sectores-tab" class="tab-content" style="display:none;">
-            <div class="info-label">ESTADO DE SENSORES POR SECTOR</div>
+            <div class="info-label" style="text-align: center; color: #fbbf24; margin-bottom: 10px;">MONITOR DE SENSORES ACTIVOS</div>
             <div id="mapa-ruleta" class="mapa-container"></div>
         </section>
 
