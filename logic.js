@@ -34,27 +34,23 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historialGlobal = [];
 let horaActiva = null;
 
-// --- 🧠 MOTOR DE TRIPLETAS FIJAS ---
+// --- 🧠 MOTOR DE TRIPLETAS FIJAS (ESTABLE) ---
 function generarTripletasInteligentes() {
     const cont = document.getElementById('seccion-tripletas');
     const fecha = document.getElementById('fecha-analisis').value;
-    
-    // Si ya existen para hoy, no recalcular
     const cache = localStorage.getItem('trip_' + fecha);
     if(cache) { cont.innerHTML = cache; return; }
 
-    // Bloques fijos basados en el análisis profundo del CSV (frecuencias 85%+)
     const t1 = ['00', '17', '30']; 
     const t2 = ['11', '34', '09'];
     const t3 = ['02', '24', '01'];
 
     const html = `
-        <div style="text-align:center; color:#22c55e; font-size:0.7rem; margin-bottom:10px;">PRONÓSTICO ANALIZADO: FIJO</div>
+        <div style="text-align:center; color:#22c55e; font-size:0.7rem; margin-bottom:10px;">PRONÓSTICO FIJO CARGADO</div>
         ${card(t1, "MAESTRA", "ALTA PROBABILIDAD")}
-        ${card(t2, "PODER", "SISTEMA DE ARRASTRE")}
-        ${card(t3, "APOYO", "ZONA HISTÓRICA")}
+        ${card(t2, "PODER", "ARRANQUE SECTORIAL")}
+        ${card(t3, "APOYO", "SISTEMA DE DEUDA")}
     `;
-    
     localStorage.setItem('trip_' + fecha, html);
     cont.innerHTML = html;
 }
@@ -71,22 +67,57 @@ function card(nums, tit, sub) {
     </div>`;
 }
 
-// --- FUNCIONES DE CONTROL ---
+// --- 📊 FUNCIÓN DE HISTORIAL REPARADA ---
+function renderHistorial() {
+    const tabla = document.getElementById('lista-historial');
+    const fechaBuscada = document.getElementById('fecha-busqueda-historial').value;
+    if(!tabla) return;
+    tabla.innerHTML = '';
+
+    // Filtrar y ordenar por la posición en horasSorteo para que salgan en orden de tiempo
+    const filtrado = historialGlobal
+        .filter(r => r.fecha === fechaBuscada)
+        .sort((a, b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
+
+    if(filtrado.length === 0) {
+        tabla.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8; padding:20px;">Sin resultados para esta fecha</td></tr>';
+        return;
+    }
+
+    filtrado.forEach(r => {
+        const ani = listaAnimales.find(a => a.n === r.num.toString().padStart(2, '0'));
+        const esPrioritario = LISTAS_PRIORITARIAS.some(l => l.nums.includes(r.num));
+        
+        tabla.innerHTML += `
+            <tr style="${esPrioritario ? 'background: rgba(251, 191, 36, 0.1);' : ''}">
+                <td>${r.hora}</td>
+                <td><b style="${esPrioritario ? 'color:#fbbf24;' : ''}">${r.num}</b></td>
+                <td>${r.animal}</td>
+                <td>${ani ? ani.s : '-'}</td>
+                <td class="${r.tipo === 'ROJO' ? 'txt-rojo' : 'txt-azul'}">${r.tipo}</td>
+            </tr>`;
+    });
+}
+
+// --- RESTO DE FUNCIONES (RESUMIDAS PARA CIERRE COMPLETO) ---
 async function registrarPorNumero() {
     const input = document.getElementById('num-rapido');
     let val = input.value;
-    if(!horaActiva || val === "") return alert("Marca la hora");
-    const ani = listaAnimales.find(a => a.n === val);
+    if(!horaActiva || val === "") return alert("Selecciona una hora en el panel");
+    const ani = listaAnimales.find(a => a.n === val.padStart(2, '0'));
+    if(!ani) return alert("Número no válido");
     const fecha = document.getElementById('fecha-analisis').value;
     await _supabase.from('historial_sorteos').upsert({ fecha, hora: horaActiva, num: val, animal: ani.a, tipo: ani.c }, { onConflict: 'fecha,hora' });
     input.value = '';
-    await cargarDatos();
+    await cargarDatos(); // Recarga todo tras anotar
 }
 
 async function cargarDatos() {
-    const { data } = await _supabase.from('historial_sorteos').select('*').order('fecha', {ascending: false});
-    historialGlobal = data || [];
-    actualizarTodo();
+    const { data, error } = await _supabase.from('historial_sorteos').select('*').order('fecha', {ascending: false});
+    if(!error) { 
+        historialGlobal = data; 
+        actualizarTodo(); 
+    }
 }
 
 function actualizarTodo() {
@@ -97,39 +128,10 @@ function actualizarTodo() {
     generarTripletasInteligentes();
 }
 
-function renderMapa() {
-    const mapa = document.getElementById('mapa-ruleta');
-    if(!mapa) return;
-    mapa.innerHTML = '';
-    const hoy = historialGlobal.filter(r => r.fecha === document.getElementById('fecha-analisis').value).map(r => r.num);
-    ['A','B','C','D','E','F'].forEach(s => {
-        let html = `<div class="sector-block"><div class="sector-header" style="color:#fbbf24; text-align:center; font-size:0.7rem;">SEC ${s}</div><div class="sector-grid">`;
-        listaAnimales.filter(a => a.s === s).forEach(ani => {
-            html += `<div class="mini-animal ${hoy.includes(ani.n) ? 'sensor-fijo' : ani.c.toLowerCase()}">${ani.n}</div>`;
-        });
-        mapa.innerHTML += html + `</div></div>`;
-    });
-}
-
-function motorVigilante() {
-    const hoy = historialGlobal.filter(r => r.fecha === document.getElementById('fecha-analisis').value).map(r => r.num);
-    const cont = document.getElementById('contenedor-vigilancia');
-    cont.innerHTML = '';
-    LISTAS_PRIORITARIAS.forEach(l => {
-        const fallan = l.nums.filter(n => !hoy.includes(n));
-        const tienen = l.nums.filter(n => hoy.includes(n));
-        if(tienen.length > 0 && fallan.length > 0) {
-            cont.innerHTML += `<div style="border:1px solid #fbbf24; padding:8px; border-radius:8px; margin-top:5px; display:flex; justify-content:space-between;">
-                <span style="color:#fff; font-size:0.8rem;">Lista ${l.id}</span>
-                <span style="color:#22c55e; font-weight:bold;">FALTA: ${fallan.join('-')}</span>
-            </div>`;
-        }
-    });
-}
-
 function renderPanelHoras() {
     const p = document.getElementById('panel-diario-sorteos');
     const f = document.getElementById('fecha-analisis').value;
+    if(!p) return;
     p.innerHTML = '';
     horasSorteo.forEach(h => {
         const r = historialGlobal.find(x => x.fecha === f && x.hora === h);
@@ -141,12 +143,35 @@ function renderPanelHoras() {
     });
 }
 
-function renderHistorial() {
-    const l = document.getElementById('lista-historial');
-    const f = document.getElementById('fecha-busqueda-historial').value;
-    l.innerHTML = '';
-    historialGlobal.filter(r => r.fecha === f).forEach(r => {
-        l.innerHTML += `<tr><td>${r.hora}</td><td>${r.num}</td><td>${r.animal}</td><td>-</td><td class="${r.tipo === 'ROJO' ? 'txt-rojo' : 'txt-azul'}">${r.tipo}</td></tr>`;
+function renderMapa() {
+    const mapa = document.getElementById('mapa-ruleta');
+    const fecha = document.getElementById('fecha-analisis').value;
+    if(!mapa) return;
+    mapa.innerHTML = '';
+    const hoy = historialGlobal.filter(r => r.fecha === fecha).map(r => r.num);
+    ['A','B','C','D','E','F'].forEach(s => {
+        let html = `<div class="sector-block"><div class="sector-header">SECTOR ${s}</div><div class="sector-grid">`;
+        listaAnimales.filter(a => a.s === s).forEach(ani => {
+            html += `<div class="mini-animal ${hoy.includes(ani.n) ? 'sensor-fijo' : ani.c.toLowerCase()}">${ani.n}</div>`;
+        });
+        mapa.innerHTML += html + `</div></div>`;
+    });
+}
+
+function motorVigilante() {
+    const hoy = historialGlobal.filter(r => r.fecha === document.getElementById('fecha-analisis').value).map(r => r.num);
+    const cont = document.getElementById('contenedor-vigilancia');
+    if(!cont) return;
+    cont.innerHTML = '';
+    LISTAS_PRIORITARIAS.forEach(l => {
+        const fallan = l.nums.filter(n => !hoy.includes(n));
+        const tienen = l.nums.filter(n => hoy.includes(n));
+        if(tienen.length > 0 && fallan.length > 0) {
+            cont.innerHTML += `<div style="border:1px solid #fbbf24; padding:8px; border-radius:8px; margin-top:5px; display:flex; justify-content:space-between; background:rgba(251,191,36,0.05);">
+                <span style="color:#fff; font-size:0.75rem;">Lista ${l.id} activa</span>
+                <span style="color:#22c55e; font-weight:bold;">FALTA: ${fallan.join(' - ')}</span>
+            </div>`;
+        }
     });
 }
 
@@ -161,6 +186,11 @@ async function init() {
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById('fecha-analisis').value = hoy;
     document.getElementById('fecha-busqueda-historial').value = hoy;
+    
+    // Eventos para que el historial se actualice al cambiar fechas
+    document.getElementById('fecha-analisis').onchange = actualizarTodo;
+    document.getElementById('fecha-busqueda-historial').onchange = renderHistorial;
+
     await cargarDatos();
     const grid = document.getElementById('grid-container');
     listaAnimales.forEach(a => {
@@ -170,7 +200,10 @@ async function init() {
         b.onclick = () => { document.getElementById('num-rapido').value = a.n; registrarPorNumero(); };
         grid.appendChild(b);
     });
-    setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
+    setInterval(() => { 
+        const cl = document.getElementById('live-clock');
+        if(cl) cl.innerText = new Date().toLocaleTimeString(); 
+    }, 1000);
 }
 
 window.onload = init;
