@@ -3,140 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRCA PRO V2 - INTELIGENCIA REAL</title>
+    <title>CRCA PRO V2 - CEREBRO FIJO</title>
     <link rel="stylesheet" href="style.css">
     <style>
+        /* Estilos base para garantizar que nada se mueva en el móvil */
         .panel-arrastre-carlos {
             background: linear-gradient(145deg, #0f172a, #1e293b);
             border: 1px solid #fbbf24;
             border-radius: 12px;
             padding: 15px;
             margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
         .arrastre-titulo {
             color: #fbbf24;
             font-size: 0.75rem;
             font-weight: bold;
-            letter-spacing: 1.5px;
-            margin-bottom: 10px;
-            text-transform: uppercase;
             text-align: center;
-        }
-        #contenedor-vigilancia {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+            text-transform: uppercase;
         }
         .mapa-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
             padding: 10px;
         }
         .sector-block {
             background: #1e293b;
-            border-radius: 10px;
-            padding: 10px;
+            border-radius: 8px;
+            padding: 8px;
             border: 1px solid #334155;
-        }
-        .sector-header {
-            color: #38bdf8;
-            font-size: 0.8rem;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 8px;
-            border-bottom: 1px solid #334155;
-            padding-bottom: 5px;
         }
         .sector-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 5px;
+            gap: 4px;
         }
         .mini-animal {
             aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: bold;
-            border-radius: 4px;
-            color: white;
+            border-radius: 3px;
         }
-        .mini-animal.rojo { background: #ef444433; border: 1px solid #ef4444; }
-        .mini-animal.azul { background: #38bdf833; border: 1px solid #38bdf8; }
-        .mini-animal.negro { background: #1e293b; border: 1px solid #475569; }
-        
-        .sensor-fijo { 
-            background: #22c55e !important; 
-            color: #000 !important; 
-            box-shadow: 0 0 10px #22c55e;
-            border: 1px solid #fff !important;
-        }
+        .sensor-fijo { background: #22c55e !important; color: #000 !important; border: 1px solid #fff; }
+        .rojo { background: #ef444433; border: 1px solid #ef4444; color: #fff; }
+        .azul { background: #38bdf833; border: 1px solid #38bdf8; color: #fff; }
+        .negro { background: #1e293b; border: 1px solid #475569; color: #fff; }
 
-        /* DISEÑO DE TRIPLETAS MASTER */
-        .tripleta-list {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            padding: 15px;
-        }
+        /* Estilos de las Tripletas Inamovibles */
+        .tripleta-list { display: flex; flex-direction: column; gap: 15px; padding: 15px; }
         .tripleta-card {
             background: linear-gradient(145deg, #1e293b, #020617);
-            border-left: 5px solid #fbbf24;
-            border-right: 1px solid #fbbf24;
-            border-top: 1px solid #fbbf24;
-            border-bottom: 1px solid #fbbf24;
+            border: 2px solid #fbbf24;
             border-radius: 12px;
-            padding: 20px;
+            padding: 15px;
             text-align: center;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.6);
             position: relative;
         }
-        .badge-tripleta {
-            position: absolute;
-            top: -10px;
-            left: 20px;
-            background: #fbbf24;
-            color: #000;
-            padding: 2px 15px;
-            border-radius: 4px;
-            font-weight: 900;
-            font-size: 0.7rem;
-        }
         .nums-tripleta {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 900;
-            color: #ffffff;
-            margin: 15px 0;
+            color: #fff;
             display: flex;
             justify-content: center;
-            gap: 15px;
-            text-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
+            gap: 10px;
+            margin: 10px 0;
         }
         .num-circle {
             background: rgba(255,255,255,0.05);
-            width: 60px;
-            height: 60px;
+            width: 50px;
+            height: 50px;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 50%;
             border: 2px solid #fbbf24;
         }
-        .meta-data {
-            color: #38bdf8;
-            font-size: 0.75rem;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
+        .badge-tripleta { background: #fbbf24; color: #000; padding: 2px 10px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
     </style>
 </head>
 <body>
     <div id="main-app">
         <header>
-            <h1>CRCA PRO <span style="color: #22c55e;">MASTER</span></h1>
+            <h1>CRCA PRO <span style="color: #22c55e;">V2</span></h1>
             <div id="live-clock">00:00:00</div>
             <div class="tab-container">
                 <button class="tab-btn active" onclick="openTab(event, 'registro')">REGISTRO</button>
@@ -148,22 +99,18 @@
 
         <section id="registro" class="tab-content active">
             <div class="panel-sniper">
-                <span class="sniper-badge">🎯 PROYECCIÓN DE SALIDA</span>
-                <div class="sniper-nums" id="numeros-sugeridos-directos">ESPERANDO...</div>
+                <span class="sniper-badge">🎯 SNIPER</span>
+                <div class="sniper-nums" id="numeros-sugeridos-directos">...</div>
             </div>
-
             <div class="panel-arrastre-carlos">
-                <div class="arrastre-titulo">🚨 VIGILANTE DE LISTAS ACTIVAS</div>
+                <div class="arrastre-titulo">🚨 VIGILANTE</div>
                 <div id="contenedor-vigilancia"></div>
             </div>
-
             <div class="panel-diario" id="panel-diario-sorteos"></div>
-            
             <div class="entrada-rapida">
                 <input type="text" id="num-rapido" maxlength="2" placeholder="NRO">
                 <button onclick="registrarPorNumero()">ANOTAR</button>
             </div>
-            
             <div class="grid-animales" id="grid-container"></div>
             <input type="date" id="fecha-analisis" class="fecha-input">
         </section>
@@ -173,27 +120,20 @@
         </section>
 
         <section id="tripletas-tab" class="tab-content" style="display:none;">
-            <h2 style="text-align:center; color: #fbbf24; font-size: 1.2rem; margin-top: 20px;">💰 TRIPLETAS FIJAS DIARIAS</h2>
-            <p style="text-align:center; color: #94a3b8; font-size: 0.7rem; margin-bottom: 20px;">Motor de análisis profundo (Enero-Mayo)</p>
-            <div id="seccion-tripletas" class="tripleta-list">
-                </div>
+            <h2 style="text-align:center; color: #fbbf24; margin-top: 20px;">💰 TRIPLETAS FIJAS DEL DÍA</h2>
+            <div id="seccion-tripletas" class="tripleta-list"></div>
         </section>
 
         <section id="historial" class="tab-content" style="display:none;">
-            <div class="historial-header">
-                <input type="date" id="fecha-busqueda-historial" class="fecha-input">
-            </div>
+            <input type="date" id="fecha-busqueda-historial" class="fecha-input">
             <div class="tabla-contenedor">
                 <table>
-                    <thead>
-                        <tr><th>HORA</th><th>NRO</th><th>ANIMAL</th><th>SEC</th><th>COLOR</th></tr>
-                    </thead>
+                    <thead><tr><th>HORA</th><th>NRO</th><th>ANIMAL</th><th>SEC</th><th>COLOR</th></tr></thead>
                     <tbody id="lista-historial"></tbody>
                 </table>
             </div>
         </section>
     </div>
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="logic.js"></script>
 </body>
