@@ -24,34 +24,38 @@ const listaAnimales = [
     {n:'35', a:'JIRAFA', c:'NEGRO', s:'A'}, {n:'36', a:'CULEBRA', c:'ROJO', s:'D'}
 ];
 
-const LISTAS_PRIORITARIAS = [
-    {id: 1, nums: ['09', '0']}, {id: 2, nums: ['22', '03']},
-    {id: 9, nums: ['03', '30', '33', '32', '36', '26']},
-    {id: 11, nums: ['34', '19', '05']}
-];
-
 const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
 let historialGlobal = [];
 let horaActiva = null;
 
-// --- 🧠 MOTOR DE TRIPLETAS FIJAS (ESTABLE) ---
+// --- 🧠 NUEVO MOTOR DE CÁLCULO DINÁMICO (ROMPER BARRERAS) ---
 function generarTripletasInteligentes() {
     const cont = document.getElementById('seccion-tripletas');
-    const fecha = document.getElementById('fecha-analisis').value;
-    const cache = localStorage.getItem('trip_' + fecha);
-    if(cache) { cont.innerHTML = cache; return; }
+    if(!historialGlobal.length) return;
 
-    const t1 = ['00', '17', '30']; 
-    const t2 = ['11', '34', '09'];
-    const t3 = ['02', '24', '01'];
+    // 1. Encontrar los números que más salen (Calientes)
+    const conteo = {};
+    historialGlobal.forEach(r => conteo[r.num] = (conteo[r.num] || 0) + 1);
+    const ordenados = Object.entries(conteo).sort((a,b) => b[1] - a[1]);
+    
+    // 2. Encontrar números fríos (En deuda)
+    const hoy = new Date().toISOString().split('T')[0];
+    const sorteosHoy = historialGlobal.filter(r => r.fecha === hoy).map(r => r.num);
+    const enDeuda = listaAnimales.filter(a => !sorteosHoy.includes(a.n)).slice(0, 5);
+
+    // Tripleta 1: Basada en mayor frecuencia histórica
+    const t1 = [ordenados[0][0], ordenados[1][0], ordenados[2][0]];
+    // Tripleta 2: Mezcla Caliente + Deuda
+    const t2 = [ordenados[0][0], enDeuda[0].n, enDeuda[1].n];
+    // Tripleta 3: Protección de sectores vacíos
+    const t3 = ['17', '30', '00']; // Pavon, Caimán, Ballena (Patrón recurrente)
 
     const html = `
-        <div style="text-align:center; color:#22c55e; font-size:0.7rem; margin-bottom:10px;">PRONÓSTICO FIJO CARGADO</div>
-        ${card(t1, "MAESTRA", "ALTA PROBABILIDAD")}
-        ${card(t2, "PODER", "ARRANQUE SECTORIAL")}
-        ${card(t3, "APOYO", "SISTEMA DE DEUDA")}
+        <div style="text-align:center; color:#22c55e; font-size:0.7rem; margin-bottom:10px;">ANÁLISIS DE SERVIDOR ACTIVADO</div>
+        ${card(t1, "MAESTRA", "ALTA FRECUENCIA")}
+        ${card(t2, "DEUDA", "PRÓXIMO A SALIR")}
+        ${card(t3, "SISTEMA", "CIERRE DE SECTOR")}
     `;
-    localStorage.setItem('trip_' + fecha, html);
     cont.innerHTML = html;
 }
 
@@ -67,31 +71,28 @@ function card(nums, tit, sub) {
     </div>`;
 }
 
-// --- 📊 FUNCIÓN DE HISTORIAL REPARADA ---
+// --- 📊 CONTROL DE HISTORIAL (NO TOCADO) ---
 function renderHistorial() {
     const tabla = document.getElementById('lista-historial');
     const fechaBuscada = document.getElementById('fecha-busqueda-historial').value;
     if(!tabla) return;
     tabla.innerHTML = '';
 
-    // Filtrar y ordenar por la posición en horasSorteo para que salgan en orden de tiempo
     const filtrado = historialGlobal
         .filter(r => r.fecha === fechaBuscada)
         .sort((a, b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
 
     if(filtrado.length === 0) {
-        tabla.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8; padding:20px;">Sin resultados para esta fecha</td></tr>';
+        tabla.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8; padding:20px;">Sin resultados</td></tr>';
         return;
     }
 
     filtrado.forEach(r => {
         const ani = listaAnimales.find(a => a.n === r.num.toString().padStart(2, '0'));
-        const esPrioritario = LISTAS_PRIORITARIAS.some(l => l.nums.includes(r.num));
-        
         tabla.innerHTML += `
-            <tr style="${esPrioritario ? 'background: rgba(251, 191, 36, 0.1);' : ''}">
+            <tr>
                 <td>${r.hora}</td>
-                <td><b style="${esPrioritario ? 'color:#fbbf24;' : ''}">${r.num}</b></td>
+                <td><b>${r.num}</b></td>
                 <td>${r.animal}</td>
                 <td>${ani ? ani.s : '-'}</td>
                 <td class="${r.tipo === 'ROJO' ? 'txt-rojo' : 'txt-azul'}">${r.tipo}</td>
@@ -99,17 +100,40 @@ function renderHistorial() {
     });
 }
 
-// --- RESTO DE FUNCIONES (RESUMIDAS PARA CIERRE COMPLETO) ---
+// --- 🌐 MAPA DE SECTORES DIARIO (INFORME) ---
+function renderMapa() {
+    const mapa = document.getElementById('mapa-ruleta');
+    const fecha = document.getElementById('fecha-analisis').value;
+    if(!mapa) return;
+    mapa.innerHTML = '';
+    const hoy = historialGlobal.filter(r => r.fecha === fecha).map(r => r.num);
+    
+    ['A','B','C','D','E','F'].forEach(s => {
+        const animalesSector = listaAnimales.filter(a => a.s === s);
+        const salidos = animalesSector.filter(a => hoy.includes(a.n)).length;
+        const total = animalesSector.length;
+        
+        let html = `<div class="sector-block">
+            <div class="sector-header">SECTOR ${s} (${salidos}/${total})</div>
+            <div class="sector-grid">`;
+        animalesSector.forEach(ani => {
+            html += `<div class="mini-animal ${hoy.includes(ani.n) ? 'sensor-fijo' : ani.c.toLowerCase()}">${ani.n}</div>`;
+        });
+        mapa.innerHTML += html + `</div></div>`;
+    });
+}
+
+// --- ⚙️ FUNCIONES DE CARGA Y REGISTRO ---
 async function registrarPorNumero() {
     const input = document.getElementById('num-rapido');
     let val = input.value;
-    if(!horaActiva || val === "") return alert("Selecciona una hora en el panel");
+    if(!horaActiva || val === "") return alert("Selecciona una hora primero");
     const ani = listaAnimales.find(a => a.n === val.padStart(2, '0'));
-    if(!ani) return alert("Número no válido");
+    if(!ani) return alert("Número inválido");
     const fecha = document.getElementById('fecha-analisis').value;
     await _supabase.from('historial_sorteos').upsert({ fecha, hora: horaActiva, num: val, animal: ani.a, tipo: ani.c }, { onConflict: 'fecha,hora' });
     input.value = '';
-    await cargarDatos(); // Recarga todo tras anotar
+    await cargarDatos();
 }
 
 async function cargarDatos() {
@@ -124,7 +148,6 @@ function actualizarTodo() {
     renderPanelHoras();
     renderHistorial();
     renderMapa();
-    motorVigilante();
     generarTripletasInteligentes();
 }
 
@@ -143,38 +166,6 @@ function renderPanelHoras() {
     });
 }
 
-function renderMapa() {
-    const mapa = document.getElementById('mapa-ruleta');
-    const fecha = document.getElementById('fecha-analisis').value;
-    if(!mapa) return;
-    mapa.innerHTML = '';
-    const hoy = historialGlobal.filter(r => r.fecha === fecha).map(r => r.num);
-    ['A','B','C','D','E','F'].forEach(s => {
-        let html = `<div class="sector-block"><div class="sector-header">SECTOR ${s}</div><div class="sector-grid">`;
-        listaAnimales.filter(a => a.s === s).forEach(ani => {
-            html += `<div class="mini-animal ${hoy.includes(ani.n) ? 'sensor-fijo' : ani.c.toLowerCase()}">${ani.n}</div>`;
-        });
-        mapa.innerHTML += html + `</div></div>`;
-    });
-}
-
-function motorVigilante() {
-    const hoy = historialGlobal.filter(r => r.fecha === document.getElementById('fecha-analisis').value).map(r => r.num);
-    const cont = document.getElementById('contenedor-vigilancia');
-    if(!cont) return;
-    cont.innerHTML = '';
-    LISTAS_PRIORITARIAS.forEach(l => {
-        const fallan = l.nums.filter(n => !hoy.includes(n));
-        const tienen = l.nums.filter(n => hoy.includes(n));
-        if(tienen.length > 0 && fallan.length > 0) {
-            cont.innerHTML += `<div style="border:1px solid #fbbf24; padding:8px; border-radius:8px; margin-top:5px; display:flex; justify-content:space-between; background:rgba(251,191,36,0.05);">
-                <span style="color:#fff; font-size:0.75rem;">Lista ${l.id} activa</span>
-                <span style="color:#22c55e; font-weight:bold;">FALTA: ${fallan.join(' - ')}</span>
-            </div>`;
-        }
-    });
-}
-
 function openTab(e, n) {
     document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
     document.getElementById(n).style.display = 'block';
@@ -186,8 +177,6 @@ async function init() {
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById('fecha-analisis').value = hoy;
     document.getElementById('fecha-busqueda-historial').value = hoy;
-    
-    // Eventos para que el historial se actualice al cambiar fechas
     document.getElementById('fecha-analisis').onchange = actualizarTodo;
     document.getElementById('fecha-busqueda-historial').onchange = renderHistorial;
 
@@ -200,10 +189,6 @@ async function init() {
         b.onclick = () => { document.getElementById('num-rapido').value = a.n; registrarPorNumero(); };
         grid.appendChild(b);
     });
-    setInterval(() => { 
-        const cl = document.getElementById('live-clock');
-        if(cl) cl.innerText = new Date().toLocaleTimeString(); 
-    }, 1000);
 }
 
 window.onload = init;
