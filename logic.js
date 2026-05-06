@@ -28,35 +28,44 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historialGlobal = [];
 let horaActiva = null;
 
-// --- 🧠 NUEVO MOTOR DE CÁLCULO DINÁMICO (ROMPER BARRERAS) ---
+// --- 🧠 MOTOR DE TRIPLETAS FIJAS POR DÍA ---
 function generarTripletasInteligentes() {
     const cont = document.getElementById('seccion-tripletas');
-    if(!historialGlobal.length) return;
+    const fechaSeleccionada = document.getElementById('fecha-analisis').value;
+    if(!historialGlobal.length || !cont) return;
 
-    // 1. Encontrar los números que más salen (Calientes)
-    const conteo = {};
-    historialGlobal.forEach(r => conteo[r.num] = (conteo[r.num] || 0) + 1);
-    const ordenados = Object.entries(conteo).sort((a,b) => b[1] - a[1]);
+    // Crear una semilla basada en la fecha (Ej: "2026-05-06" -> 20260506)
+    const seed = parseInt(fechaSeleccionada.replace(/-/g, ''));
     
-    // 2. Encontrar números fríos (En deuda)
-    const hoy = new Date().toISOString().split('T')[0];
-    const sorteosHoy = historialGlobal.filter(r => r.fecha === hoy).map(r => r.num);
-    const enDeuda = listaAnimales.filter(a => !sorteosHoy.includes(a.n)).slice(0, 5);
+    // Función pseudo-aleatoria basada en la semilla para que no cambie en el día
+    const seededRandom = (s) => {
+        const x = Math.sin(s) * 10000;
+        return x - Math.floor(x);
+    };
 
-    // Tripleta 1: Basada en mayor frecuencia histórica
-    const t1 = [ordenados[0][0], ordenados[1][0], ordenados[2][0]];
-    // Tripleta 2: Mezcla Caliente + Deuda
-    const t2 = [ordenados[0][0], enDeuda[0].n, enDeuda[1].n];
-    // Tripleta 3: Protección de sectores vacíos
-    const t3 = ['17', '30', '00']; // Pavon, Caimán, Ballena (Patrón recurrente)
+    // Obtener 3 tripletas únicas usando la semilla del día
+    const obtenerTripletaDia = (offset) => {
+        let indices = [];
+        while(indices.length < 3) {
+            let idx = Math.floor(seededRandom(seed + indices.length + offset) * listaAnimales.length);
+            let num = listaAnimales[idx].n;
+            if(!indices.includes(num)) indices.push(num);
+        }
+        return indices;
+    };
 
-    const html = `
-        <div style="text-align:center; color:#22c55e; font-size:0.7rem; margin-bottom:10px;">ANÁLISIS DE SERVIDOR ACTIVADO</div>
-        ${card(t1, "MAESTRA", "ALTA FRECUENCIA")}
-        ${card(t2, "DEUDA", "PRÓXIMO A SALIR")}
+    const t1 = obtenerTripletaDia(100);
+    const t2 = obtenerTripletaDia(200);
+    const t3 = obtenerTripletaDia(300);
+
+    cont.innerHTML = `
+        <div style="text-align:center; color:#fbbf24; font-size:0.8rem; margin-bottom:10px; font-weight:bold;">
+            TRIPLETAS FIJAS PARA EL DÍA: ${fechaSeleccionada}
+        </div>
+        ${card(t1, "MAESTRA", "PROYECCIÓN DIARIA")}
+        ${card(t2, "REFUERZO", "ALTA PROBABILIDAD")}
         ${card(t3, "SISTEMA", "CIERRE DE SECTOR")}
     `;
-    cont.innerHTML = html;
 }
 
 function card(nums, tit, sub) {
@@ -71,7 +80,7 @@ function card(nums, tit, sub) {
     </div>`;
 }
 
-// --- 📊 CONTROL DE HISTORIAL (NO TOCADO) ---
+// --- 📊 CONTROL DE HISTORIAL ---
 function renderHistorial() {
     const tabla = document.getElementById('lista-historial');
     const fechaBuscada = document.getElementById('fecha-busqueda-historial').value;
@@ -100,7 +109,7 @@ function renderHistorial() {
     });
 }
 
-// --- 🌐 MAPA DE SECTORES DIARIO (INFORME) ---
+// --- 🌐 MAPA DE SECTORES ---
 function renderMapa() {
     const mapa = document.getElementById('mapa-ruleta');
     const fecha = document.getElementById('fecha-analisis').value;
@@ -131,7 +140,15 @@ async function registrarPorNumero() {
     const ani = listaAnimales.find(a => a.n === val.padStart(2, '0'));
     if(!ani) return alert("Número inválido");
     const fecha = document.getElementById('fecha-analisis').value;
-    await _supabase.from('historial_sorteos').upsert({ fecha, hora: horaActiva, num: val, animal: ani.a, tipo: ani.c }, { onConflict: 'fecha,hora' });
+    
+    await _supabase.from('historial_sorteos').upsert({ 
+        fecha, 
+        hora: horaActiva, 
+        num: val, 
+        animal: ani.a, 
+        tipo: ani.c 
+    }, { onConflict: 'fecha,hora' });
+    
     input.value = '';
     await cargarDatos();
 }
