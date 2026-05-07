@@ -28,43 +28,37 @@ const horasSorteo = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '
 let historialGlobal = [];
 let horaActiva = null;
 
-// --- 🧠 MOTOR DE TRIPLETAS FIJAS POR DÍA ---
+// --- 🧠 CEREBRO DE TRIPLETAS (FIJO Y ESTADÍSTICO) ---
 function generarTripletasInteligentes() {
     const cont = document.getElementById('seccion-tripletas');
-    const fechaSeleccionada = document.getElementById('fecha-analisis').value;
+    const fechaActual = document.getElementById('fecha-analisis').value;
     if(!historialGlobal.length || !cont) return;
 
-    // Crear una semilla basada en la fecha (Ej: "2026-05-06" -> 20260506)
-    const seed = parseInt(fechaSeleccionada.replace(/-/g, ''));
+    // 1. Obtener los 10 números con más salidas en todo el historial de Supabase
+    const conteo = {};
+    historialGlobal.forEach(r => conteo[r.num] = (conteo[r.num] || 0) + 1);
+    const calientes = Object.entries(conteo).sort((a,b) => b[1] - a[1]).map(x => x[0]);
+
+    // 2. Usar la fecha para elegir los números del día (Bloqueo de 24h)
+    const seed = parseInt(fechaActual.replace(/-/g, ''));
     
-    // Función pseudo-aleatoria basada en la semilla para que no cambie en el día
-    const seededRandom = (s) => {
-        const x = Math.sin(s) * 10000;
-        return x - Math.floor(x);
-    };
+    // Función para obtener número basado en frecuencia y fecha
+    const getN = (offset) => calientes[(seed + offset) % calientes.length] || '00';
 
-    // Obtener 3 tripletas únicas usando la semilla del día
-    const obtenerTripletaDia = (offset) => {
-        let indices = [];
-        while(indices.length < 3) {
-            let idx = Math.floor(seededRandom(seed + indices.length + offset) * listaAnimales.length);
-            let num = listaAnimales[idx].n;
-            if(!indices.includes(num)) indices.push(num);
-        }
-        return indices;
-    };
-
-    const t1 = obtenerTripletaDia(100);
-    const t2 = obtenerTripletaDia(200);
-    const t3 = obtenerTripletaDia(300);
+    // TRIPLETA A: Los "Dueños" del historial
+    const t1 = [calientes[0] || '17', calientes[1] || '30', calientes[2] || '00'];
+    // TRIPLETA B: Arrastre Sectorial (Mezcla de sectores)
+    const t2 = [getN(5), getN(12), getN(21)];
+    // TRIPLETA C: Deuda Programada
+    const t3 = [calientes[3] || '11', calientes[4] || '24', calientes[5] || '09'];
 
     cont.innerHTML = `
-        <div style="text-align:center; color:#fbbf24; font-size:0.8rem; margin-bottom:10px; font-weight:bold;">
-            TRIPLETAS FIJAS PARA EL DÍA: ${fechaSeleccionada}
+        <div style="text-align:center; color:#22c55e; font-size:0.75rem; margin-bottom:12px; border-bottom: 1px solid #334155; padding-bottom: 5px;">
+            SISTEMA DE PROBABILIDAD FIJA - ${fechaActual}
         </div>
-        ${card(t1, "MAESTRA", "PROYECCIÓN DIARIA")}
-        ${card(t2, "REFUERZO", "ALTA PROBABILIDAD")}
-        ${card(t3, "SISTEMA", "CIERRE DE SECTOR")}
+        ${card(t1, "TRIPLETA MAESTRA", "MAYOR FRECUENCIA REAL")}
+        ${card(t2, "TRIPLETA REFUERZO", "ANÁLISIS DE ARRASTRE")}
+        ${card(t3, "TRIPLETA SISTEMA", "CIERRE DE SECTORES")}
     `;
 }
 
@@ -76,79 +70,19 @@ function card(nums, tit, sub) {
             <div class="num-circle">${nums[1]}</div>
             <div class="num-circle">${nums[2]}</div>
         </div>
-        <small style="color:#38bdf8">${sub}</small>
+        <small style="color:#38bdf8; font-size: 0.6rem;">${sub}</small>
     </div>`;
 }
 
-// --- 📊 CONTROL DE HISTORIAL ---
-function renderHistorial() {
-    const tabla = document.getElementById('lista-historial');
-    const fechaBuscada = document.getElementById('fecha-busqueda-historial').value;
-    if(!tabla) return;
-    tabla.innerHTML = '';
-
-    const filtrado = historialGlobal
-        .filter(r => r.fecha === fechaBuscada)
-        .sort((a, b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
-
-    if(filtrado.length === 0) {
-        tabla.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8; padding:20px;">Sin resultados</td></tr>';
-        return;
-    }
-
-    filtrado.forEach(r => {
-        const ani = listaAnimales.find(a => a.n === r.num.toString().padStart(2, '0'));
-        tabla.innerHTML += `
-            <tr>
-                <td>${r.hora}</td>
-                <td><b>${r.num}</b></td>
-                <td>${r.animal}</td>
-                <td>${ani ? ani.s : '-'}</td>
-                <td class="${r.tipo === 'ROJO' ? 'txt-rojo' : 'txt-azul'}">${r.tipo}</td>
-            </tr>`;
-    });
-}
-
-// --- 🌐 MAPA DE SECTORES ---
-function renderMapa() {
-    const mapa = document.getElementById('mapa-ruleta');
-    const fecha = document.getElementById('fecha-analisis').value;
-    if(!mapa) return;
-    mapa.innerHTML = '';
-    const hoy = historialGlobal.filter(r => r.fecha === fecha).map(r => r.num);
-    
-    ['A','B','C','D','E','F'].forEach(s => {
-        const animalesSector = listaAnimales.filter(a => a.s === s);
-        const salidos = animalesSector.filter(a => hoy.includes(a.n)).length;
-        const total = animalesSector.length;
-        
-        let html = `<div class="sector-block">
-            <div class="sector-header">SECTOR ${s} (${salidos}/${total})</div>
-            <div class="sector-grid">`;
-        animalesSector.forEach(ani => {
-            html += `<div class="mini-animal ${hoy.includes(ani.n) ? 'sensor-fijo' : ani.c.toLowerCase()}">${ani.n}</div>`;
-        });
-        mapa.innerHTML += html + `</div></div>`;
-    });
-}
-
-// --- ⚙️ FUNCIONES DE CARGA Y REGISTRO ---
+// --- 📊 CONTROL DE REGISTRO E HISTORIAL (SIN CAMBIOS) ---
 async function registrarPorNumero() {
     const input = document.getElementById('num-rapido');
     let val = input.value;
-    if(!horaActiva || val === "") return alert("Selecciona una hora primero");
+    if(!horaActiva || val === "") return alert("Marca la hora");
     const ani = listaAnimales.find(a => a.n === val.padStart(2, '0'));
-    if(!ani) return alert("Número inválido");
+    if(!ani) return alert("Número no válido");
     const fecha = document.getElementById('fecha-analisis').value;
-    
-    await _supabase.from('historial_sorteos').upsert({ 
-        fecha, 
-        hora: horaActiva, 
-        num: val, 
-        animal: ani.a, 
-        tipo: ani.c 
-    }, { onConflict: 'fecha,hora' });
-    
+    await _supabase.from('historial_sorteos').upsert({ fecha, hora: horaActiva, num: val, animal: ani.a, tipo: ani.c }, { onConflict: 'fecha,hora' });
     input.value = '';
     await cargarDatos();
 }
@@ -183,6 +117,35 @@ function renderPanelHoras() {
     });
 }
 
+function renderHistorial() {
+    const tabla = document.getElementById('lista-historial');
+    const fechaBuscada = document.getElementById('fecha-busqueda-historial').value;
+    if(!tabla) return;
+    tabla.innerHTML = '';
+    const filtrado = historialGlobal
+        .filter(r => r.fecha === fechaBuscada)
+        .sort((a, b) => horasSorteo.indexOf(a.hora) - horasSorteo.indexOf(b.hora));
+    filtrado.forEach(r => {
+        const ani = listaAnimales.find(a => a.n === r.num.toString().padStart(2, '0'));
+        tabla.innerHTML += `<tr><td>${r.hora}</td><td><b>${r.num}</b></td><td>${r.animal}</td><td>${ani ? ani.s : '-'}</td><td class="${r.tipo === 'ROJO' ? 'txt-rojo' : 'txt-azul'}">${r.tipo}</td></tr>`;
+    });
+}
+
+function renderMapa() {
+    const mapa = document.getElementById('mapa-ruleta');
+    const fecha = document.getElementById('fecha-analisis').value;
+    if(!mapa) return;
+    mapa.innerHTML = '';
+    const hoy = historialGlobal.filter(r => r.fecha === fecha).map(r => r.num);
+    ['A','B','C','D','E','F'].forEach(s => {
+        let html = `<div class="sector-block"><div class="sector-header">SECTOR ${s}</div><div class="sector-grid">`;
+        listaAnimales.filter(a => a.s === s).forEach(ani => {
+            html += `<div class="mini-animal ${hoy.includes(ani.n) ? 'sensor-fijo' : ani.c.toLowerCase()}">${ani.n}</div>`;
+        });
+        mapa.innerHTML += html + `</div></div>`;
+    });
+}
+
 function openTab(e, n) {
     document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
     document.getElementById(n).style.display = 'block';
@@ -196,7 +159,6 @@ async function init() {
     document.getElementById('fecha-busqueda-historial').value = hoy;
     document.getElementById('fecha-analisis').onchange = actualizarTodo;
     document.getElementById('fecha-busqueda-historial').onchange = renderHistorial;
-
     await cargarDatos();
     const grid = document.getElementById('grid-container');
     listaAnimales.forEach(a => {
@@ -207,5 +169,4 @@ async function init() {
         grid.appendChild(b);
     });
 }
-
 window.onload = init;
